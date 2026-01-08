@@ -1,22 +1,45 @@
-#define UNICODE
-#define _UNICODE
-#define COBJMACROS
 
 #include <windows.h>
 #include <stdio.h>
 #include <stdbool.h>
 
+#include <vulkan/vulkan.h>
+#include <renderer.h>
+
+#define STRINGIZE2(x) #x
+#define STRINGIZE(x)  STRINGIZE2(x)
+
+#if defined(_MSC_VER)
+#define TODO(msg) __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) "): TODO: " msg))
+#else
+#define TODO(msg) _Pragma("message(\"TODO: " msg "\")")
+// or simply: #define TODO(msg) _Pragma("GCC warning \"TODO: " msg "\"")
+#endif
+
 bool app_running = true;
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+
 
 // TODO: Add error handling popup (look perplexity on how)
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine, int nCmdShow)
 {
     (void)hPrevInstance;
     (void)pCmdLine;
-    
-    printf("Initializing");
+
+#ifdef _DEBUG   
+    if (AllocConsole())
+    {
+        FILE *fDummy;
+
+        // Redirect standard streams to the new console "CONOUT$" and "CONIN$"
+        freopen_s(&fDummy, "CONOUT$", "w", stdout);
+        freopen_s(&fDummy, "CONOUT$", "w", stderr);
+        freopen_s(&fDummy, "CONIN$", "r", stdin);
+    }
+#endif // ifdef _DEBUG
+
+    printf("Initializing\n");
 
     HRESULT hr;
 
@@ -49,13 +72,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         return 1;
     }
 
-#warning TODO: Init vulkan
-    // TODO: Init vulkan
+    renderer_init();
 
     ShowWindow(hwnd, nCmdShow);
 
     MSG msg = {0};
-#warning TODO: while (app.running)
+    TODO("while (app.running)")
     // TODO: while (app.running)
     while (app_running)
     {
@@ -63,7 +85,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         {
             if (msg.message == WM_QUIT)
             {
-#warning TODO: app.running = false;
+                TODO("app.running = false;")
                 // TODO: app.running = false;
                 app_running = false;
             }
@@ -71,11 +93,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
             DispatchMessage(&msg);
         }
 
-#warning TODO: if (app.running)
+        TODO("if (app.running)")
         // TODO: if (app.running)
         if (app_running)
         {
-#warning TODO: Do rendering stuff
+            TODO("Do rendering stuff")
             // TODO: Do rendering stuff
         }
     }
@@ -93,7 +115,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_SIZE:
-#warning TODO: Recreate shit!
+        TODO("Recreate shit!")
         // TODO: Recreate shit!
         return 0;
 
