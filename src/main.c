@@ -16,6 +16,7 @@
 
 
 // TODO: Make this better with proper stuff and the appropiate place
+// TODO: Do this in compile time to get the appropriate struct then
 // === STRUCT DEFINITIONS ===
 #define MAX_APIS 16
 #define MAX_PLUGINS 16
