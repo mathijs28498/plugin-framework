@@ -1,13 +1,28 @@
 {
-    "availble_apis": {
-        "test_api": {
+    "available_apis": [
+        {
+            "name": "test_api",
             "plugin": "test_plugin"
+        },
+        {
+            "name": "test_api2",
+            "plugin": "test_plugin_2"
         }
-    },
-    "plugins": {
-        "test_plugin": {
+    ],
+    "plugins": [
+        {
+            "name": "test_plugin",
             "path": "./TestPlugin.dll",
-            "implements": ["test_api"]
+            "implements": [
+                "test_api"
+            ]
+        },
+        {
+            "name": "test_plugin_2",
+            "path": "./TestPlugin2.dll",
+            "implements": [
+                "test_api2"
+            ]
         }
-    }
+    ]
 }

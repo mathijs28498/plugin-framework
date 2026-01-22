@@ -7,11 +7,11 @@ message(STATUS "C compiler ID: ${CMAKE_C_COMPILER_ID}")
 message(STATUS "C compiler version: ${CMAKE_C_COMPILER_VERSION}")
 
 if(MSVC)
-    # add_compile_options(
-    #     /W4       # Warning level 4 (Production quality - standard "strict")
-    #     /WX       # Treat warnings as errors
-    #     /permissive- # Enforce strict standard conformance (no MSVC extensions/loose rules)
-    # )
+    add_compile_options(
+        /W4       # Warning level 4 (Production quality - standard "strict")
+        /WX       # Treat warnings as errors
+        /permissive- # Enforce strict standard conformance (no MSVC extensions/loose rules)
+    )
     
 else()
     # GCC / Clang

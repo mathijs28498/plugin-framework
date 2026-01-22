@@ -1,7 +1,7 @@
 
-add_library(TestLib)
+add_library(test_lib)
 
-target_sources(TestLib
+target_sources(test_lib
     PRIVATE
         test_lib.c
 
@@ -12,7 +12,7 @@ target_sources(TestLib
 )
 
 if(MSVC)
-    target_compile_options(TestLib PRIVATE /W3 /WX-) # W3 = normal, WX- = No error
+    target_compile_options(test_lib PRIVATE /W3 /WX-) # W3 = normal, WX- = No error
 else()
-    target_compile_options(TestLib PRIVATE -w) # -w disables all warnings (extreme)
+    target_compile_options(test_lib PRIVATE -w) # -w disables all warnings (extreme)
 endif()

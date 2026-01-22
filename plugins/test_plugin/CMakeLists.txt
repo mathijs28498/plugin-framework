@@ -1,6 +1,6 @@
-add_library(TestPlugin SHARED)
+add_library(test_plugin SHARED)
 
-target_sources(TestPlugin
+target_sources(test_plugin
     PRIVATE
         test_plugin.c
     

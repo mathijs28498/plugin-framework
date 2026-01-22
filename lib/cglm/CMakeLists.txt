@@ -1,12 +1,6 @@
-add_library(Cglm INTERFACE)
+add_library(cglm INTERFACE)
 
-target_sources(Cglm
+target_sources(cglm
     INTERFACE
         FILE_SET HEADERS
 )
-
-if(MSVC)
-    target_compile_options(TestLib PRIVATE /W3 /WX-) # W3 = normal, WX- = No error
-else()
-    target_compile_options(TestLib PRIVATE -w) # -w disables all warnings (extreme)
-endif()
