@@ -11,5 +11,7 @@ target_sources(plugin_loader
 )
 
 target_link_libraries(plugin_loader
-    plugin_common
+    PRIVATE
+        plugin_common
+        cjson
 )

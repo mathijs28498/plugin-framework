@@ -22,8 +22,6 @@ target_link_libraries(program
         plugin_common
         plugin_loader
         test_lib
-        # jsmn
-        cjson
         test_yes
 )
 

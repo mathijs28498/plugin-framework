@@ -8,7 +8,7 @@
 
 typedef struct PluginApi
 {
-    int32_t (*add_search_path)(const char *search_path);
+    int32_t (*init)();
     int32_t (*add)(const char* plugin_name, const void **out_plugin_interface);
     int32_t (*get)(const char* plugin_name, const void **out_plugin_interface);
 } PluginApi;
