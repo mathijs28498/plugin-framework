@@ -2,12 +2,12 @@
     "plugins": [
         {
             "name": "test_plugin",
-            "path": "./TestPlugin.dll",
+            "path": "./test_plugin.dll",
             "implements": "test_api"
         },
         {
             "name": "test_plugin_2",
-            "path": "./TestPlugin2.dll",
+            "path": "./test_plugin2.dll",
             "implements": "test_api2"
         }
     ]

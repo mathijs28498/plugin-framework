@@ -9,3 +9,8 @@ target_sources(test_plugin
         FILES
             test_plugin.h
 )
+
+target_link_libraries(test_plugin
+    PRIVATE
+        plugin_common
+)

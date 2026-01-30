@@ -13,6 +13,7 @@ if(MSVC)
         /WX       # Treat warnings as errors
         /permissive- # Enforce strict standard conformance (no MSVC extensions/loose rules)
     )
+    add_compile_options(/Zc:preprocessor)
     
 else()
     # GCC / Clang

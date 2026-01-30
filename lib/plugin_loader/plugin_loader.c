@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <cjson.h>
+#include <Windows.h>
 
 #include <plugin_api.h>
 #include "plugin_loader_json_parser.h"
@@ -25,7 +26,7 @@ int32_t plugin_loader_read_config(char **buffer_out)
 {
     FILE *system_json_file;
     int ret;
-    ret = fopen_s(&system_json_file, "../system.json", "rb");
+    ret = fopen_s(&system_json_file, "../plugin_config.json", "rb");
 
     // TODO: Do this without malloc (get a define with the size of the file)
     fseek(system_json_file, 0, SEEK_END);
@@ -75,7 +76,7 @@ int32_t plugin_api_init()
         PluginToAddInfo *plugin_to_add = &g_plugins_to_add[i];
 
         bool use_default = strlen(plugin_to_add->plugin_name) == 0;
-        (void) use_default;
+        (void)use_default;
 
         // for (int )
     }
@@ -83,10 +84,36 @@ int32_t plugin_api_init()
     printf("\n=== Plugins ===\n");
     for (uint32_t i = 0; i < plugin_config.plugins_count; i++)
     {
-        printf("  [%d] Name: %s\n", i, plugin_config.plugins[i].name);
+        printf("\n  [%d] Name: %s\n", i, plugin_config.plugins[i].name);
         printf("      Path: %s\n", plugin_config.plugins[i].path);
         printf("      Implements: %s\n", plugin_config.plugins[i].implements);
-        printf("\n");
+        HMODULE loaded_dll = LoadLibrary(plugin_config.plugins[i].path);
+        if (!loaded_dll)
+        {
+            printf("Error: Failed to load plugin \"%s\" at \"%s\"\n", plugin_config.plugins[i].name, plugin_config.plugins[i].path);
+            // return -1;
+            continue;
+        }
+
+        FARPROC proc = GetProcAddress(loaded_dll, "get_dependencies__");
+        // FARPROC proc = GetProcAddress(loaded_dll, "test_func");
+        // FARPROC proc = GetProcAddress(loaded_dll, "test_func_");
+        if (!proc)
+        {
+            printf("Error: Plugin \"%s\" does not have a get_dependencies function defined\n", plugin_config.plugins[i].name);
+            continue;
+        }
+
+        printf("Calling proc\n");
+        proc(NULL, NULL);
+
+        FARPROC proc2 = GetProcAddress(loaded_dll, "set_dependency_test_api_2");
+        if (!proc2)
+        {
+            printf("Error: Plugin \"%s\" does not have a set_dependency_test_api_2 function defined\n", plugin_config.plugins[i].name);
+            continue;
+        }
+        proc2(NULL);
     }
     return 0;
 }
