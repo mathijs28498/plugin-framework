@@ -95,7 +95,7 @@ int32_t plugin_api_init()
             continue;
         }
 
-        FARPROC proc = GetProcAddress(loaded_dll, "get_dependencies__");
+        FARPROC proc = GetProcAddress(loaded_dll, "get_dependencies");
         // FARPROC proc = GetProcAddress(loaded_dll, "test_func");
         // FARPROC proc = GetProcAddress(loaded_dll, "test_func_");
         if (!proc)
@@ -105,7 +105,14 @@ int32_t plugin_api_init()
         }
 
         printf("Calling proc\n");
-        proc(NULL, NULL);
+        const char *const *dependencies;
+        int32_t count;
+
+        proc(&dependencies, &count);
+        for (int j = 0; j < count; j++)
+        {
+            printf("dep: %s\n", dependencies[j]);
+        }
 
         FARPROC proc2 = GetProcAddress(loaded_dll, "set_dependency_test_api_2");
         if (!proc2)

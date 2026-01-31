@@ -4,6 +4,4 @@
 
 #include <stdint.h>
 
-__declspec(dllexport) void test_func(uint32_t num);
-
 #endif // #ifndef TEST_PLUGIN_H
