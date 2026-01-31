@@ -44,7 +44,7 @@ int32_t plugin_loader_read_config(char **buffer_out)
     return 0;
 }
 
-int32_t plugin_api_init()
+int32_t plugin_api_init(void)
 {
     int ret;
     char *buffer;
@@ -71,12 +71,48 @@ int32_t plugin_api_init()
     //              - Do error checking on these dependencies (eg. cyclic dependencies)
     //          - Walk dependency graph layer by layer calling the init functions
 
+    // TODO: Check if this algorithm can/should be made better/faster
+    // Get the PluginInfo for the dlls of the user added
     for (size_t i = 0; i < g_plugins_to_add_count; i++)
     {
         PluginToAddInfo *plugin_to_add = &g_plugins_to_add[i];
 
         bool use_default = strlen(plugin_to_add->plugin_name) == 0;
-        (void)use_default;
+
+        int32_t plugin_info_index = -1;
+        for (uint32_t j = 0; j < plugin_config.plugins_count; j++)
+        {
+            PluginInfo *plugin_info = &plugin_config.plugins[j];
+
+            if (use_default)
+            {
+                if (strncmp(plugin_info->implements, plugin_to_add->api_name, PLUGIN_CONFIG_MAX_PLUGIN_API_NAME_COUNT) == 0)
+                {
+                    plugin_info_index = (int32_t)j;
+                    break;
+                }
+            }
+            else
+            {
+                if (strncmp(plugin_info->name, plugin_to_add->plugin_name, PLUGIN_CONFIG_MAX_PLUGIN_NAME_COUNT) == 0)
+                {
+                    plugin_info_index = (int32_t)j;
+                    break;
+                }
+            }
+        }
+
+        if (plugin_info_index < 0)
+        {
+            printf("Error: couldn't add plugin api \"%s\"\n", plugin_to_add->api_name);
+            return -1;
+        }
+
+        printf("Adding plugin api: \"%s\" with implementation \"%s\" and path \"%s\"\n", 
+            plugin_config.plugins[plugin_info_index].implements,
+            plugin_config.plugins[plugin_info_index].name,
+            plugin_config.plugins[plugin_info_index].path
+        );
 
         // for (int )
     }
@@ -95,7 +131,7 @@ int32_t plugin_api_init()
             continue;
         }
 
-        FARPROC proc = GetProcAddress(loaded_dll, "get_dependencies");
+        FARPROC proc = GetProcAddress(loaded_dll, "test_api_get_dependencies");
         // FARPROC proc = GetProcAddress(loaded_dll, "test_func");
         // FARPROC proc = GetProcAddress(loaded_dll, "test_func_");
         if (!proc)
@@ -125,11 +161,11 @@ int32_t plugin_api_init()
     return 0;
 }
 
-int32_t plugin_api_get(const char *api_name, const void **out_plugin_interface)
+int32_t plugin_api_get(const char *api_name, const void **out_api_interface)
 {
     (void *)api_name;
     printf("Doing api get: %s\n", api_name);
-    out_plugin_interface = NULL;
+    out_api_interface = NULL;
     return 0;
 }
 

@@ -25,9 +25,14 @@ int main(int argc, char *argv[])
 
     int32_t ret;
 
-    PluginApi *plugin_api = get_plugin_api();
-    ret = plugin_api->add("test_api", NULL);
-    ret = plugin_api->init();
+    ret = PLUGIN_API_ADD("test_api", NULL);
+    ret = PLUGIN_API_ADD("test_api2", NULL);
+    // ret = PLUGIN_API_ADD("test_api3", NULL);
+    ret = PLUGIN_API_INIT();
+
+    // PluginApi *plugin_api = get_plugin_api();
+    // ret = plugin_api->add("test_api", NULL);
+    // ret = plugin_api->init();
 
 
     // ret = plugin_loader_init();
