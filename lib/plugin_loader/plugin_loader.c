@@ -118,8 +118,6 @@ int32_t plugin_api_load(PluginLoaderContext *context)
     //          [/] - Walk dependency graph layer by layer calling the init functions
 
     // TODO: Check if this algorithm can/should be made better/faster
-    // Get the PluginInfo for the dlls of the user added
-
     size_t plugin_modules_len = 0;
     PluginModule plugin_modules[PLUGIN_LOADER_MAX_PLUGIN_LEN];
     resolve_requested_plugins(context, plugin_modules, &plugin_modules_len, &plugin_config);
