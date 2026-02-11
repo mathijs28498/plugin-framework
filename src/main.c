@@ -40,7 +40,7 @@ PLUGIN_MANAGER_API_MAIN()
     int32_t ret;
 
     // TODO: Make out of order work
-    ret = PLUGIN_MANAGER_API_ADD("logger_api", NULL);
+    // ret = PLUGIN_MANAGER_API_ADD("logger_api", NULL);
     ret = PLUGIN_MANAGER_API_ADD("test_api2", NULL);
     ret = PLUGIN_MANAGER_API_ADD("test_api", NULL);
 

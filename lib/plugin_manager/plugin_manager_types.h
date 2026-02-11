@@ -13,6 +13,7 @@
 #define PLUGIN_MANAGER_MAX_PLUGINS_LEN 64
 
 #define PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN 2
+#define PLUGIN_MANAGER_MAX_DEPENDENCIES 64
 
 typedef struct PluginDefinition
 {
@@ -44,22 +45,31 @@ typedef struct PluginManagerBaseApi
     void *context;
 } PluginManagerBaseApi;
 
+typedef struct PluginDependency
+{
+    char *api_name;
+    bool resolved;
+} PluginDependency;
+
 typedef struct PluginModule
 {
     const PluginDefinition *plugin_definition;
     HMODULE handle;
 
-    char **dependencies;
+    // char **dependencies;
+    PluginDependency dependencies[PLUGIN_MANAGER_MAX_DEPENDENCIES];
     uint32_t dependencies_len;
     PluginManagerBaseApi *api;
 } PluginModule;
+
 
 typedef struct PluginStatic
 {
     const char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
     const char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
 
-    char **dependencies;
+    // char **dependencies;
+    PluginDependency *dependencies;
     uint32_t dependencies_len;
     PluginManagerBaseApi *api;
 } PluginStatic;

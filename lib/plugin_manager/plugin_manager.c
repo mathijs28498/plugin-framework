@@ -24,6 +24,8 @@
 
 #define LOGGER_API_TAG "plugin_manager"
 
+#define PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH 255
+
 PluginManagerRuntimeContext *get_plugin_manager_runtime_context()
 {
     static PluginManagerRuntimeContext context = {0};
@@ -117,9 +119,9 @@ int32_t plugin_manager_add(PluginManagerSetupContext *setup_context, const char 
 // TODO: plugin add functionality
 //          [X] - Load in plugin_definitions to add
 //          [X] - Call dependency functions on plugin_definitions to add
-//          [ ] - Check if dependencies are or are not included
-//          [ ] - Add dependencies where not already included
-//          [ ] - Repeat this until all dependencies loaded in
+//          [X] - Check if dependencies are or are not included
+//          [X] - Add dependencies where not already included
+//          [X] - Repeat this until all dependencies loaded in
 //          [ ] - Create dependency graph
 //              [ ] - Do error checking on these dependencies (eg. cyclic dependencies)
 //          [/] - Walk dependency graph layer by layer calling the init functions
@@ -144,46 +146,78 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
     size_t plugin_modules_len = 0;
     PluginModule plugin_modules[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
-    ret = resolve_requested_plugins_registry(
-        setup_context->logger_api,
-        setup_context->requested_plugins,
-        setup_context->requested_plugins_len,
-        &plugin_registry,
-        plugin_modules,
-        &plugin_modules_len);
 
-    ret = load_plugin_modules(
-        setup_context->logger_api,
-        plugin_modules,
-        plugin_modules_len,
-        runtime_context->api_instances,
-        &runtime_context->api_instances_len);
+    int i = 0;
+    while (setup_context->requested_plugins_len > 0 && i < PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH)
+    {
+        ret = resolve_requested_plugins_registry(
+            setup_context->logger_api,
+            setup_context->requested_plugins,
+            setup_context->requested_plugins_len,
+            &plugin_registry,
+            plugin_modules,
+            &plugin_modules_len);
 
-    // size_t plugin_static_list_len = 0;
-    // PluginStatic plugin_static_list[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
-    ret = resolve_requested_plugins_internal(
-        setup_context->logger_api,
-        setup_context->requested_plugins,
-        setup_context->requested_plugins_len,
-        setup_context->internal_plugins,
-        setup_context->internal_plugins_len,
-        runtime_context->api_instances,
-        &runtime_context->api_instances_len);
-        // plugin_static_list,
-        // &plugin_static_list_len);
+        if (ret < 0)
+        {
+            return ret;
+        }
 
-    // TODO: Add resolve unresolved dependencies recursively
+        ret = load_plugin_modules(
+            setup_context->logger_api,
+            plugin_modules,
+            plugin_modules_len,
+            runtime_context->api_instances,
+            &runtime_context->api_instances_len);
 
-    ret = resolve_plugin_module_dependencies(
-        setup_context->logger_api, 
-        runtime_context->api_instances,
-        runtime_context->api_instances_len,
-        plugin_modules, 
-        plugin_modules_len);
+        if (ret < 0)
+        {
+            return ret;
+        }
+
+        ret = resolve_requested_plugins_internal(
+            setup_context->logger_api,
+            setup_context->requested_plugins,
+            setup_context->requested_plugins_len,
+            setup_context->internal_plugins,
+            setup_context->internal_plugins_len,
+            runtime_context->api_instances,
+            &runtime_context->api_instances_len);
+
+        if (ret < 0)
+        {
+            return ret;
+        }
+
+        setup_context->requested_plugins_len = 0;
+
+        // TODO: Add resolve unresolved dependencies recursively
+
+        ret = resolve_plugin_module_dependencies(
+            setup_context->logger_api,
+            runtime_context->api_instances,
+            runtime_context->api_instances_len,
+            plugin_modules,
+            plugin_modules_len,
+            setup_context->requested_plugins,
+            &setup_context->requested_plugins_len);
+
+        if (ret < 0)
+        {
+            return ret;
+        }
+
+        i++;
+    }
 
     // TODO: Make sure the plugin_definitions get initialized in order with their dependencies
 
     ret = initialize_plugins(setup_context->logger_api, plugin_modules, plugin_modules_len);
+
+    if (ret < 0)
+    {
+        return ret;
+    }
 
     free(setup_context);
 

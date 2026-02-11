@@ -90,7 +90,13 @@ int32_t load_plugin_modules(
         if (get_dependencies_proc)
         {
             // TODO: Make these functions casted to a function signature typedef
-            get_dependencies_proc(&plugin_module->dependencies, &plugin_module->dependencies_len);
+            char **dependencies;
+            get_dependencies_proc(&dependencies, &plugin_module->dependencies_len);
+            for (size_t j = 0; j < plugin_module->dependencies_len; j++)
+            {
+                plugin_module->dependencies[j].api_name = dependencies[j];
+                plugin_module->dependencies[j].resolved = false;
+            }
         }
 
         static const char get_api_postfix[] = "_get_api";
@@ -188,7 +194,9 @@ int32_t resolve_plugin_module_dependencies(
     const ApiInstance *api_instances,
     size_t api_instances_len,
     PluginModule *plugin_modules,
-    size_t plugin_modules_len)
+    size_t plugin_modules_len,
+    RequestedPlugin *requested_plugins,
+    size_t *requested_plugins_len)
 {
     for (size_t i = 0; i < plugin_modules_len; i++)
     {
@@ -197,33 +205,63 @@ int32_t resolve_plugin_module_dependencies(
         for (uint32_t j = 0; j < plugin_module->dependencies_len; j++)
         {
             // TODO: Handle when dependency is not found (add it from the registry if it is available)
-            char *dependency = plugin_module->dependencies[j];
+            PluginDependency *dependency = &plugin_module->dependencies[j];
+
             for (uint32_t k = 0; k < api_instances_len; k++)
             {
                 // TODO: look into the api_instances, not plugin_modules
                 const ApiInstance *api_instance = &api_instances[k];
-                if (strcmp(api_instance->api_name, dependency) == 0)
+                if (strcmp(api_instance->api_name, dependency->api_name) != 0)
                 {
+                    continue;
+                }
 
-                    static const char set_dependency_midfix[] = "_set_";
-                    // TODO: Fix the sizing here
-                    char set_dependency_function_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN + sizeof(set_dependency_midfix)];
+                static const char set_dependency_midfix[] = "_set_";
+                // TODO: Fix the sizing here
+                char set_dependency_function_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN + sizeof(set_dependency_midfix)];
 
-                    snprintf(set_dependency_function_name, sizeof(set_dependency_function_name),
-                             "%s%s%s", plugin_module->plugin_definition->api_name, set_dependency_midfix, dependency);
+                snprintf(set_dependency_function_name, sizeof(set_dependency_function_name),
+                         "%s%s%s", plugin_module->plugin_definition->api_name, set_dependency_midfix, dependency->api_name);
 
-                    FARPROC set_dependency_proc = GetProcAddress(plugin_module->handle, set_dependency_function_name);
-                    if (set_dependency_proc)
-                    {
-                        // TODO: Make these functions casted to a function signature typedef
-                        set_dependency_proc(plugin_module->api->context, api_instance->api);
-                    }
-                    else
-                    {
-                        LOG_ERR(logger_api, "%s() not found", set_dependency_function_name);
-                    }
+                FARPROC set_dependency_proc = GetProcAddress(plugin_module->handle, set_dependency_function_name);
+                if (!set_dependency_proc)
+                {
+                    LOG_ERR(logger_api, "%s() not found", set_dependency_function_name);
+                    return -1;
+                }
+
+                // TODO: Make these functions casted to a function signature typedef
+                set_dependency_proc(plugin_module->api->context, api_instance->api);
+                dependency->resolved = true;
+            }
+
+            if (dependency->resolved)
+            {
+                continue;
+            }
+
+            // TODO: Make this a method that can be reused by the plugin_manager_add
+            bool to_request = true;
+            for (size_t l = 0; l < *requested_plugins_len; l++)
+            {
+                if (strcmp(requested_plugins[l].api_name, dependency->api_name) == 0)
+                {
+                    to_request = false;
+                    break;
                 }
             }
+
+            if (!to_request)
+            {
+                continue;
+            }
+
+            RequestedPlugin *requested_plugin = &requested_plugins[*requested_plugins_len];
+            snprintf(requested_plugin->api_name, sizeof(requested_plugin->api_name), "%s", dependency->api_name);
+            requested_plugin->plugin_name[0] = '\0';
+            requested_plugin->resolved = false;
+            (*requested_plugins_len)++;
+            LOG_DBG(logger_api, "dependency '%s' not found, adding to requested plugins", requested_plugin->api_name);
         }
     }
 

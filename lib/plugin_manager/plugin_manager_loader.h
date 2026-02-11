@@ -43,7 +43,10 @@ int32_t resolve_plugin_module_dependencies(
     const struct ApiInstance *api_instances,
     size_t api_instances_len,
     struct PluginModule *plugin_modules,
-    size_t plugin_modules_len);
+    size_t plugin_modules_len,
+    struct RequestedPlugin *requested_plugins,
+    size_t *requested_plugins_len);
+
 int32_t initialize_plugins(
     const struct LoggerApi *logger_api,
     struct PluginModule *plugin_modules,
