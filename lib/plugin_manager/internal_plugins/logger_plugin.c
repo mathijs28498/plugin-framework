@@ -5,12 +5,13 @@
 #include <windows.h>
 
 #include <logger_api.h>
+#include <plugin_manager_common.h>
 
 #define TIME_STRING_LEN sizeof("[00:00:00.000]")
 
 void get_time_str(char time_str[TIME_STRING_LEN])
 {
-    // TODO: Figure out a way to get the time for each platform with a fallback for just hr, min, sec
+    TODO("Figure out a way to get the time for each platform with a fallback for just hr, min, sec")
     SYSTEMTIME time;
     GetLocalTime(&time);
 

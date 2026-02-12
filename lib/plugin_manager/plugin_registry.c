@@ -6,6 +6,8 @@
 #include <cJSON.h>
 #include <stdio.h>
 
+#include <plugin_manager_common.h>
+
 #include "plugin_manager_types.h"
 
 int32_t plugin_registry_deserialize_json(const char *json_str, PluginRegistry *plugin_registry)
@@ -36,8 +38,8 @@ int32_t plugin_registry_deserialize_json(const char *json_str, PluginRegistry *p
             break;
         }
 
-        // TODO: Make helper functions for different types (like string)
-        // TODO: Add error handling
+        TODO("Make helper functions for different types (like string)")
+        TODO("Add error handling")
         const cJSON *json_plugin_name = cJSON_GetObjectItem(json_plugin_definition, "name");
         if (cJSON_IsString(json_plugin_name))
         {

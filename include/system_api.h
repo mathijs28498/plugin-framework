@@ -1,5 +1,3 @@
-// TODO: Make logging work on module level like zephyr
-
 #pragma once
 #ifndef SYSTEM_API_H
 #define SYSTEM_API_H

@@ -5,7 +5,7 @@
 
 #include <vulkan/vulkan.h>
 #include <renderer.h>
-#include <project_common.h>
+#include <plugin_manager_common.h>
 
 bool app_running = true;
 

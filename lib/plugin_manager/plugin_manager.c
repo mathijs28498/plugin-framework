@@ -9,7 +9,6 @@
 #include <Windows.h>
 #include <assert.h>
 
-// TODO: Change the name of this file
 #include <plugin_manager_api.h>
 
 #include <environment_api.h>
@@ -116,16 +115,6 @@ int32_t plugin_manager_add(PluginManagerSetupContext *setup_context, const char 
     return 0;
 };
 
-// TODO: plugin add functionality
-//          [X] - Load in plugin_definitions to add
-//          [X] - Call dependency functions on plugin_definitions to add
-//          [X] - Check if dependencies are or are not included
-//          [X] - Add dependencies where not already included
-//          [X] - Repeat this until all dependencies loaded in
-//          [ ] - Create dependency graph
-//              [ ] - Do error checking on these dependencies (eg. cyclic dependencies)
-//          [/] - Walk dependency graph layer by layer calling the init functions
-
 int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginManagerRuntimeContext *runtime_context)
 {
     int ret;
@@ -133,7 +122,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     PluginRegistry plugin_registry;
     (void)runtime_context;
 
-    // TODO: Make buffer not use malloc
+    TODO("Make buffer not use malloc")
     ret = file_io_read("../plugin_registry.json", &buffer);
     ret = plugin_registry_deserialize_json(buffer, &plugin_registry);
     free(buffer);
@@ -207,8 +196,6 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
         i++;
     }
-
-    // TODO: Make sure the plugin_definitions get initialized in order with their dependencies
 
     uint32_t sorted_plugin_modules_indices[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
     ret = calculate_plugin_module_initialization_order(setup_context->logger_api, plugin_modules, plugin_modules_len, sorted_plugin_modules_indices);

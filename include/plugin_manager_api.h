@@ -2,9 +2,10 @@
 #ifndef PLUGIN_API_H
 #define PLUGIN_API_H
 
-// TODO: Add static linking functionality
-
+#include <plugin_manager_common.h>
 #include <stdint.h>
+
+TODO("Add static linking functionality")
 
 #ifndef PLUGIN_MANAGER_STATIC_LINKING
 
@@ -20,13 +21,7 @@ int32_t plugin_manager_get(const struct PluginManagerRuntimeContext *runtime_con
 
 #endif // #ifndef STATIC_LINKING
 
-// TODO: Add wWinMain here when necessary
-// TODO: Also handle the arguments for this
-// TODO: Make the argc/argv available to the user
-
-// TODO: Initialize the plugin_manager_system_api like other apis
-// TODO: Use a plugin_manager_set_plugin_manager_system_api() function after initializing the method
-// TODO: Maybe do this in an init function
+TODO("Add wWinMain here when necessary")
 #define PLUGIN_MANAGER_API_MAIN()                                     \
     int plugin_api_main(struct PluginManagerSetupContext *__context); \
     int main(int argc, char *argv[])                                  \

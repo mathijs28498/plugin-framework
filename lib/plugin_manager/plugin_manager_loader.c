@@ -6,12 +6,13 @@
 #include <stdio.h>
 
 #include <logger_api.h>
+#include <plugin_manager_common.h>
 
 #include "plugin_manager_types.h"
 
 #define LOGGER_API_TAG "plugin_manager_loader"
 
-// TODO: Check if this algorithm can/should be made better/faster
+TODO("Check if this algorithm can/should be made better/faster")
 int32_t resolve_requested_plugins_registry(
     const LoggerApi *logger_api,
     RequestedPlugin *requested_plugins,
@@ -56,7 +57,7 @@ int32_t resolve_requested_plugins_registry(
         plugin_modules[*plugin_modules_len].dependencies_len = 0;
         (*plugin_modules_len)++;
         requested_plugins[i].resolved = true;
-        // TODO: Add max index check here
+        TODO("Add max index check here")
     }
 
     return 0;
@@ -222,7 +223,6 @@ int32_t resolve_plugin_module_dependencies(
 
             for (uint32_t k = 0; k < api_instances_len; k++)
             {
-                // TODO: look into the api_instances, not plugin_modules
                 const ApiInstance *api_instance = &api_instances[k];
                 if (strcmp(api_instance->api_name, dependency->api_name) != 0)
                 {
@@ -238,10 +238,10 @@ int32_t resolve_plugin_module_dependencies(
                 continue;
             }
 
-            // TODO: Make this a method that can be reused by the plugin_manager_add
             // Adding dependency to requested plugins as it is not found yet
 
             // First check if dependency has already been reqeusted in the meantime
+            TODO("Make this a method that can be reused by the plugin_manager_add")
             bool to_request = true;
             for (size_t k = 0; k < *requested_plugins_len; k++)
             {
@@ -337,8 +337,9 @@ int32_t calculate_plugin_module_initialization_order(
         }
     }
 
-    // TODO: Add upper bound to while loop while macro
-    // Iteratively fille sorted indices
+    TODO("Add upper bound to while loop while macro")
+    // Iteratively fill sorted indices
+    // SAFE_WHILE
     while (queue_head != queue_tail)
     {
         uint32_t current_idx = sorted_plugin_modules_indices[queue_head];
@@ -375,7 +376,6 @@ int32_t calculate_plugin_module_initialization_order(
 
     if (queue_tail != plugin_modules_len)
     {
-        // TODO: Cyclic dependency error msg
         LOG_ERR(logger_api, "Cyclic dependency detected! Initialized %d out of %d plugins.", queue_tail, plugin_modules_len);
         return -1;
     }

@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <project_common.h>
+#include <plugin_manager_common.h>
 
 #include "logging.h"
 

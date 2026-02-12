@@ -4,7 +4,7 @@
 #include <vulkan/vulkan.h>
 #include <string.h>
 
-#include <project_common.h>
+#include <plugin_manager_common.h>
 #include <system_api.h>
 
 #include "renderer_vk_utils.h"

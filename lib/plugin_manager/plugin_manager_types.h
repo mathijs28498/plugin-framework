@@ -4,8 +4,9 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <plugin_manager_common.h>
 
-// TODO: Make this into cmake variables
+TODO("Make this into cmake variables")
 #define PLUGIN_REGISTRY_MAX_PLUGIN_LEN 64
 #define PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN 64
 #define PLUGIN_REGISTRY_MAX_PLUGIN_PATH_LEN 512
