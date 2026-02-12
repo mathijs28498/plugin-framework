@@ -47,8 +47,15 @@ int32_t resolve_plugin_module_dependencies(
     struct RequestedPlugin *requested_plugins,
     size_t *requested_plugins_len);
 
+int32_t calculate_plugin_module_initialization_order(
+    const struct LoggerApi *logger_api,
+    const struct PluginModule *plugin_modules,
+    size_t plugin_modules_len,
+    uint32_t *sorted_plugin_modules_indices);
+
 int32_t initialize_plugins(
     const struct LoggerApi *logger_api,
+    uint32_t *sorted_plugin_modules_indices,
     struct PluginModule *plugin_modules,
     size_t plugin_modules_len);
 

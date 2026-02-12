@@ -45,23 +45,30 @@ typedef struct PluginManagerBaseApi
     void *context;
 } PluginManagerBaseApi;
 
+typedef void (*PluginGetDependencies_Fn)(const char *const **dependencies, uint32_t *len);
+typedef void (*PluginSetDependency_Fn)(PluginManagerBaseApi *context, void *api);
+typedef PluginManagerBaseApi *(*PluginGetApi_Fn)(void);
+typedef int32_t (*PluginInit_Fn)(void *PluginManagerBaseApi);
+
 typedef struct PluginDependency
 {
     char *api_name;
     bool resolved;
+    PluginSetDependency_Fn set;
 } PluginDependency;
 
 typedef struct PluginModule
 {
     const PluginDefinition *plugin_definition;
-    HMODULE handle;
+    // HMODULE handle;
 
-    // char **dependencies;
     PluginDependency dependencies[PLUGIN_MANAGER_MAX_DEPENDENCIES];
     uint32_t dependencies_len;
-    PluginManagerBaseApi *api;
-} PluginModule;
 
+    // PluginManagerBaseApi *api;
+    PluginGetApi_Fn get_api;
+    PluginInit_Fn init;
+} PluginModule;
 
 typedef struct PluginStatic
 {
@@ -73,7 +80,6 @@ typedef struct PluginStatic
     uint32_t dependencies_len;
     PluginManagerBaseApi *api;
 } PluginStatic;
-
 
 struct LoggerApi;
 
@@ -91,7 +97,7 @@ typedef struct PluginManagerSetupContext
 typedef struct ApiInstance
 {
     char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
-    void *api;
+    PluginManagerBaseApi *api;
 } ApiInstance;
 
 typedef struct PluginManagerRuntimeContext

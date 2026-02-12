@@ -191,8 +191,6 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
         setup_context->requested_plugins_len = 0;
 
-        // TODO: Add resolve unresolved dependencies recursively
-
         ret = resolve_plugin_module_dependencies(
             setup_context->logger_api,
             runtime_context->api_instances,
@@ -212,8 +210,14 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
     // TODO: Make sure the plugin_definitions get initialized in order with their dependencies
 
-    ret = initialize_plugins(setup_context->logger_api, plugin_modules, plugin_modules_len);
+    uint32_t sorted_plugin_modules_indices[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
+    ret = calculate_plugin_module_initialization_order(setup_context->logger_api, plugin_modules, plugin_modules_len, sorted_plugin_modules_indices);
+    if (ret < 0)
+    {
+        return ret;
+    }
 
+    ret = initialize_plugins(setup_context->logger_api, sorted_plugin_modules_indices, plugin_modules, plugin_modules_len);
     if (ret < 0)
     {
         return ret;
