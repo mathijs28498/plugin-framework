@@ -30,6 +30,9 @@ int32_t plugin_manager_get(struct PluginManagerRuntimeContext *runtime_context, 
         (void)hPrevInstance;                                                      \
         (void)lpCmdLine;                                                          \
                                                                                   \
+        HRESULT hr = {0};                                                         \
+        hr = CoInitialize(NULL);                                                  \
+                                                                                  \
         struct PluginManagerSetupContext *__context;                              \
         static struct                                                             \
         {                                                                         \
@@ -38,6 +41,7 @@ int32_t plugin_manager_get(struct PluginManagerRuntimeContext *runtime_context, 
         } platform_context;                                                       \
         platform_context.hInstance = hInstance;                                   \
         platform_context.nCmdShow = nCmdShow;                                     \
+                                                                                  \
         (void)plugin_manager_init(&__context, __argc, __argv, &platform_context); \
         return plugin_api_main(__context);                                        \
     }

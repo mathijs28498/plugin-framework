@@ -132,9 +132,6 @@ PLUGIN_MANAGER_API_MAIN()
     WindowsPlatformContext *windows_context; 
     ENVIRONMENT_API_GET_WINDOWS_CONTEXT(environment_api, &windows_context);
 
-    // Initialize COM
-    HRESULT hr = {0};
-    hr = CoInitialize(NULL);
 
     const wchar_t CLASS_NAME[] = L"MainWindowClass";
 
