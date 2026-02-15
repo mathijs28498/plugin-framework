@@ -34,4 +34,4 @@ configure_file(
 add_subdirectory(lib)
 add_subdirectory(plugins)
 add_subdirectory(src)
-add_subdirectory(include)
+add_subdirectory(plugin_manager_common)

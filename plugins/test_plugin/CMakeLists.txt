@@ -12,5 +12,5 @@ target_sources(test_plugin
 
 target_link_libraries(test_plugin
     PRIVATE
-        plugin_common
+        plugin_manager_common
 )

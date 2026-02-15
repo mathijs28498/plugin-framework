@@ -120,16 +120,18 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     int ret;
     char *buffer;
     PluginRegistry plugin_registry;
-    runtime_context->logger_api = setup_context->logger_api;
+    LoggerApi *logger_api = setup_context->logger_api;
+    runtime_context->logger_api = logger_api;
+
 
     TODO("Make buffer not use malloc")
-    ret = file_io_read("../plugin_registry.json", &buffer);
-    ret = plugin_registry_deserialize_json(setup_context->logger_api, buffer, &plugin_registry);
+    ret = file_io_read(logger_api, "../plugin_registry.json", &buffer);
+    ret = plugin_registry_deserialize_json(logger_api, buffer, &plugin_registry);
     free(buffer);
 
     if (ret < 0)
     {
-        LOG_ERR(setup_context->logger_api, "unable to parse plugin config: %d", ret);
+        LOG_ERR(logger_api, "unable to parse plugin config: %d", ret);
         return ret;
     }
 
@@ -140,12 +142,12 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
         setup_context->requested_plugins_len > 0,
         PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH,
         {
-            LOG_ERR(setup_context->logger_api, "Plugin manager dependency solver exceeded max interations");
+            LOG_ERR(logger_api, "Plugin manager dependency solver exceeded max interations");
             return -1;
         })
     {
         ret = resolve_requested_plugins_registry(
-            setup_context->logger_api,
+            logger_api,
             setup_context->requested_plugins,
             setup_context->requested_plugins_len,
             &plugin_registry,
@@ -158,7 +160,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
         }
 
         ret = load_plugin_modules(
-            setup_context->logger_api,
+            logger_api,
             plugin_modules,
             plugin_modules_len,
             runtime_context->api_instances,
@@ -170,7 +172,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
         }
 
         ret = resolve_requested_plugins_internal(
-            setup_context->logger_api,
+            logger_api,
             setup_context->requested_plugins,
             setup_context->requested_plugins_len,
             setup_context->internal_plugins,
@@ -186,7 +188,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
         setup_context->requested_plugins_len = 0;
 
         ret = resolve_plugin_module_dependencies(
-            setup_context->logger_api,
+            logger_api,
             runtime_context->api_instances,
             runtime_context->api_instances_len,
             plugin_modules,
@@ -201,13 +203,13 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     }
 
     uint32_t sorted_plugin_modules_indices[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
-    ret = calculate_plugin_module_initialization_order(setup_context->logger_api, plugin_modules, plugin_modules_len, sorted_plugin_modules_indices);
+    ret = calculate_plugin_module_initialization_order(logger_api, plugin_modules, plugin_modules_len, sorted_plugin_modules_indices);
     if (ret < 0)
     {
         return ret;
     }
 
-    ret = initialize_plugins(setup_context->logger_api, sorted_plugin_modules_indices, plugin_modules, plugin_modules_len);
+    ret = initialize_plugins(logger_api, sorted_plugin_modules_indices, plugin_modules, plugin_modules_len);
     if (ret < 0)
     {
         return ret;

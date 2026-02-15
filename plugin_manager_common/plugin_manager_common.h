@@ -62,5 +62,9 @@
 #endif
 
 TODO("Make a macro for addressing any function that uses the context when you give the api")
+#define NOT_IMPLEMENTED(return_type, ...) \
+    ((void)(__VA_ARGS__),                 \
+     assert(0 && "Not implemented"),      \
+     (return_type)0)
 
 #endif // PLUGIN_MANAGER_COMMON_H

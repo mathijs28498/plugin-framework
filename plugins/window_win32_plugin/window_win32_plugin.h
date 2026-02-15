@@ -2,16 +2,13 @@
 #ifndef WINDOW_WIN32_PLUGIN_H
 #define WINDOW_WIN32_PLUGIN_H
 
-#pragma pack(push, 8)
+#include <stdint.h>
 
-struct LoggerApi;
-struct EnvironmentApi;
+struct WindowApiContext;
+struct WindowApiCreateWindowOptions;
 
-typedef struct WindowApiContext {
-    struct LoggerApi *logger_api;
-    struct EnvironmentApi *environment_api;
-} WindowApiContext;
-
-#pragma pack(pop)
+int32_t window_win32_plugin_create_window(struct WindowApiContext *context, struct WindowApiCreateWindowOptions *options);
+int32_t window_win32_plugin_poll_events(struct WindowApiContext *context);
+int32_t window_win32_plugin_wait_for_events(struct WindowApiContext *context);
 
 #endif // #ifndef WINDOW_WIN32_PLUGIN_H

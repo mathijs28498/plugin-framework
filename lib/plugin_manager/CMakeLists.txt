@@ -10,13 +10,13 @@ target_sources(plugin_manager
         plugin_manager.c
         plugin_registry.c
 
-    PUBLIC
-        FILE_SET HEADERS
+    # PUBLIC
+    #     FILE_SET HEADERS
 )
 
 target_link_libraries(plugin_manager
     PRIVATE
-        plugin_common
+        plugin_manager_common
         cjson
         internal_plugins
 )

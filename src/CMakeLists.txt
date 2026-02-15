@@ -1,7 +1,5 @@
 find_package(Vulkan REQUIRED)
 
-# add_executable(Program main_no_win32.c)
-
 add_executable(program main.c)
 
 if (WIN32)
@@ -19,7 +17,7 @@ target_link_libraries(program
         # Renderer
         # ProjectCommon
         # TestPlugin
-        plugin_common
+        plugin_manager_common
         plugin_manager
         test_lib
         test_yes
