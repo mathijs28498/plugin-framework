@@ -1,6 +1,4 @@
 #pragma once
-#ifndef PLUGIN_MANAGER_TYPES_H
-#define PLUGIN_MANAGER_TYPES_H
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -107,5 +105,3 @@ typedef struct PluginManagerRuntimeContext
     size_t api_instances_len;
     ApiInstance api_instances[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
 } PluginManagerRuntimeContext;
-
-#endif // #ifndef PLUGIN_MANAGER_TYPES_H

@@ -1,6 +1,6 @@
 #pragma once
-#ifndef INPUT_API_H
-#define INPUT_API_H
+
+
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -28,4 +28,3 @@ typedef struct InputApi
 #define KEY_HELD(api, key) (api->key_held(api->context, key))
 #define KEY_RELEASED(api, key) (api->key_released(api->context, key))
 
-#endif // #ifndef INPUT_API_H

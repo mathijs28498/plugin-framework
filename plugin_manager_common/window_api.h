@@ -1,6 +1,6 @@
 #pragma once
-#ifndef WINDOW_API_H
-#define WINDOW_API_H
+
+
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -30,4 +30,3 @@ typedef struct WindowApi
 
 #pragma pack(pop)
 
-#endif // #ifndef WINDOW_API_H

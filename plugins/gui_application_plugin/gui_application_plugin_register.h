@@ -1,20 +1,21 @@
 #pragma once
-#ifndef APPLICATION_PLUGIN_REGISTER_H
-#define APPLICATION_PLUGIN_REGISTER_H
+
+
 
 #pragma pack(push, 8)
 
 struct LoggerApi;
 struct WindowApi;
 struct InputApi;
+struct DrawApi;
 
-typedef struct AppApiContext
+typedef struct GuiApplicationApiContext
 {
     struct LoggerApi *logger_api;
     struct WindowApi *window_api;
     struct InputApi *input_api;
-} AppApiContext;
+    struct DrawApi *draw_api;
+} GuiApplicationApiContext;
 
 #pragma pack(pop)
 
-#endif // #ifndef APPLICATION_PLUGIN_REGISTER_H

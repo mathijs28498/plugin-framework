@@ -1,6 +1,6 @@
 #pragma once
-#ifndef TEST_PLUGIN_2_H
-#define TEST_PLUGIN_2_H
+
+
 
 #include <stdbool.h>
 
@@ -17,4 +17,3 @@ typedef struct TestApi2Context
 
 #pragma pack(pop)
 
-#endif // #ifndef TEST_PLUGIN_2_H

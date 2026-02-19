@@ -1,6 +1,4 @@
 #pragma once
-#ifndef ENVIRONMENT_API_H
-#define ENVIRONMENT_API_H
 
 #include "plugin_manager_common.h"
 
@@ -28,5 +26,3 @@ typedef struct WindowsPlatformContext
 #endif // #if WINDOWS_GUI
 
 #pragma pack(pop)
-
-#endif // #ifndef ENVIRONMENT_API_H

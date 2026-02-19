@@ -1,6 +1,4 @@
 #pragma once
-#ifndef PLUGIN_MANAGER_COMMON_H
-#define PLUGIN_MANAGER_COMMON_H
 
 #define STRINGIZE2(x) #x
 #define STRINGIZE(x) STRINGIZE2(x)
@@ -68,5 +66,3 @@ TODO("Make a macro for addressing any function that uses the context when you gi
      (return_type)0)
     
 #define BITFIELD_SIZE_32(bits) (((bits) + 31) / 32)
-
-#endif // PLUGIN_MANAGER_COMMON_H

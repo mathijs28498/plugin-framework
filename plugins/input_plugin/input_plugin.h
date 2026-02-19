@@ -1,6 +1,6 @@
 #pragma once
-#ifndef INPUT_PLUGIN_H
-#define INPUT_PLUGIN_H
+
+
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -16,4 +16,3 @@ bool input_plugin_key_pressed(struct InputApiContext *context, enum WindowEventK
 bool input_plugin_key_held(struct InputApiContext *context, enum WindowEventKey key);
 bool input_plugin_key_released(struct InputApiContext *context, enum WindowEventKey key);
 
-#endif // #ifndef INPUT_PLUGIN_H

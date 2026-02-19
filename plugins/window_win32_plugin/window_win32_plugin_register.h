@@ -1,6 +1,6 @@
 #pragma once
-#ifndef WINDOW_WIN32_PLUGIN_REGISTER_H
-#define WINDOW_WIN32_PLUGIN_REGISTER_H
+
+
 
 #include <window_api_window_event.h>
 
@@ -22,4 +22,3 @@ typedef struct WindowApiContext {
 
 #pragma pack(pop)
 
-#endif // #ifndef WINDOW_WIN32_PLUGIN_REGISTER_H

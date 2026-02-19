@@ -1,6 +1,4 @@
 #pragma once
-#ifndef PLUGIN_MANAGER_LOADER_H
-#define PLUGIN_MANAGER_LOADER_H
 
 #include <stdint.h>
 #include <stddef.h>
@@ -58,5 +56,3 @@ int32_t initialize_plugins(
     uint32_t *sorted_plugin_modules_indices,
     struct PluginModule *plugin_modules,
     size_t plugin_modules_len);
-
-#endif // #ifndef PLUGIN_MANAGER_LOADER_H

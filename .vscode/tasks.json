@@ -1,0 +1,23 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Generate api and plugin",
+            "type": "shell",
+            "command": "python ${workspaceFolder}/tools/gen_api_plugin.py --api_name ${input:apiName} --plugin_name ${input:pluginName}",
+            "problemMatcher": [],
+        }
+    ],
+    "inputs": [
+        {
+            "id": "apiName",
+            "type": "promptString",
+            "description": "Api name (e.g. renderer_api)"
+        },
+        {
+            "id": "pluginName",
+            "type": "promptString",
+            "description": "Plugin name (e.g. renderer_vulkan_api)"
+        }
+    ]
+}

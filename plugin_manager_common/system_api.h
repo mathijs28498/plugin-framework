@@ -1,6 +1,6 @@
 #pragma once
-#ifndef SYSTEM_API_H
-#define SYSTEM_API_H
+
+
 
 typedef enum {
     LOG_DEBUG = 0,
@@ -49,4 +49,3 @@ typedef struct {
     #define LOG_ERR(logger, module, fmt, ...) ((void)0)
 #endif
 
-#endif // #ifndef SYSTEM_API_H

@@ -1,6 +1,6 @@
 #pragma once
-#ifndef WINDOW_API_WINDOW_EVENT_ENUMS_H
-#define WINDOW_API_WINDOW_EVENT_ENUMS_H
+
+
 
 typedef enum WindowEventKey
 {
@@ -136,4 +136,3 @@ typedef enum WindowEventKey
     WINDOW_EVENT_KEY_MAX 
 } WindowEventKey;
 
-#endif // #ifndef WINDOW_API_WINDOW_EVENT_ENUMS_H

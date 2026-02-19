@@ -1,6 +1,6 @@
 #pragma once
-#ifndef LOGGER_API_H
-#define LOGGER_API_H
+
+
 
 struct LoggerApiContext;
 
@@ -49,4 +49,3 @@ typedef struct LoggerApi
 #define LOG_INF(logger_api, ...) LOG(logger_api, LOG_LEVEL_INFO, __VA_ARGS__)
 #define LOG_DBG(logger_api, ...) LOG(logger_api, LOG_LEVEL_DEBUG, __VA_ARGS__)
 
-#endif // #ifndef LOGGER_API_H

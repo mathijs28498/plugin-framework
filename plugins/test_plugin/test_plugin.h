@@ -1,6 +1,6 @@
 #pragma once
-#ifndef TEST_PLUGIN_H
-#define TEST_PLUGIN_H
+
+
 
 #pragma pack(push, 8)
 
@@ -15,4 +15,3 @@ typedef struct TestApiContext
 
 #pragma pack(pop)
 
-#endif // #ifndef TEST_PLUGIN_H

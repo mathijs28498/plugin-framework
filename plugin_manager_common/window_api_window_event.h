@@ -1,6 +1,6 @@
 #pragma once
-#ifndef WINDOW_API_WINDOW_EVENT_H
-#define WINDOW_API_WINDOW_EVENT_H
+
+
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -32,4 +32,3 @@ typedef struct WindowEvent
 
 #pragma pack(pop)
 
-#endif // #ifndef WINDOW_API_WINDOW_EVENT_H

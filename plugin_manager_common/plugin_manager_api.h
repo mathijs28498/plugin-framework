@@ -1,6 +1,6 @@
 #pragma once
-#ifndef PLUGIN_API_H
-#define PLUGIN_API_H
+
+
 
 #include <plugin_manager_common.h>
 #include <stdint.h>
@@ -78,4 +78,3 @@ int32_t plugin_manager_get(struct PluginManagerRuntimeContext *runtime_context, 
 #define PLUGIN_MANAGER_API_GET(api_name, api_interface) (plugin_manager_get(get_plugin_manager_runtime_context(), api_name, (void **)api_interface))
 #endif // #ifdef PLUGIN_MANAGER_STATIC_LINKING
 
-#endif // #ifndef PLUGIN_API_H

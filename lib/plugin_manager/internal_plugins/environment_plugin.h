@@ -1,6 +1,4 @@
 #pragma once
-#ifndef ENVIRONMENT_PLUGIN_H
-#define ENVIRONMENT_PLUGIN_H
 
 #include <stdint.h>
 
@@ -14,5 +12,3 @@ struct EnvironmentApi;
 
 struct EnvironmentApi *environment_api_get_api(void);
 int32_t environment_plugin_set_args(EnvironmentApiContext *context, int argc, char **argv, void *platform_context);
-
-#endif // #ifndef ENVIRONMENT_PLUGIN_H

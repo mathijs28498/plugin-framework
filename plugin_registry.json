@@ -16,14 +16,19 @@
             "path": "./window_win32_plugin.dll"
         },
         {
-            "name": "application_plugin",
-            "api": "application_api",
-            "path": "./application_plugin.dll"
+            "name": "gui_application_plugin",
+            "api": "gui_application_api",
+            "path": "./gui_application_plugin.dll"
         },
         {
             "name": "input_plugin",
             "api": "input_api",
             "path": "./input_plugin.dll"
+        },
+        {
+            "name": "draw_plugin",
+            "api": "draw_api",
+            "path": "./draw_plugin.dll"
         }
     ]
 }

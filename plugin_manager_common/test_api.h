@@ -1,5 +1,5 @@
 #pragma once
-#ifndef TEST_API_H
+
 
 #include <stdint.h>
 
@@ -16,4 +16,3 @@ typedef struct TestApi
 
 #pragma pack(pop)
 
-#endif // #ifndef TEST_API_H

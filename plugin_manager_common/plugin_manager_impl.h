@@ -1,6 +1,10 @@
 #pragma once
-#ifndef PLUGIN_MANAGER_IMPL_H
-#define PLUGIN_IMPL_H
+
+
+
+#include "plugin_manager_common.h"
+
+TODO("Add optional dependencies")
 
 #define _CONCAT(a, b) a##b
 #define CONCAT(a, b) _CONCAT(a, b)
@@ -38,4 +42,3 @@
         return init_fn(context);                                                         \
     }
 
-#endif // #ifndef PLUGIN_IMPL_H
