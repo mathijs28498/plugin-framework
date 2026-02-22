@@ -14,13 +14,12 @@ PLUGIN_MANAGER_API_MAIN()
 
     ret = PLUGIN_MANAGER_API_ADD("gui_application_api", NULL);
 
-    ret = PLUGIN_MANAGER_API_ADD("logic_api", NULL);
-    ret = PLUGIN_MANAGER_API_ADD("logic_ecs_api", NULL);
+    // ret = PLUGIN_MANAGER_API_ADD("logic_ecs_api", NULL);
     // ret = PLUGIN_MANAGER_LINK_APIS("logic_api", "logic_apis",
     //                                "logic_ecs_api");
 
-    ret = PLUGIN_MANAGER_API_ADD("draw_api", NULL);
-    ret = PLUGIN_MANAGER_API_ADD("draw_2d_api", NULL);
+    // ret = PLUGIN_MANAGER_API_ADD("draw_api", NULL);
+    // ret = PLUGIN_MANAGER_API_ADD("draw_2d_api", NULL);
     // ret = PLUGIN_MANAGER_API_ADD("draw_3d_api", NULL);
     // ret = PLUGIN_MANAGER_API_ADD("draw_raytracer_api", NULL);
     // ret = PLUGIN_MANAGER_API_ADD("draw_ui_api", NULL);

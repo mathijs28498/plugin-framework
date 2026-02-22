@@ -8,6 +8,7 @@ LOGGER_API_REGISTER(gui_application_plugin, LOG_LEVEL_DEBUG)
 #include <input_api.h>
 #include <plugin_manager_common.h>
 #include <draw_api.h>
+#include <logic_api.h>
 
 #include "gui_application_plugin_register.h"
 
@@ -16,9 +17,8 @@ int32_t gui_application_plugin_run(GuiApplicationApiContext *context)
     WindowApi *window_api = context->window_api;
     LoggerApi *logger_api = context->logger_api;
     InputApi *input_api = context->input_api;
-    // DrawApi *draw_api = context->draw_api;
+    DrawApi *draw_api = context->draw_api;
 
-    // LogicApi *logic_api = context->logic_api;
     LOG_INF(logger_api, "Starting main loop");
 
     bool gui_application_running = true;
@@ -60,7 +60,7 @@ int32_t gui_application_plugin_run(GuiApplicationApiContext *context)
         // }
 
           
-        // draw_api->present(draw_api->context);
+        draw_api->present(draw_api->context);
 
     }
 

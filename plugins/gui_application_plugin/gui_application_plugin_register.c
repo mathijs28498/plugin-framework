@@ -9,13 +9,12 @@
 
 #include "gui_application_plugin.h"
 
-// REG
 #define PLUGIN_API_NAME gui_application_api
 
 #define PLUGIN_DEPENDENCIES(X)           \
     X(LoggerApi, logger_api, logger_api) \
     X(WindowApi, window_api, window_api) \
-    X(DrawApi, draw_api, draw_api) \
+    X(DrawApi, draw_api, draw_api)       \
     X(InputApi, input_api, input_api)
 
 PLUGIN_REGISTER_DEPENDENCIES(GuiApplicationApiContext, PLUGIN_DEPENDENCIES);
