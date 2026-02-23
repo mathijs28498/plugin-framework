@@ -6,7 +6,7 @@
 #include <cJSON.h>
 #include <stdio.h>
 
-#include <plugin_manager_common.h>
+#include <plugin_utils.h>
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(plugin_registry, LOG_LEVEL_DEBUG)
 

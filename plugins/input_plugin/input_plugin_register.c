@@ -1,6 +1,6 @@
 #include "input_plugin_register.h"
 
-#include <plugin_manager_impl.h>
+#include <plugin_sdk.h>
 #include <input_interface.h>
 
 #include "input_plugin.h"

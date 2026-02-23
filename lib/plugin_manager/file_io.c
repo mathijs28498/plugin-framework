@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <plugin_manager_common.h>
+#include <plugin_utils.h>
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(file_io, LOG_LEVEL_DEBUG)
 

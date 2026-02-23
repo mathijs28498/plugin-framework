@@ -1,7 +1,7 @@
 #include "gui_application_plugin_register.h"
 
 #include <gui_application_interface.h>
-#include <plugin_manager_impl.h>
+#include <plugin_sdk.h>
 #include <logger_interface.h>
 #include <window_interface.h>
 #include <input_interface.h>

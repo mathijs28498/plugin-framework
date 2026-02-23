@@ -4,7 +4,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <plugin_manager_common.h>
+#include <plugin_utils.h>
 #include <window_interface_window_event_enums.h>
 
 #pragma pack(push, 8)

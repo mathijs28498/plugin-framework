@@ -43,7 +43,7 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
     {
         assert(new_setup_context->internal_plugins_len < sizeof(new_setup_context->internal_plugins) / sizeof(new_setup_context->internal_plugins[0]));
 
-        EnvironmentInterface *environment = environment_interface_get_interface();
+        EnvironmentInterface *environment = environment_get_interface();
         environment_plugin_set_args(environment->context, argc, argv, platform_context);
 
         PluginStatic environment_plugin = {

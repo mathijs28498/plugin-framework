@@ -6,7 +6,7 @@
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(draw_plugin, LOG_LEVEL_DEBUG);
 
-#include <plugin_manager_common.h>
+#include <plugin_utils.h>
 
 #include "draw_plugin_register.h"
 

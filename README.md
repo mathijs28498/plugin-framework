@@ -1,10 +1,10 @@
 ## TODO
 - [ ] Add static loading
     - [ ] Figure out naming collisions
-- [ ] Change api name to interface
+- [x] Change api name to interface
 - [ ] Remove _plugin suffix to plugin names
-- [ ] Change plugin_manager_common.h to plugin_utils.h
-- [ ] Change plugin_manager_impl.h to plugin_sdk.h
+- [x] Change plugin_manager_common.h to plugin_utils.h
+- [x] Change plugin_manager_impl.h to plugin_sdk.h
 - [ ] Add register plugin macro (rather than the define from now)
 - [ ] Remove api/interface prefixes for sdk methods
 - [ ] Add retaining window at end of program exit

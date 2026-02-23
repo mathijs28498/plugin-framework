@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <Windows.h>
 
-#include <plugin_manager_impl.h>
+#include <plugin_sdk.h>
 #include <environment_interface.h>
 #include <window_interface.h>
 #include <logger_interface.h>

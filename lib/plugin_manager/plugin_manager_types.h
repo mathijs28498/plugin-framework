@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <plugin_manager_common.h>
+#include <plugin_utils.h>
 
 TODO("Make this into cmake variables")
 #define PLUGIN_REGISTRY_MAX_PLUGIN_LEN 64

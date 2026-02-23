@@ -2,7 +2,7 @@
 #pragma once
 
 #include <stdint.h>
-#include <plugin_manager_common.h>
+#include <plugin_utils.h>
 
 TODO("Make this a system plugin")
 

@@ -5,7 +5,7 @@
 
 #include <window_interface.h>
 #include <environment_interface.h>
-#include <plugin_manager_common.h>
+#include <plugin_utils.h>
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(window_win32_plugin, LOG_LEVEL_DEBUG);
 

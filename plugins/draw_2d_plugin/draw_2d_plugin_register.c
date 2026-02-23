@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #include <logger_interface.h>
-#include <plugin_manager_impl.h>
+#include <plugin_sdk.h>
 #include <draw_2d_interface.h>
 
 #include "draw_2d_plugin.h"

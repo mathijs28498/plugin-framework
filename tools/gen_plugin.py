@@ -88,7 +88,7 @@ def write_plugin_register_source(interface_name: str, plugin_name: str, path_fil
 #include <stdint.h>
 
 #include <logger_interface.h>
-#include <plugin_manager_impl.h>
+#include <plugin_sdk.h>
 #include <{interface_name}.h>
 
 #include "{plugin_name}.h"

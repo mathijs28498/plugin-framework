@@ -8,7 +8,7 @@
 
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(logger_plugin, LOG_LEVEL_DEBUG);
-#include <plugin_manager_common.h>
+#include <plugin_utils.h>
 
 TODO("Use the known macros for the interface implementation")
 

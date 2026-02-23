@@ -1,6 +1,6 @@
 #pragma once
 
-#include <plugin_manager_common.h>
+#include <plugin_utils.h>
 #include <stdint.h>
 
 TODO("Add static linking functionality")

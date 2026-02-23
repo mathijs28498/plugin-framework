@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#include <plugin_manager_common.h>
+#include <plugin_utils.h>
 
 #include "window_win32_plugin_register.h"
 

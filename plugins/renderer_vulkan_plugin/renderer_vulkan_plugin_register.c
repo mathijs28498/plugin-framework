@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 #include <logger_interface.h>
-#include <plugin_manager_impl.h>
+#include <plugin_sdk.h>
 #include <renderer_interface.h>
 
 #include "renderer_vulkan_plugin.h"
