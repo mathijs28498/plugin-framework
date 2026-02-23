@@ -7,12 +7,12 @@
 #include <stdio.h>
 
 #include <plugin_manager_common.h>
-#include <logger_api.h>
-LOGGER_API_REGISTER(plugin_registry, LOG_LEVEL_DEBUG)
+#include <logger_interface.h>
+LOGGER_INTERFACE_REGISTER(plugin_registry, LOG_LEVEL_DEBUG)
 
 #include "plugin_manager_types.h"
 
-int32_t plugin_registry_deserialize_json(LoggerApi *logger_api, const char *json_str, PluginRegistry *plugin_registry)
+int32_t plugin_registry_deserialize_json(LoggerInterface *logger, const char *json_str, PluginRegistry *plugin_registry)
 {
     memset(plugin_registry, 0, sizeof(PluginRegistry));
 
@@ -45,7 +45,7 @@ int32_t plugin_registry_deserialize_json(LoggerApi *logger_api, const char *json
         const cJSON *json_plugin_name = cJSON_GetObjectItem(json_plugin_definition, "name");
         if (cJSON_IsString(json_plugin_name))
         {
-            LOG_DBG(logger_api, "Found api '%s' in registry", json_plugin_name->valuestring);
+            LOG_DBG(logger, "Found interface '%s' in registry", json_plugin_name->valuestring);
             snprintf(plugin_registry->plugin_definitions[plugin_definitions_len].plugin_name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN,
                      "%s", json_plugin_name->valuestring);
         }
@@ -57,11 +57,11 @@ int32_t plugin_registry_deserialize_json(LoggerApi *logger_api, const char *json
                      "%s", json_plugin_path->valuestring);
         }
 
-        const cJSON *json_plugin_api = cJSON_GetObjectItem(json_plugin_definition, "api");
-        if (cJSON_IsString(json_plugin_api))
+        const cJSON *json_plugin_interface = cJSON_GetObjectItem(json_plugin_definition, "interface");
+        if (cJSON_IsString(json_plugin_interface))
         {
-            snprintf(plugin_registry->plugin_definitions[plugin_definitions_len].api_name, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN,
-                     "%s", json_plugin_api->valuestring);
+            snprintf(plugin_registry->plugin_definitions[plugin_definitions_len].interface_name, PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN,
+                     "%s", json_plugin_interface->valuestring);
         }
 
         plugin_definitions_len++;

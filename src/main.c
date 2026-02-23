@@ -1,67 +1,67 @@
-#include <plugin_manager_api.h>
-#include <logger_api.h>
-LOGGER_API_REGISTER(main, LOG_LEVEL_DEBUG)
-#include <environment_api.h>
-#include <window_api.h>
-#include <gui_application_api.h>
+#include <plugin_framework.h>
+#include <logger_interface.h>
+LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
+#include <environment_interface.h>
+#include <window_interface.h>
+#include <gui_application_interface.h>
 
 #include <stdio.h>
 #include <stdbool.h>
 
-PLUGIN_MANAGER_API_MAIN()
+PLUGIN_FRAMEWORK_MAIN()
 {
     int32_t ret;
 
-    ret = PLUGIN_MANAGER_API_ADD("gui_application_api", NULL);
+    ret = PLUGIN_FRAMEWORK_ADD("gui_application", NULL);
 
-    // ret = PLUGIN_MANAGER_API_ADD("logic_ecs_api", NULL);
-    // ret = PLUGIN_MANAGER_LINK_APIS("logic_api", "logic_apis",
-    //                                "logic_ecs_api");
+    // ret = PLUGIN_FRAMEWORK_ADD("logic_ecs", NULL);
+    // ret = PLUGIN_MANAGER_LINK_INTERFACES("logic", "logic_interfaces",
+    //                                "logic_ecs");
 
-    // ret = PLUGIN_MANAGER_API_ADD("draw_api", NULL);
-    // ret = PLUGIN_MANAGER_API_ADD("draw_2d_api", NULL);
-    // ret = PLUGIN_MANAGER_API_ADD("draw_3d_api", NULL);
-    // ret = PLUGIN_MANAGER_API_ADD("draw_raytracer_api", NULL);
-    // ret = PLUGIN_MANAGER_API_ADD("draw_ui_api", NULL);
+    // ret = PLUGIN_FRAMEWORK_ADD("draw", NULL);
+    // ret = PLUGIN_FRAMEWORK_ADD("draw_2d", NULL);
+    // ret = PLUGIN_FRAMEWORK_ADD("draw_3d", NULL);
+    // ret = PLUGIN_FRAMEWORK_ADD("draw_raytracer", NULL);
+    // ret = PLUGIN_FRAMEWORK_ADD("draw_ui", NULL);
 
-    // ret = PLUGIN_MANAGER_LINK_APIS("draw_api", "draw_apis",
-    //                                "draw_2d_api", "draw_3d_api", "draw_ui_api");
+    // ret = PLUGIN_MANAGER_LINK_INTERFACES("draw", "draw_interfaces",
+    //                                "draw_2d", "draw_3d", "draw_ui");
 
-    ret = PLUGIN_MANAGER_API_ADD("window_api", NULL);
-    ret = PLUGIN_MANAGER_API_LOAD();
+    ret = PLUGIN_FRAMEWORK_ADD("window", NULL);
+    ret = PLUGIN_FRAMEWORK_LOAD();
     if (ret < 0)
     {
         return ret;
     }
 
-    WindowApi *window_api;
-    GuiApplicationApi *gui_application_api;
-    // Draw2dApi *draw_2d_api;
+    WindowInterface *window;
+    GuiApplicationInterface *gui_application;
+    // Draw2dInterface *draw_2d;
 
-    ret = PLUGIN_MANAGER_API_GET("window_api", &window_api);
+    ret = PLUGIN_FRAMEWORK_GET("window", &window);
     if (ret < 0)
     {
         return ret;
     }
 
-    PLUGIN_MANAGER_API_GET("gui_application_api", &gui_application_api);
+    PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
     if (ret < 0)
     {
         return ret;
     }
 
-    // PLUGIN_MANAGER_API_GET("draw_2d_api", &draw_2d_api);
+    // PLUGIN_FRAMEWORK_GET("draw_2d", &draw_2d);
     // if (ret < 0)
     // {
     //     return ret;
     // }
 
-    WindowApiCreateWindowOptions create_window_options = {
+    WindowInterfaceCreateWindowOptions create_window_options = {
         .window_name = "My app",
     };
-    ret = window_api->create_window(window_api->context, &create_window_options);
+    ret = window->create_window(window->context, &create_window_options);
 
-    ret = gui_application_api->run(gui_application_api->context);
+    ret = gui_application->run(gui_application->context);
 
     return 0;
 }

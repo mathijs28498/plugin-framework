@@ -5,16 +5,16 @@
 #include <stdlib.h>
 
 #include <plugin_manager_common.h>
-#include <logger_api.h>
-LOGGER_API_REGISTER(file_io, LOG_LEVEL_DEBUG)
+#include <logger_interface.h>
+LOGGER_INTERFACE_REGISTER(file_io, LOG_LEVEL_DEBUG)
 
 TODO("Replace malloc")
-int32_t file_io_read(LoggerApi *logger_api, const char *path, char **buffer_out)
+int32_t file_io_read(LoggerInterface *logger, const char *path, char **buffer_out)
 {
     FILE *system_json_file;
     int ret;
     ret = fopen_s(&system_json_file, path, "rb");
-    LOG_DBG(logger_api, "After fopen_s '%d', '%p'", ret, system_json_file);
+    LOG_DBG(logger, "After fopen_s '%d', '%p'", ret, system_json_file);
 
     TODO("Do this without malloc (get a define with the size of the file)")
     fseek(system_json_file, 0, SEEK_END);

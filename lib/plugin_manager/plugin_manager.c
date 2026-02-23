@@ -9,13 +9,13 @@
 #include <Windows.h>
 #include <assert.h>
 
-#include <plugin_manager_api.h>
+#include <plugin_framework.h>
 
-#include <environment_api.h>
+#include <environment_interface.h>
 #include <environment_plugin.h>
-#include <logger_api.h>
+#include <logger_interface.h>
 #include <logger_plugin.h>
-LOGGER_API_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
+LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 
 #include "file_io.h"
 #include "plugin_registry.h"
@@ -43,14 +43,14 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
     {
         assert(new_setup_context->internal_plugins_len < sizeof(new_setup_context->internal_plugins) / sizeof(new_setup_context->internal_plugins[0]));
 
-        EnvironmentApi *environment_api = environment_api_get_api();
-        environment_plugin_set_args(environment_api->context, argc, argv, platform_context);
+        EnvironmentInterface *environment = environment_interface_get_interface();
+        environment_plugin_set_args(environment->context, argc, argv, platform_context);
 
         PluginStatic environment_plugin = {
-            .api_name = "environment_api",
+            .interface_name = "environment",
             .plugin_name = "internal_environment_plugin",
             .dependencies_len = 0,
-            .api = (PluginManagerBaseApi *)environment_api,
+            .iface = (PluginManagerBaseInterface *)environment,
         };
 
         memcpy(&new_setup_context->internal_plugins[new_setup_context->internal_plugins_len],
@@ -62,14 +62,14 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
     {
         assert(new_setup_context->internal_plugins_len < sizeof(new_setup_context->internal_plugins) / sizeof(new_setup_context->internal_plugins[0]));
 
-        LoggerApi *logger_api = logger_api_get_api();
-        new_setup_context->logger_api = logger_api;
+        LoggerInterface *logger = logger_interface_get_interface();
+        new_setup_context->logger = logger;
 
         PluginStatic logger_plugin = {
-            .api_name = "logger_api",
+            .interface_name = "logger",
             .plugin_name = "internal_logger_plugin",
             .dependencies_len = 0,
-            .api = (PluginManagerBaseApi *)logger_api,
+            .iface= (PluginManagerBaseInterface *)logger,
         };
 
         memcpy(&new_setup_context->internal_plugins[new_setup_context->internal_plugins_len],
@@ -81,11 +81,11 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
     return 0;
 }
 
-int32_t __plugin_manager_add(PluginManagerSetupContext *setup_context, const char *api_name, const char *plugin_name)
+int32_t __plugin_manager_add(PluginManagerSetupContext *setup_context, const char *interface_name, const char *plugin_name)
 {
     return plugin_manager_add_internal(
-        setup_context->logger_api,
-        api_name,
+        setup_context->logger,
+        interface_name,
         plugin_name,
         true,
         setup_context->requested_plugins,
@@ -93,28 +93,28 @@ int32_t __plugin_manager_add(PluginManagerSetupContext *setup_context, const cha
 };
 
 int32_t plugin_manager_add_internal(
-    const LoggerApi *logger_api,
-    const char *api_name,
+    const LoggerInterface *logger,
+    const char *interface_name,
     const char *plugin_name,
     bool is_explicit,
     RequestedPlugin *requested_plugins,
     size_t *requested_plugins_len)
 {
-    if (api_name == NULL)
+    if (interface_name == NULL)
     {
-        LOG_ERR(logger_api, "Api name is NULL");
+        LOG_ERR(logger, "Interface name is NULL");
         return -1;
     }
 
     if (*requested_plugins_len >= PLUGIN_MANAGER_MAX_PLUGINS_LEN)
     {
-        LOG_ERR(logger_api, "Cannot add plugin as max plugin_definitions is reached. Max plugin count '%d'", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
+        LOG_ERR(logger, "Cannot add plugin as max plugin_definitions is reached. Max plugin count '%d'", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
         return -1;
     }
 
     struct RequestedPlugin *requested_plugin = &requested_plugins[*requested_plugins_len];
 
-    snprintf(requested_plugin->api_name, PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN, "%s", api_name);
+    snprintf(requested_plugin->interface_name, PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN, "%s", interface_name);
 
     if (plugin_name == NULL)
     {
@@ -137,17 +137,17 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
     int ret;
     char *buffer;
     PluginRegistry plugin_registry;
-    LoggerApi *logger_api = setup_context->logger_api;
-    runtime_context->logger_api = logger_api;
+    LoggerInterface *logger = setup_context->logger;
+    runtime_context->logger = logger;
 
     TODO("Make buffer not use malloc")
-    ret = file_io_read(logger_api, "../plugin_registry.json", &buffer);
-    ret = plugin_registry_deserialize_json(logger_api, buffer, &plugin_registry);
+    ret = file_io_read(logger, "../plugin_registry.json", &buffer);
+    ret = plugin_registry_deserialize_json(logger, buffer, &plugin_registry);
     free(buffer);
 
     if (ret < 0)
     {
-        LOG_ERR(logger_api, "unable to parse plugin config: %d", ret);
+        LOG_ERR(logger, "unable to parse plugin config: %d", ret);
         return ret;
     }
 
@@ -158,12 +158,12 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
         setup_context->requested_plugins_len > 0,
         PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH,
         {
-            LOG_ERR(logger_api, "Plugin manager dependency solver exceeded max interations");
+            LOG_ERR(logger, "Plugin manager dependency solver exceeded max interations");
             return -1;
         })
     {
         ret = resolve_requested_plugins_registry(
-            logger_api,
+            logger,
             setup_context->requested_plugins,
             setup_context->requested_plugins_len,
             &plugin_registry,
@@ -172,44 +172,44 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
 
         if (ret < 0)
         {
-            LOG_ERR(logger_api, "Error in resolve_requested_plugins_registry: %d", ret);
+            LOG_ERR(logger, "Error in resolve_requested_plugins_registry: %d", ret);
             return ret;
         }
 
         ret = load_plugin_modules(
-            logger_api,
+            logger,
             plugin_modules,
             plugin_modules_len,
-            runtime_context->api_instances,
-            &runtime_context->api_instances_len);
+            runtime_context->interface_instances,
+            &runtime_context->interface_instances_len);
 
         if (ret < 0)
         {
-            LOG_ERR(logger_api, "Error in load_plugin_modules: %d", ret);
+            LOG_ERR(logger, "Error in load_plugin_modules: %d", ret);
             return ret;
         }
 
         ret = resolve_requested_plugins_internal(
-            logger_api,
+            logger,
             setup_context->requested_plugins,
             setup_context->requested_plugins_len,
             setup_context->internal_plugins,
             setup_context->internal_plugins_len,
-            runtime_context->api_instances,
-            &runtime_context->api_instances_len);
+            runtime_context->interface_instances,
+            &runtime_context->interface_instances_len);
 
         if (ret < 0)
         {
-            LOG_ERR(logger_api, "Error in resolve_requested_plugins_internal: %d", ret);
+            LOG_ERR(logger, "Error in resolve_requested_plugins_internal: %d", ret);
             return ret;
         }
 
         setup_context->requested_plugins_len = 0;
 
         ret = resolve_plugin_module_dependencies(
-            logger_api,
-            runtime_context->api_instances,
-            runtime_context->api_instances_len,
+            logger,
+            runtime_context->interface_instances,
+            runtime_context->interface_instances_len,
             plugin_modules,
             plugin_modules_len,
             setup_context->requested_plugins,
@@ -217,23 +217,23 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
 
         if (ret < 0)
         {
-            LOG_ERR(logger_api, "Error in resolve_plugin_module_dependencies: %d", ret);
+            LOG_ERR(logger, "Error in resolve_plugin_module_dependencies: %d", ret);
             return ret;
         }
     }
 
     uint32_t sorted_plugin_modules_indices[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
-    ret = calculate_plugin_module_initialization_order(logger_api, plugin_modules, plugin_modules_len, sorted_plugin_modules_indices);
+    ret = calculate_plugin_module_initialization_order(logger, plugin_modules, plugin_modules_len, sorted_plugin_modules_indices);
     if (ret < 0)
     {
-        LOG_ERR(logger_api, "Error in calculate_plugin_module_initialization_order: %d", ret);
+        LOG_ERR(logger, "Error in calculate_plugin_module_initialization_order: %d", ret);
         return ret;
     }
 
-    ret = initialize_plugins(logger_api, sorted_plugin_modules_indices, plugin_modules, plugin_modules_len);
+    ret = initialize_plugins(logger, sorted_plugin_modules_indices, plugin_modules, plugin_modules_len);
     if (ret < 0)
     {
-        LOG_ERR(logger_api, "Error in initialize_plugins: %d", ret);
+        LOG_ERR(logger, "Error in initialize_plugins: %d", ret);
         return ret;
     }
 
@@ -242,32 +242,32 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
     return 0;
 }
 
-int32_t __plugin_manager_get(PluginManagerRuntimeContext *runtime_context, const char *api_name, void **api_interface)
+int32_t __plugin_manager_get(PluginManagerRuntimeContext *runtime_context, const char *interface_name, void **iface)
 {
-    for (size_t i = 0; i < runtime_context->api_instances_len; i++)
+    for (size_t i = 0; i < runtime_context->interface_instances_len; i++)
     {
-        ApiInstance *api_instance = &runtime_context->api_instances[i];
-        if (strcmp(api_name, api_instance->api_name) == 0 && api_instance->is_explicit)
+        InterfaceInstance *interface_instance = &runtime_context->interface_instances[i];
+        if (strcmp(interface_name, interface_instance->interface_name) == 0 && interface_instance->is_explicit)
         {
-            *api_interface = api_instance->api;
+            *iface = interface_instance->iface;
             return 0;
         }
     }
 
-    *api_interface = NULL;
-    LOG_ERR(runtime_context->logger_api, "Failed to get api '%s'", api_name);
+    *iface = NULL;
+    LOG_ERR(runtime_context->logger, "Failed to get interface '%s'", interface_name);
 
     return -1;
 }
 
 int32_t __plugin_manager_shutdown(PluginManagerRuntimeContext *runtime_context)
 {
-    if (runtime_context->logger_api)
+    if (runtime_context->logger)
     {
-        runtime_context->logger_api->on_exit(runtime_context->logger_api->context);
+        runtime_context->logger->on_exit(runtime_context->logger->context);
     }
 
-    TODO("Do this in the right spot");
+    TODO("Do this in the right spot")
     CoUninitialize();
     return 0;
 }

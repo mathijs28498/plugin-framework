@@ -1,17 +1,17 @@
 #include "input_plugin_register.h"
 
 #include <plugin_manager_impl.h>
-#include <input_api.h>
+#include <input_interface.h>
 
 #include "input_plugin.h"
 
-#define PLUGIN_API_NAME input_api
+#define PLUGIN_INTERFACE_NAME input
 
-InputApi *get_api(void)
+InputInterface *get_interface(void)
 {
-    static InputApiContext context = {0};
+    static InputInterfaceContext context = {0};
 
-    static InputApi api = {
+    static InputInterface iface = {
         .context = &context,
         .prepare_processing = input_plugin_prepare_processing,
         .process_window_event = input_plugin_process_window_event,
@@ -20,7 +20,7 @@ InputApi *get_api(void)
         .key_released = input_plugin_key_released,
     };
 
-    return &api;
+    return &iface;
 }
 
-PLUGIN_REGISTER_API(get_api, InputApi)
+PLUGIN_REGISTER_INTERFACE(get_interface, InputInterface)

@@ -36,82 +36,82 @@ def create_dir(path_dir: Path):
     path_dir.mkdir()
 
 
-def create_api(api_name: str, path_api_dir: Path):
-    path_api_header = path_api_dir / f"{api_name}.h"
-    if path_api_header.exists():
+def create_interface(interface_name: str, path_interface_dir: Path):
+    path_interface_header = path_interface_dir / f"{interface_name}.h"
+    if path_interface_header.exists():
         print(
-            f"{api_name} already has a header, skipping header creation: {str(path_api_header)}"
+            f"{interface_name} already has a header, skipping header creation: {str(path_interface_header)}"
         )
         return
 
     create_file(
-        path_api_header,
+        path_interface_header,
         f"""#pragma once
 
 #pragma pack(push, 8)
 
-struct {snake_to_camel_case(api_name)}Context;
+struct {snake_to_camel_case(interface_name)}Context;
 
-typedef struct {snake_to_camel_case(api_name)}
+typedef struct {snake_to_camel_case(interface_name)}
 {{
-    struct {snake_to_camel_case(api_name)}Context *context;
-}} {snake_to_camel_case(api_name)};
+    struct {snake_to_camel_case(interface_name)}Context *context;
+}} {snake_to_camel_case(interface_name)};
 
 #pragma pack(pop)
 """,
     )
 
 
-def write_plugin_register_header(api_name: str, plugin_name: str, path_file):
+def write_plugin_register_header(interface_name: str, path_file):
     create_file(
         path_file,
         f"""#pragma once
 
 #pragma pack(push, 8)
 
-struct LoggerApi;
+struct LoggerInterface;
 
-typedef struct {snake_to_camel_case(api_name)}Context
+typedef struct {snake_to_camel_case(interface_name)}Context
 {{
-    struct LoggerApi *logger_api;
-}} {snake_to_camel_case(api_name)}Context;
+    struct LoggerInterface *logger;
+}} {snake_to_camel_case(interface_name)}Context;
 
 #pragma pack(pop)""",
     )
 
 
-def write_plugin_register_source(api_name: str, plugin_name: str, path_file):
+def write_plugin_register_source(interface_name: str, plugin_name: str, path_file):
     create_file(
         path_file,
         f"""#include "{plugin_name}_register.h"
 
 #include <stdint.h>
 
-#include <logger_api.h>
+#include <logger_interface.h>
 #include <plugin_manager_impl.h>
-#include <{api_name}.h>
+#include <{interface_name}.h>
 
 #include "{plugin_name}.h"
 
-#define PLUGIN_API_NAME {api_name}
+#define PLUGIN_INTERFACE_NAME {interface_name}
 
 #define REGISTER_DEPENDENCIES(X) \\
-    X(LoggerApi, logger_api, logger_api)
+    X(LoggerInterface, logger, logger)
 
-PLUGIN_REGISTER_DEPENDENCIES({snake_to_camel_case(api_name)}Context, REGISTER_DEPENDENCIES);
+PLUGIN_REGISTER_DEPENDENCIES({snake_to_camel_case(interface_name)}Context, REGISTER_DEPENDENCIES);
 
-{snake_to_camel_case(api_name)} *get_api()
+{snake_to_camel_case(interface_name)} *get_interface()
 {{
-    static {snake_to_camel_case(api_name)}Context context = {{0}};
+    static {snake_to_camel_case(interface_name)}Context context = {{0}};
 
-    static {snake_to_camel_case(api_name)} api = {{
+    static {snake_to_camel_case(interface_name)} iface = {{
         .context = &context,
     }};
 
-    return &api;
+    return &interface;
 }}
 
-PLUGIN_REGISTER_API(get_api, {snake_to_camel_case(api_name)});""",
+PLUGIN_REGISTER_INTERFACE(get_interface, {snake_to_camel_case(interface_name)});""",
     )
 
 
@@ -128,8 +128,8 @@ def write_plugin_source(plugin_name: str, path_file):
         path_file,
         f"""#include "{plugin_name}.h"
 
-#include <logger_api.h>
-LOGGER_API_REGISTER({plugin_name}, LOG_LEVEL_DEBUG);
+#include <logger_interface.h>
+LOGGER_INTERFACE_REGISTER({plugin_name}, LOG_LEVEL_DEBUG);
 
 #include "{plugin_name}_register.h" """,
     )
@@ -156,7 +156,7 @@ target_link_libraries({plugin_name}
     )
 
 
-def create_plugin(api_name: str, plugin_name: str, path_plugins_dir: Path):
+def create_plugin(interface_name: str, plugin_name: str, path_plugins_dir: Path):
     path_plugin_dir = path_plugins_dir / f"{plugin_name}"
 
     create_dir(path_plugin_dir)
@@ -166,10 +166,10 @@ def create_plugin(api_name: str, plugin_name: str, path_plugins_dir: Path):
     append_file(path_plugins_cmakelists, f"\nadd_subdirectory({plugin_name})")
 
     write_plugin_register_header(
-        api_name, plugin_name, path_plugin_dir / f"{plugin_name}_register.h"
+        plugin_name, path_plugin_dir / f"{plugin_name}_register.h"
     )
     write_plugin_register_source(
-        api_name, plugin_name, path_plugin_dir / f"{plugin_name}_register.c"
+        interface_name, plugin_name, path_plugin_dir / f"{plugin_name}_register.c"
     )
     write_plugin_header(plugin_name, path_plugin_dir / f"{plugin_name}.h")
     write_plugin_source(plugin_name, path_plugin_dir / f"{plugin_name}.c")
@@ -180,26 +180,30 @@ def parse_arguments() -> tuple[str, str]:
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--api_name", required=True, help="Api name (e.g. renderer_api)"
+        "--interface_name",
+        required=True,
+        help="Interface name (e.g. renderer_interface)",
     )
     parser.add_argument(
-        "--plugin_name", required=True, help="Plugin name (e.g. renderer_vulkan_api)"
+        "--plugin_name", required=True, help="Plugin name (e.g. renderer_vulkan)"
     )
 
     args = parser.parse_args()
 
-    return args.api_name, args.plugin_name
+    return args.interface_name, args.plugin_name
 
 
 def main():
-    api_name, plugin_name = parse_arguments()
+    interface_name, plugin_name = parse_arguments()
 
     # Assuming this file is placed at root/tools
     path_root_dir = Path(__file__).parent.resolve().parent
 
-    path_api_dir = path_root_dir / "plugin_manager_common"
-    if not path_api_dir.exists():
-        raise FileNotFoundError(f"API directory not found at: {str(path_api_dir)}")
+    path_interface_dir = path_root_dir / "plugin_manager_common"
+    if not path_interface_dir.exists():
+        raise FileNotFoundError(
+            f"Interface directory not found at: {str(path_interface_dir)}"
+        )
 
     path_plugins_dir = path_root_dir / "plugins"
     if not path_plugins_dir.exists():
@@ -224,8 +228,8 @@ def main():
             f"Plugin directory already exists: {str(path_plugin_dir)}"
         )
 
-    create_api(api_name, path_api_dir)
-    create_plugin(api_name, plugin_name, path_plugins_dir)
+    create_interface(interface_name, path_interface_dir)
+    create_plugin(interface_name, plugin_name, path_plugins_dir)
 
 
 if __name__ == "__main__":

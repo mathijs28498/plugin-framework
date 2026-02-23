@@ -4,7 +4,7 @@
 
 #include <stdint.h>
 
-struct GuiApplicationApiContext;
+struct GuiApplicationInterfaceContext;
 
-int32_t gui_application_plugin_run(struct GuiApplicationApiContext *context);
+int32_t gui_application_plugin_run(struct GuiApplicationInterfaceContext *context);
 

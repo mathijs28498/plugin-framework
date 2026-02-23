@@ -2,30 +2,30 @@
 
 #include <stdint.h>
 
-#include <logger_api.h>
+#include <logger_interface.h>
 #include <plugin_manager_impl.h>
-#include <draw_api.h>
+#include <draw_interface.h>
 
 #include "draw_plugin.h"
 
-#define PLUGIN_API_NAME draw_api
+#define PLUGIN_INTERFACE_NAME draw
 
 #define REGISTER_DEPENDENCIES(X) \
-    X(LoggerApi, logger_api, logger_api)
+    X(LoggerInterface, logger, logger)
 
-PLUGIN_REGISTER_DEPENDENCIES(DrawApiContext, REGISTER_DEPENDENCIES);
+PLUGIN_REGISTER_DEPENDENCIES(DrawInterfaceContext, REGISTER_DEPENDENCIES);
 
-DrawApi *get_api()
+DrawInterface *get_interface()
 {
-    static DrawApiContext context = {0};
+    static DrawInterfaceContext context = {0};
 
-    static DrawApi api = {
+    static DrawInterface iface = {
         .context = &context,
 
         .present = draw_plugin_present,
     };
 
-    return &api;
+    return &iface;
 }
 
-PLUGIN_REGISTER_API(get_api, DrawApi);
+PLUGIN_REGISTER_INTERFACE(get_interface, DrawInterface);

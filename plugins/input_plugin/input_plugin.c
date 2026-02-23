@@ -1,6 +1,6 @@
 #include "input_plugin.h"
 
-#include <window_api_window_event.h>
+#include <window_interface_window_event.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -14,7 +14,7 @@ void get_key_state_bitfield_indices(WindowEventKey key, size_t *key_state_index,
     *key_state_bit_index = key % 32;
 }
 
-void get_key_state(InputApiContext *context, WindowEventKey key, bool *previous, bool *current)
+void get_key_state(InputInterfaceContext *context, WindowEventKey key, bool *previous, bool *current)
 {
     size_t key_state_index;
     size_t key_state_bit_index;
@@ -23,13 +23,13 @@ void get_key_state(InputApiContext *context, WindowEventKey key, bool *previous,
     *current = (context->key_state_current[key_state_index] & (1 << key_state_bit_index)) != 0;
 }
 
-int32_t input_plugin_prepare_processing(InputApiContext *context)
+int32_t input_plugin_prepare_processing(InputInterfaceContext *context)
 {
     memcpy(context->key_state_previous, context->key_state_current, ARRAY_SIZE(context->key_state_previous));
     return 0;
 }
 
-int32_t input_plugin_process_window_event(InputApiContext *context, WindowEvent *window_event)
+int32_t input_plugin_process_window_event(InputInterfaceContext *context, WindowEvent *window_event)
 {
     switch (window_event->type)
     {
@@ -54,21 +54,21 @@ int32_t input_plugin_process_window_event(InputApiContext *context, WindowEvent 
     return 0;
 }
 
-bool input_plugin_key_pressed(InputApiContext *context, WindowEventKey key)
+bool input_plugin_key_pressed(InputInterfaceContext *context, WindowEventKey key)
 {
     bool previous, current;
     get_key_state(context, key, &previous, &current);
     return !previous && current;
 }
 
-bool input_plugin_key_held(InputApiContext *context, WindowEventKey key)
+bool input_plugin_key_held(InputInterfaceContext *context, WindowEventKey key)
 {
     bool previous, current;
     get_key_state(context, key, &previous, &current);
     return current;
 }
 
-bool input_plugin_key_released(InputApiContext *context, WindowEventKey key)
+bool input_plugin_key_released(InputInterfaceContext *context, WindowEventKey key)
 {
     bool previous, current;
     get_key_state(context, key, &previous, &current);

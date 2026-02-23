@@ -5,15 +5,15 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <plugin_manager_common.h>
-#include <window_api_window_event_enums.h>
+#include <window_interface_window_event_enums.h>
 
 #pragma pack(push, 8)
 
-typedef struct InputApiContext
+typedef struct InputInterfaceContext
 {
     uint32_t key_state_previous[BITFIELD_SIZE_32(WINDOW_EVENT_KEY_MAX)];
     uint32_t key_state_current[BITFIELD_SIZE_32(WINDOW_EVENT_KEY_MAX)];
-} InputApiContext;
+} InputInterfaceContext;
 
 #pragma pack(pop)
 

@@ -1,33 +1,23 @@
 {
     "plugin_definitions": [
         {
-            "name": "test_plugin",
-            "api": "test_api",
-            "path": "./test_plugin.dll"
-        },
-        {
-            "name": "test_plugin_2",
-            "api": "test_api2",
-            "path": "./test_plugin_2.dll"
-        },
-        {
             "name": "window_win32_plugin",
-            "api": "window_api",
+            "interface": "window",
             "path": "./window_win32_plugin.dll"
         },
         {
             "name": "gui_application_plugin",
-            "api": "gui_application_api",
+            "interface": "gui_application",
             "path": "./gui_application_plugin.dll"
         },
         {
             "name": "input_plugin",
-            "api": "input_api",
+            "interface": "input",
             "path": "./input_plugin.dll"
         },
         {
             "name": "draw_plugin",
-            "api": "draw_api",
+            "interface": "draw",
             "path": "./draw_plugin.dll"
         }
     ]

@@ -4,12 +4,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-struct LoggerApi;
+struct LoggerInterface;
 struct RequestedPlugin;
 
 int32_t  plugin_manager_add_internal(
-    const struct LoggerApi *logger_api,
-    const char *api_name,
+    const struct LoggerInterface *logger,
+    const char *interface_name,
     const char *plugin_name,
     bool is_explicit,
     struct RequestedPlugin *requested_plugins,

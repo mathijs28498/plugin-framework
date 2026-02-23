@@ -3,11 +3,11 @@
 #include <Windows.h>
 #include <assert.h>
 
-#include <window_api.h>
-#include <environment_api.h>
+#include <window_interface.h>
+#include <environment_interface.h>
 #include <plugin_manager_common.h>
-#include <logger_api.h>
-LOGGER_API_REGISTER(window_win32_plugin, LOG_LEVEL_DEBUG);
+#include <logger_interface.h>
+LOGGER_INTERFACE_REGISTER(window_win32_plugin, LOG_LEVEL_DEBUG);
 
 #include "window_win32_plugin_register.h"
 #include "window_win32_plugin_window_events.h"
@@ -15,11 +15,10 @@ LOGGER_API_REGISTER(window_win32_plugin, LOG_LEVEL_DEBUG);
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-int32_t window_win32_plugin_create_window(WindowApiContext *context, WindowApiCreateWindowOptions *options)
+int32_t window_win32_plugin_create_window(WindowInterfaceContext *context, WindowInterfaceCreateWindowOptions *options)
 {
-    (void)options;
     WindowsPlatformContext *windows_context;
-    ENVIRONMENT_API_GET_WINDOWS_CONTEXT(context->environment_api, &windows_context);
+    ENVIRONMENT_INTERFACE_GET_WINDOWS_CONTEXT(context->environment, &windows_context);
 
     const wchar_t CLASS_NAME[] = L"MainWindowClass";
 
@@ -57,14 +56,14 @@ int32_t window_win32_plugin_create_window(WindowApiContext *context, WindowApiCr
     return 0;
 }
 
-int32_t window_win32_plugin_close_window(struct WindowApiContext *context)
+int32_t window_win32_plugin_close_window(struct WindowInterfaceContext *context)
 {
     (void)context;
     PostQuitMessage(0);
     return 0;
 }
 
-int32_t window_win32_plugin_poll_os_events(WindowApiContext *context)
+int32_t window_win32_plugin_poll_os_events(WindowInterfaceContext *context)
 {
     (void)context;
     MSG msg;
@@ -84,25 +83,25 @@ int32_t window_win32_plugin_poll_os_events(WindowApiContext *context)
     return 0;
 }
 
-int32_t window_win32_plugin_wait_for_os_events(WindowApiContext *context)
+int32_t window_win32_plugin_wait_for_os_events(WindowInterfaceContext *context)
 {
     return NOT_IMPLEMENTED(int32_t, context);
 }
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    WindowApiContext *context = NULL;
+    WindowInterfaceContext *context = NULL;
 
     if (uMsg == WM_NCCREATE)
     {
         LPCREATESTRUCT pCreate = (LPCREATESTRUCT)lParam;
-        context = (WindowApiContext *)pCreate->lpCreateParams;
+        context = (WindowInterfaceContext *)pCreate->lpCreateParams;
 
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)context);
     }
     else
     {
-        context = (WindowApiContext *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+        context = (WindowInterfaceContext *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     }
 
     if (context == NULL)
@@ -117,7 +116,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         return 0;
 
     case WM_SIZE:
-        TODO("Recreate shit!");
+        TODO("Recreate shit!")
         return 0;
 
     case WM_KEYDOWN:

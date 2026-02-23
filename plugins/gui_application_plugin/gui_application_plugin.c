@@ -2,32 +2,32 @@
 
 #include <stdint.h>
 
-#include <window_api.h>
-#include <logger_api.h>
-LOGGER_API_REGISTER(gui_application_plugin, LOG_LEVEL_DEBUG)
-#include <input_api.h>
+#include <window_interface.h>
+#include <logger_interface.h>
+LOGGER_INTERFACE_REGISTER(gui_application_plugin, LOG_LEVEL_DEBUG)
+#include <input_interface.h>
 #include <plugin_manager_common.h>
-#include <draw_api.h>
+#include <draw_interface.h>
 
 #include "gui_application_plugin_register.h"
 
-int32_t gui_application_plugin_run(GuiApplicationApiContext *context)
+int32_t gui_application_plugin_run(GuiApplicationInterfaceContext *context)
 {
-    WindowApi *window_api = context->window_api;
-    LoggerApi *logger_api = context->logger_api;
-    InputApi *input_api = context->input_api;
-    DrawApi *draw_api = context->draw_api;
+    WindowInterface *window= context->window;
+    LoggerInterface *logger= context->logger;
+    InputInterface *input= context->input;
+    DrawInterface *draw= context->draw;
 
-    LOG_INF(logger_api, "Starting main loop");
+    LOG_INF(logger, "Starting main loop");
 
     bool gui_application_running = true;
     while (gui_application_running)
     {
-        window_api->poll_os_events(window_api->context);
+        window->poll_os_events(window->context);
         WindowEvent window_event;
 
-        input_api->prepare_processing(input_api->context);
-        while (window_api->pop_window_event(window_api->context, &window_event))
+        input->prepare_processing(input->context);
+        while (window->pop_window_event(window->context, &window_event))
         {
             switch (window_event.type)
             {
@@ -38,7 +38,7 @@ int32_t gui_application_plugin_run(GuiApplicationApiContext *context)
             case WINDOW_EVENT_TYPE_MOUSE_MOVE:
             case WINDOW_EVENT_TYPE_MOUSE_PRESS:
             case WINDOW_EVENT_TYPE_MOUSE_SCROLL:
-                input_api->process_window_event(input_api->context, &window_event);
+                input->process_window_event(input->context, &window_event);
                 break;
             }
         }
@@ -47,19 +47,19 @@ int32_t gui_application_plugin_run(GuiApplicationApiContext *context)
             break;
         }
 
-        if (KEY_PRESSED(input_api, WINDOW_EVENT_KEY_ESCAPE))
+        if (KEY_PRESSED(input, WINDOW_EVENT_KEY_ESCAPE))
         {
-            window_api->close_window(window_api->context);
+            window->close_window(window->context);
         }
 
-        // logic_api->update(logic_api->context);
+        // logic->update(logic->context);
         // if (gui_applicaiton_do_fixed_update(context))
         // {
-        //     logic_api->fixed_update(logic_api->context);
+        //     logic->fixed_update(logic->context);
         // }
 
           
-        draw_api->present(draw_api->context);
+        draw->present(draw->context);
 
     }
 

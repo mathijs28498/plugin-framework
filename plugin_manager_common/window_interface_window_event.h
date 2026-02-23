@@ -4,7 +4,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "window_api_window_event_enums.h"
+#include "window_interface_window_event_enums.h"
 
 #pragma pack(push, 8)
 

@@ -4,18 +4,18 @@
 
 #pragma pack(push, 8)
 
-struct LoggerApi;
-struct WindowApi;
-struct InputApi;
-struct DrawApi;
+struct LoggerInterface;
+struct WindowInterface;
+struct InputInterface;
+struct DrawInterface;
 
-typedef struct GuiApplicationApiContext
+typedef struct GuiApplicationInterfaceContext
 {
-    struct LoggerApi *logger_api;
-    struct WindowApi *window_api;
-    struct InputApi *input_api;
-    struct DrawApi *draw_api;
-} GuiApplicationApiContext;
+    struct LoggerInterface *logger;
+    struct WindowInterface *window;
+    struct InputInterface *input;
+    struct DrawInterface *draw;
+} GuiApplicationInterfaceContext;
 
 #pragma pack(pop)
 

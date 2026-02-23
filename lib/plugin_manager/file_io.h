@@ -6,6 +6,6 @@
 
 TODO("Make this a system plugin")
 
-struct LoggerApi;
+struct LoggerInterface;
 
-int32_t file_io_read(struct LoggerApi *logger_api, const char *path, char **buffer_out);
+int32_t file_io_read(struct LoggerInterface *logger, const char *path, char **buffer_out);

@@ -2,11 +2,11 @@
 
 #pragma pack(push, 8)
 
-struct LoggerApi;
+struct LoggerInterface;
 
-typedef struct Draw2dApiContext
+typedef struct Draw2dInterfaceContext
 {
-    struct LoggerApi *logger_api;
-} Draw2dApiContext;
+    struct LoggerInterface *logger;
+} Draw2dInterfaceContext;
 
 #pragma pack(pop)

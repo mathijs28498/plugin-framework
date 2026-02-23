@@ -4,7 +4,8 @@
 #define STRINGIZE(x) STRINGIZE2(x)
 
 #if defined(_MSC_VER)
-#define TODO(msg) __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) "): TODO: " msg))
+// #define TODO(msg) __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) "): TODO: " msg))
+#define TODO(msg) 
 #else // #if defined(_MSC_VER)
 #define TODO(msg) _Pragma("message(\"TODO: " msg "\")")
 #endif // #if defined(_MSC_VER)
@@ -59,10 +60,10 @@
     typedef char STATIC_ASSERT_CONCAT(assertion_failed_, __LINE__)[(expr) ? 1 : -1]
 #endif
 
-TODO("Make a macro for addressing any function that uses the context when you give the api")
+TODO("Make a macro for addressing any function that uses the context when you give the interface")
 #define NOT_IMPLEMENTED(return_type, ...) \
     ((void)(__VA_ARGS__),                 \
      assert(0 && "Not implemented"),      \
      (return_type)0)
-    
+
 #define BITFIELD_SIZE_32(bits) (((bits) + 31) / 32)

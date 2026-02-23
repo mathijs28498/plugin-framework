@@ -2,11 +2,11 @@
 
 #pragma pack(push, 8)
 
-struct LoggerApi;
+struct LoggerInterface;
 
-typedef struct RendererApiContext
+typedef struct RendererInterfaceContext
 {
-    struct LoggerApi *logger_api;
-} RendererApiContext;
+    struct LoggerInterface *logger;
+} RendererInterfaceContext;
 
 #pragma pack(pop)

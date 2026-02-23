@@ -4,27 +4,27 @@
 #include <Windows.h>
 
 #include <plugin_manager_impl.h>
-#include <environment_api.h>
-#include <window_api.h>
-#include <logger_api.h>
-LOGGER_API_REGISTER(window_win32_plugin, LOG_LEVEL_DEBUG)
+#include <environment_interface.h>
+#include <window_interface.h>
+#include <logger_interface.h>
+LOGGER_INTERFACE_REGISTER(window_win32_plugin, LOG_LEVEL_DEBUG)
 
 #include "window_win32_plugin.h"
 #include "window_win32_plugin_window_events.h"
 
-#define PLUGIN_API_NAME window_api
+#define PLUGIN_INTERFACE_NAME window
 
-#define PLUGIN_DEPENDENCIES(X)                          \
-    X(EnvironmentApi, environment_api, environment_api) \
-    X(LoggerApi, logger_api, logger_api)
+#define PLUGIN_DEPENDENCIES(X)                                            \
+    X(EnvironmentInterface, environment, environment) \
+    X(LoggerInterface, logger, logger)
 
-PLUGIN_REGISTER_DEPENDENCIES(WindowApiContext, PLUGIN_DEPENDENCIES);
+PLUGIN_REGISTER_DEPENDENCIES(WindowInterfaceContext, PLUGIN_DEPENDENCIES);
 
-WindowApi *get_api()
+WindowInterface *get_interface()
 {
-    static WindowApiContext context = {0};
+    static WindowInterfaceContext context = {0};
 
-    static WindowApi api = {
+    static WindowInterface iface= {
         .context = &context,
 
         .create_window = window_win32_plugin_create_window,
@@ -35,7 +35,7 @@ WindowApi *get_api()
         .pop_window_event = window_win32_plugin_window_events_pop,
     };
 
-    return &api;
+    return &iface;
 }
 
-PLUGIN_REGISTER_API(get_api, WindowApi);
+PLUGIN_REGISTER_INTERFACE(get_interface, WindowInterface);

@@ -2,28 +2,28 @@
 
 #include <stdint.h>
 
-#include <logger_api.h>
+#include <logger_interface.h>
 #include <plugin_manager_impl.h>
-#include <renderer_api.h>
+#include <renderer_interface.h>
 
 #include "renderer_vulkan_plugin.h"
 
-#define PLUGIN_API_NAME renderer_api
+#define PLUGIN_INTERFACE_NAME renderer
 
 #define REGISTER_DEPENDENCIES(X) \
-    X(LoggerApi, logger_api, logger_api)
+    X(LoggerInterface, logger, logger)
 
-PLUGIN_REGISTER_DEPENDENCIES(RendererApiContext, REGISTER_DEPENDENCIES);
+PLUGIN_REGISTER_DEPENDENCIES(RendererInterfaceContext, REGISTER_DEPENDENCIES);
 
-RendererApi *get_api()
+RendererInterface *get_interface()
 {
-    static RendererApiContext context = {0};
+    static RendererInterfaceContext context = {0};
 
-    static RendererApi api = {
+    static RendererInterface iface = {
         .context = &context,
     };
 
-    return &api;
+    return &iface;
 }
 
-PLUGIN_REGISTER_API(get_api, RendererApi);
+PLUGIN_REGISTER_INTERFACE(get_interface, RendererInterface);

@@ -6,9 +6,11 @@
 #include <stdbool.h>
 #include <conio.h>
 
-#include <logger_api.h>
-LOGGER_API_REGISTER(logger_plugin, LOG_LEVEL_DEBUG);
+#include <logger_interface.h>
+LOGGER_INTERFACE_REGISTER(logger_plugin, LOG_LEVEL_DEBUG);
 #include <plugin_manager_common.h>
+
+TODO("Use the known macros for the interface implementation")
 
 STATIC_ASSERT(LOG_LEVEL_MAX == LOGGER_PLUGIN_LOG_LEVEL_MAX, "log_level max_mismatch!");
 
@@ -25,7 +27,7 @@ const char *LOG_LEVEL_STR_LIST[] = {"ERR", "WRN", "INF", "DBG"};
 TODO("Add functionality to allow for time formatting (year/day, no microsecond etc)")
 void get_time_str(char time_str[TIME_STRING_LEN])
 {
-    TODO("Make this a separate time plugin that gets injected into the logger");
+    TODO("Make this a separate time plugin that gets injected into the logger")
     FILETIME ft;
     SYSTEMTIME st_utc, st_local;
 
@@ -51,7 +53,7 @@ void get_time_str(char time_str[TIME_STRING_LEN])
         microseconds);
 }
 
-void log(const LoggerApiContext *context, LoggerApiLogLevel log_level, LoggerApiLogLevel urgent_log_level, const char *tag, const char *message, ...)
+void log(const LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_level, LoggerInterfaceLogLevel urgent_log_level, const char *tag, const char *message, ...)
 {
     if (log_level > context->log_level || log_level <= LOG_LEVEL_NONE || log_level >= LOG_LEVEL_MAX)
     {
@@ -90,13 +92,13 @@ void log(const LoggerApiContext *context, LoggerApiLogLevel log_level, LoggerApi
     printf("\n");
 }
 
-void set_level(LoggerApiContext *context, LoggerApiLogLevel log_level)
+void set_level(LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_level)
 {
     context->log_level = log_level;
 }
 
 TODO("Check all places that ARRAY_SIZE should be added")
-void set_colors(LoggerApiContext *context, const char *new_colors[LOG_LEVEL_MAX])
+void set_colors(LoggerInterfaceContext *context, const char *new_colors[LOG_LEVEL_MAX])
 {
     for (int i = 0; i < ARRAY_SIZE(new_colors); i++)
     {
@@ -104,33 +106,33 @@ void set_colors(LoggerApiContext *context, const char *new_colors[LOG_LEVEL_MAX]
     }
 }
 
-LoggerApi *logger_api_get_api(void);
+LoggerInterface *logger_interface_get_interface(void);
 
-void logger_api_on_exit(LoggerApiContext *context)
+void logger_interface_on_exit(LoggerInterfaceContext *context)
 {
     (void)context;
 #if IS_DEBUG && WINDOWS_GUI
-    LOG_INF(logger_api_get_api(), "\nPress any key to exit...\n");
+    LOG_INF(logger_interface_get_interface(), "\nPress any key to exit...\n");
     _getch();
 #endif
 }
 
-LoggerApi *logger_api_get_api(void)
+LoggerInterface *logger_interface_get_interface(void)
 {
-    static LoggerApiContext context = {
+    static LoggerInterfaceContext context = {
         .log_level = LOG_LEVEL_DEBUG,
         .colors = {ANSI_COLOR_RED, ANSI_COLOR_YELLOW, ANSI_COLOR_GREEN, ANSI_COLOR_CYAN},
     };
 
-    static LoggerApi api = {
+    static LoggerInterface iface = {
         .context = &context,
         .log = log,
         .set_level = set_level,
         .set_colors = set_colors,
-        .on_exit = logger_api_on_exit,
+        .on_exit = logger_interface_on_exit,
     };
 
-    TODO("Add this to an init function");
+    TODO("Add this to an init function")
 #if IS_DEBUG && WINDOWS_GUI
     if (AllocConsole())
     {
@@ -153,5 +155,5 @@ LoggerApi *logger_api_get_api(void)
     }
 #endif // #if IS_DEBUG && WINDOWS_GUI
 
-    return &api;
+    return &iface;
 }

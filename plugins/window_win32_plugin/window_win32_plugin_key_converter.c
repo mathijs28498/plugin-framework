@@ -2,7 +2,7 @@
 
 #include <Windows.h>
 
-#include <window_api.h>
+#include <window_interface.h>
 
 WindowEventKey win32_key_to_window_event_key(uintptr_t wparam)
 {

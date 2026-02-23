@@ -8,7 +8,7 @@ TODO("Make this into cmake variables")
 #define PLUGIN_REGISTRY_MAX_PLUGIN_LEN 64
 #define PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN 64
 #define PLUGIN_REGISTRY_MAX_PLUGIN_PATH_LEN 512
-#define PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN 64
+#define PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN 64
 #define PLUGIN_MANAGER_MAX_PLUGINS_LEN 64
 
 #define PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN 2
@@ -16,7 +16,7 @@ TODO("Make this into cmake variables")
 
 typedef struct PluginDefinition
 {
-    char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
+    char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
     char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
     char path[PLUGIN_REGISTRY_MAX_PLUGIN_PATH_LEN];
 } PluginDefinition;
@@ -29,7 +29,7 @@ typedef struct PluginRegistry
 
 typedef struct RequestedPlugin
 {
-    char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
+    char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
     char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
     bool is_explicit;
     bool resolved;
@@ -40,52 +40,53 @@ struct HINSTANCE__;
 typedef struct HINSTANCE__ *HMODULE;
 #endif
 
-typedef struct PluginManagerBaseApi
+typedef struct PluginManagerBaseInterface
 {
     void *context;
-} PluginManagerBaseApi;
+} PluginManagerBaseInterface;
 
 typedef void (*PluginGetDependencies_Fn)(const char *const **dependencies, uint32_t *len);
-typedef void (*PluginSetDependency_Fn)(PluginManagerBaseApi *context, void *api);
-typedef PluginManagerBaseApi *(*PluginGetApi_Fn)(void);
-typedef int32_t (*PluginInit_Fn)(void *PluginManagerBaseApi);
+typedef void (*PluginSetDependency_Fn)(PluginManagerBaseInterface *context, void *iface);
+typedef PluginManagerBaseInterface *(*PluginGetInterface_Fn)(void);
+typedef int32_t (*PluginInit_Fn)(void *PluginManagerBaseInterface);
 
 typedef struct PluginDependency
 {
-    char *api_name;
+    char *interface_name;
     bool resolved;
     PluginSetDependency_Fn set;
 } PluginDependency;
 
+
+TODO("Check if this is_explicit can be removed by creating the interface_instance at time of resolving, not of loading")
 typedef struct PluginModule
 {
     const PluginDefinition *plugin_definition;
-    TODO("Check if this is_explicit can be removed by creating the api_instance at time of resolving, not of loading")
     bool is_explicit;
 
     PluginDependency dependencies[PLUGIN_MANAGER_MAX_DEPENDENCIES];
     uint32_t dependencies_len;
 
-    PluginGetApi_Fn get_api;
+    PluginGetInterface_Fn get_interface;
     PluginInit_Fn init;
 } PluginModule;
 
 typedef struct PluginStatic
 {
-    const char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
+    const char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
     const char plugin_name[PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN];
 
     // char **dependencies;
     PluginDependency *dependencies;
     uint32_t dependencies_len;
-    PluginManagerBaseApi *api;
+    PluginManagerBaseInterface *iface;
 } PluginStatic;
 
-struct LoggerApi;
+struct LoggerInterface;
 
 typedef struct PluginManagerSetupContext
 {
-    struct LoggerApi *logger_api;
+    struct LoggerInterface *logger;
 
     size_t internal_plugins_len;
     struct PluginStatic internal_plugins[PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN];
@@ -94,16 +95,16 @@ typedef struct PluginManagerSetupContext
     RequestedPlugin requested_plugins[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
 } PluginManagerSetupContext;
 
-typedef struct ApiInstance
+typedef struct InterfaceInstance
 {
-    char api_name[PLUGIN_REGISTRY_MAX_PLUGIN_API_NAME_LEN];
-    PluginManagerBaseApi *api;
+    char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
+    PluginManagerBaseInterface *iface;
     bool is_explicit;
-} ApiInstance;
+} InterfaceInstance;
 
 typedef struct PluginManagerRuntimeContext
 {
-    struct LoggerApi *logger_api;
-    size_t api_instances_len;
-    ApiInstance api_instances[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
+    struct LoggerInterface *logger;
+    size_t interface_instances_len;
+    InterfaceInstance interface_instances[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
 } PluginManagerRuntimeContext;

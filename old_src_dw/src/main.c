@@ -271,7 +271,7 @@ void ReleaseDeviceDependentResources(ApplicationState *applicationState)
 
 HRESULT CreateLineNumberString(int numLines, WCHAR *outBuffer, const size_t outBufferLen)
 {
-    // TODO: Add outBufferLen check and return an error;
+    // TODO: Add outBufferLen check and return an error
     outBuffer[0] = L'\0';
 
     for (int i = 0; i < numLines; i++)

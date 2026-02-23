@@ -2,13 +2,13 @@
 
 #include <stdint.h>
 
-typedef struct EnvironmentApiContext {
+typedef struct EnvironmentInterfaceContext {
     int argc;
     char **argv;
     void *platform_context;
-} EnvironmentApiContext;
+} EnvironmentInterfaceContext;
 
-struct EnvironmentApi;
+struct EnvironmentInterface;
 
-struct EnvironmentApi *environment_api_get_api(void);
-int32_t environment_plugin_set_args(EnvironmentApiContext *context, int argc, char **argv, void *platform_context);
+struct EnvironmentInterface *environment_interface_get_interface(void);
+int32_t environment_plugin_set_args(EnvironmentInterfaceContext *context, int argc, char **argv, void *platform_context);

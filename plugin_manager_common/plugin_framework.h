@@ -13,9 +13,9 @@ struct PluginManagerSetupContext;
 struct PluginManagerRuntimeContext *__get_plugin_manager_runtime_context();
 
 int32_t __plugin_manager_init(struct PluginManagerSetupContext **setup_context, int argc, char **argv, void *platform_context);
-int32_t __plugin_manager_add(struct PluginManagerSetupContext *setup_context, const char *api_name, const char *plugin_name);
+int32_t __plugin_manager_add(struct PluginManagerSetupContext *setup_context, const char *interface_name, const char *plugin_name);
 int32_t __plugin_manager_load(struct PluginManagerSetupContext *setup_context, struct PluginManagerRuntimeContext *runtime_context);
-int32_t __plugin_manager_get(struct PluginManagerRuntimeContext *runtime_context, const char *api_name, void **api_interface);
+int32_t __plugin_manager_get(struct PluginManagerRuntimeContext *runtime_context, const char *interface_name, void **iface);
 int32_t __plugin_manager_shutdown(struct PluginManagerRuntimeContext *runtime_context);
 
 #endif // #ifndef PLUGIN_MANAGER_STATIC_LINKING
@@ -30,7 +30,7 @@ int32_t __plugin_manager_shutdown(struct PluginManagerRuntimeContext *runtime_co
         (void)lpCmdLine;                                                                                 \
                                                                                                          \
         HRESULT hr = {0};                                                                                \
-        TODO("Check if this belongs here or somewhere else (also replace CoUninitialize if replacing)"); \
+        TODO("Check if this belongs here or somewhere else (also replace CoUninitialize if replacing)") \
         hr = CoInitialize(NULL);                                                                         \
                                                                                                          \
         struct PluginManagerSetupContext *__context;                                                     \
@@ -43,8 +43,8 @@ int32_t __plugin_manager_shutdown(struct PluginManagerRuntimeContext *runtime_co
         platform_context.nCmdShow = nCmdShow;                                                            \
                                                                                                          \
         (void)__plugin_manager_init(&__context, __argc, __argv, &platform_context);                      \
-        int ret = plugin_api_main(__context);                                                            \
-        (void)__plugin_manager_shutdown(__get_plugin_manager_runtime_context());                           \
+        int ret = plugin_manager_main(__context);                                                        \
+        (void)__plugin_manager_shutdown(__get_plugin_manager_runtime_context());                         \
         return ret;                                                                                      \
     }
 #else // #if WINDOWS_GUI
@@ -53,29 +53,29 @@ int32_t __plugin_manager_shutdown(struct PluginManagerRuntimeContext *runtime_co
     {                                                              \
         struct PluginManagerSetupContext *__context;               \
         (void)__plugin_manager_init(&__context, argc, argv, NULL); \
-        return plugin_api_main(__context);                         \
+        return plugin_manager_main(__context);                     \
     }
 #endif // #if WINDOWS_GUI
 
-#define PLUGIN_MANAGER_API_MAIN()                                     \
-    int plugin_api_main(struct PluginManagerSetupContext *__context); \
-    __PLUGIN_MANAGER_ENTRY_IMPL()                                     \
-    int plugin_api_main(struct PluginManagerSetupContext *__context)
+#define PLUGIN_FRAMEWORK_MAIN()                                           \
+    int plugin_manager_main(struct PluginManagerSetupContext *__context); \
+    __PLUGIN_MANAGER_ENTRY_IMPL()                                         \
+    int plugin_manager_main(struct PluginManagerSetupContext *__context)
 
 #ifdef PLUGIN_MANAGER_STATIC_LINKING
-#define PLUGIN_MANAGER_API_ADD(api_name, plugin_name)
+#define PLUGIN_FRAMEWORK_ADD(interface_name, plugin_name)
 #else
-#define PLUGIN_MANAGER_API_ADD(api_name, plugin_name) (__plugin_manager_add(__context, api_name, plugin_name))
+#define PLUGIN_FRAMEWORK_ADD(interface_name, plugin_name) (__plugin_manager_add(__context, interface_name, plugin_name))
 #endif // #ifdef PLUGIN_MANAGER_STATIC_LINKING
 
 #ifdef PLUGIN_MANAGER_STATIC_LINKING
-#define PLUGIN_MANAGER_API_LOAD()
+#define PLUGIN_FRAMEWORK_LOAD()
 #else
-#define PLUGIN_MANAGER_API_LOAD() (__plugin_manager_load(__context, __get_plugin_manager_runtime_context()))
+#define PLUGIN_FRAMEWORK_LOAD() (__plugin_manager_load(__context, __get_plugin_manager_runtime_context()))
 #endif // #ifdef PLUGIN_MANAGER_STATIC_LINKING
 
 #ifdef PLUGIN_MANAGER_STATIC_LINKING
-#define PLUGIN_MANAGER_API_GET(api_name, out_api_interface)
+#define PLUGIN_FRAMEWORK_GET(interface_name, out_interface)
 #else
-#define PLUGIN_MANAGER_API_GET(api_name, api_interface) (__plugin_manager_get(__get_plugin_manager_runtime_context(), api_name, (void **)api_interface))
+#define PLUGIN_FRAMEWORK_GET(interface_name, iface) (__plugin_manager_get(__get_plugin_manager_runtime_context(), interface_name, (void **)iface))
 #endif // #ifdef PLUGIN_MANAGER_STATIC_LINKING

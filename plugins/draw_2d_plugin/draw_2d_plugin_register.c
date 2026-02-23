@@ -2,28 +2,28 @@
 
 #include <stdint.h>
 
-#include <logger_api.h>
+#include <logger_interface.h>
 #include <plugin_manager_impl.h>
-#include <draw_2d_api.h>
+#include <draw_2d_interface.h>
 
 #include "draw_2d_plugin.h"
 
-#define PLUGIN_API_NAME draw_2d_api
+#define PLUGIN_INTERFACE_NAME draw_2d_interface
 
 #define REGISTER_DEPENDENCIES(X) \
-    X(LoggerApi, logger_api, logger_api)
+    X(LoggerInterface, logger, logger)
 
-PLUGIN_REGISTER_DEPENDENCIES(Draw2dApiContext, REGISTER_DEPENDENCIES);
+PLUGIN_REGISTER_DEPENDENCIES(Draw2dInterfaceContext, REGISTER_DEPENDENCIES);
 
-Draw2dApi *get_api()
+Draw2dInterface *get_interface()
 {
-    static Draw2dApiContext context = {0};
+    static Draw2dInterfaceContext context = {0};
 
-    static Draw2dApi api = {
+    static Draw2dInterface iface = {
         .context = &context,
     };
 
-    return &api;
+    return &iface;
 }
 
-PLUGIN_REGISTER_API(get_api, Draw2dApi);
+PLUGIN_REGISTER_INTERFACE(get_interface, Draw2dInterface);

@@ -2,6 +2,6 @@
 
 #include <stdint.h>
 
-struct DrawApiContext;
+struct DrawInterfaceContext;
 
-int32_t draw_plugin_present(struct DrawApiContext *context);
+int32_t draw_plugin_present(struct DrawInterfaceContext *context);
