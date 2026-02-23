@@ -19,6 +19,7 @@
     - [ ] Make the plugins shutdown in opposite order as initialization
 - [ ] Clean up internal apis and make them better
     - [ ] Make internal apis proper plugins that are just linked statically
+- [ ] Add sub interfaces for logic and draw
 
 - [ ] Add logging to a file
 - [ ] Add static loading
