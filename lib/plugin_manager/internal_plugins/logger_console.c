@@ -109,12 +109,14 @@ LoggerInterface *logger_interface_get_interface(void);
 
 void logger_interface_on_exit(LoggerInterfaceContext *context)
 {
-// #if IS_DEBUG && WINDOWS_GUI
+    // #if IS_DEBUG && WINDOWS_GUI
     log(context, LOG_LEVEL_INFO, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, "Press any key to exit...");
     _getch();
-// #endif
+    // #endif
 }
 
+TODO("Remove this and solve it better")
+bool to_remove_done_alloc_console = false;
 LoggerInterface *logger_interface_get_interface(void)
 {
     static LoggerInterfaceContext context = {
@@ -132,24 +134,28 @@ LoggerInterface *logger_interface_get_interface(void)
 
     TODO("Add this to an init function")
 #if IS_DEBUG && WINDOWS_GUI
-    if (AllocConsole())
+    if (!to_remove_done_alloc_console)
     {
-        FILE *fDummy;
-
-        // Redirect standard streams to the new console "CONOUT$" and "CONIN$"
-        freopen_s(&fDummy, "CONOUT$", "w", stdout);
-        freopen_s(&fDummy, "CONOUT$", "w", stderr);
-        freopen_s(&fDummy, "CONIN$", "r", stdin);
-        HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-        if (hOut != INVALID_HANDLE_VALUE)
+        if (AllocConsole())
         {
-            DWORD dwMode = 0;
-            if (GetConsoleMode(hOut, &dwMode))
+            FILE *fDummy;
+
+            // Redirect standard streams to the new console "CONOUT$" and "CONIN$"
+            freopen_s(&fDummy, "CONOUT$", "w", stdout);
+            freopen_s(&fDummy, "CONOUT$", "w", stderr);
+            freopen_s(&fDummy, "CONIN$", "r", stdin);
+            HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+            if (hOut != INVALID_HANDLE_VALUE)
             {
-                dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-                SetConsoleMode(hOut, dwMode);
+                DWORD dwMode = 0;
+                if (GetConsoleMode(hOut, &dwMode))
+                {
+                    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+                    SetConsoleMode(hOut, dwMode);
+                }
             }
         }
+        to_remove_done_alloc_console = true;
     }
 #endif // #if IS_DEBUG && WINDOWS_GUI
 
