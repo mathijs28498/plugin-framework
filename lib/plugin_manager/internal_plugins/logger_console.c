@@ -105,9 +105,7 @@ void set_colors(LoggerInterfaceContext *context, const char *new_colors[LOG_LEVE
     }
 }
 
-LoggerInterface *logger_interface_get_interface(void);
-
-void logger_interface_on_exit(LoggerInterfaceContext *context)
+void logger_interface_on_program_exit(LoggerInterfaceContext *context)
 {
     // #if IS_DEBUG && WINDOWS_GUI
     log(context, LOG_LEVEL_INFO, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, "Press any key to exit...");
@@ -129,7 +127,6 @@ LoggerInterface *logger_interface_get_interface(void)
         .log = log,
         .set_level = set_level,
         .set_colors = set_colors,
-        .on_exit = logger_interface_on_exit,
     };
 
     TODO("Add this to an init function")

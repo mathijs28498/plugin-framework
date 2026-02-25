@@ -23,8 +23,8 @@ typedef struct PluginModuleDefinition
 
 typedef struct PluginModuleRegistry
 {
-    uint32_t plugin_definitions_len;
     PluginModuleDefinition plugin_definitions[PLUGIN_REGISTRY_MAX_PLUGIN_LEN];
+    size_t plugin_definitions_len;
 } PluginModuleRegistry;
 
 typedef struct RequestedPlugin
@@ -48,7 +48,7 @@ typedef int32_t (*PluginShutdown_Fn)(void *context);
 
 typedef struct PluginDependency
 {
-    char *interface_name;
+    char interface_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
     bool is_resolved;
     PluginSetDependency_Fn set;
 } PluginDependency;
@@ -82,11 +82,15 @@ typedef struct PluginManagerSetupContext
 {
     struct LoggerInterface *logger;
 
+    PluginProvider internal_plugins[PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN];
     size_t internal_plugins_len;
-    struct PluginProvider internal_plugins[PLUGIN_MANAGER_MAX_INTERNAL_PLUGINS_LEN];
 
-    size_t requested_plugins_len;
     RequestedPlugin requested_plugins[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
+    size_t requested_plugins_len;
+
+    size_t sorted_plugin_providers_indices[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
+    PluginProvider plugin_providers[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
+    size_t plugin_providers_len;
 } PluginManagerSetupContext;
 
 typedef struct InterfaceInstance
@@ -99,6 +103,6 @@ typedef struct InterfaceInstance
 typedef struct PluginManagerRuntimeContext
 {
     struct LoggerInterface *logger;
-    size_t interface_instances_len;
     InterfaceInstance interface_instances[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
+    size_t interface_instances_len;
 } PluginManagerRuntimeContext;

@@ -21,7 +21,6 @@ typedef struct LoggerInterface
     void (*log)(const struct LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_level, LoggerInterfaceLogLevel urgent_log_level, const char *tag, const char *message, ...);
     void (*set_level)(struct LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_level);
     void (*set_colors)(struct LoggerInterfaceContext *context, const char *[LOG_LEVEL_MAX]);
-    void (*on_exit)(struct LoggerInterfaceContext *context);
 
 } LoggerInterface;
 

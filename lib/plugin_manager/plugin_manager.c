@@ -34,14 +34,14 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
 {
     assert(setup_context != NULL);
 
-    PluginManagerSetupContext *new_setup_context = calloc(1, sizeof(**setup_context));
-    if (new_setup_context == NULL)
-    {
-        return -1;
-    }
+    static PluginManagerSetupContext new_setup_context = {
+        .internal_plugins_len = 0,
+        .plugin_providers_len = 0,
+        .requested_plugins_len = 0,
+    };
 
     {
-        assert(new_setup_context->internal_plugins_len < ARRAY_SIZE(new_setup_context->internal_plugins));
+        assert(new_setup_context.internal_plugins_len < ARRAY_SIZE(new_setup_context.internal_plugins));
 
         EnvironmentInterface *environment = environment_interface_get_interface();
         environment_default_set_args(environment->context, argc, argv, platform_context);
@@ -56,14 +56,14 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
             .is_initialized = true,
         };
 
-        memcpy(&new_setup_context->internal_plugins[new_setup_context->internal_plugins_len],
+        memcpy(&new_setup_context.internal_plugins[new_setup_context.internal_plugins_len],
                &environment_plugin,
-               sizeof(new_setup_context->internal_plugins[new_setup_context->internal_plugins_len]));
-        new_setup_context->internal_plugins_len++;
+               sizeof(new_setup_context.internal_plugins[new_setup_context.internal_plugins_len]));
+        new_setup_context.internal_plugins_len++;
     }
 
     {
-        assert(new_setup_context->internal_plugins_len < ARRAY_SIZE(new_setup_context->internal_plugins));
+        assert(new_setup_context.internal_plugins_len < ARRAY_SIZE(new_setup_context.internal_plugins));
 
         TODO("Add init function so that the allocConsole gets done properly")
         PluginProvider logger_plugin = {
@@ -76,14 +76,14 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
             .is_initialized = true,
         };
 
-        new_setup_context->logger = (LoggerInterface *)logger_plugin.get_interface();
+        new_setup_context.logger = (LoggerInterface *)logger_plugin.get_interface();
 
-        memcpy(&new_setup_context->internal_plugins[new_setup_context->internal_plugins_len],
+        memcpy(&new_setup_context.internal_plugins[new_setup_context.internal_plugins_len],
                &logger_plugin,
-               sizeof(new_setup_context->internal_plugins[new_setup_context->internal_plugins_len]));
-        new_setup_context->internal_plugins_len++;
+               sizeof(new_setup_context.internal_plugins[new_setup_context.internal_plugins_len]));
+        new_setup_context.internal_plugins_len++;
     }
-    *setup_context = new_setup_context;
+    *setup_context = &new_setup_context;
     return 0;
 }
 
@@ -157,9 +157,6 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
         return ret;
     }
 
-    PluginProvider plugin_providers[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
-    size_t plugin_providers_len = 0;
-
     SAFE_WHILE(
         setup_context->requested_plugins_len > 0,
         PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH,
@@ -191,8 +188,8 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
                 logger,
                 plugin_modules,
                 plugin_modules_len,
-                plugin_providers,
-                &plugin_providers_len);
+                setup_context->plugin_providers,
+                &setup_context->plugin_providers_len);
 
             if (ret < 0)
             {
@@ -207,8 +204,8 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
             setup_context->requested_plugins_len,
             setup_context->internal_plugins,
             setup_context->internal_plugins_len,
-            plugin_providers,
-            &plugin_providers_len);
+            setup_context->plugin_providers,
+            &setup_context->plugin_providers_len);
 
         if (ret < 0)
         {
@@ -220,8 +217,8 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
 
         ret = resolve_plugin_provider_dependencies(
             logger,
-            plugin_providers,
-            plugin_providers_len,
+            setup_context->plugin_providers,
+            setup_context->plugin_providers_len,
             setup_context->requested_plugins,
             &setup_context->requested_plugins_len);
 
@@ -232,10 +229,7 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
         }
     }
 
-    TODO("Make internal plugins just static plugins")
-    TODO("Do this for all plugins including the internal ones")
-    uint32_t sorted_plugin_providers_indices[PLUGIN_MANAGER_MAX_PLUGINS_LEN];
-    ret = calculate_plugin_provider_initialization_order(logger, plugin_providers, plugin_providers_len, sorted_plugin_providers_indices);
+    ret = calculate_plugin_provider_initialization_order(logger, setup_context->plugin_providers, setup_context->plugin_providers_len, setup_context->sorted_plugin_providers_indices);
     if (ret < 0)
     {
         LOG_ERR(logger, "Error in calculate_plugin_provider_initialization_order: %d", ret);
@@ -244,9 +238,9 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
 
     ret = initialize_plugins(
         logger,
-        sorted_plugin_providers_indices,
-        plugin_providers,
-        plugin_providers_len,
+        setup_context->sorted_plugin_providers_indices,
+        setup_context->plugin_providers,
+        setup_context->plugin_providers_len,
         runtime_context->interface_instances,
         &runtime_context->interface_instances_len);
     if (ret < 0)
@@ -276,12 +270,22 @@ int32_t __plugin_manager_get(PluginManagerRuntimeContext *runtime_context, const
     return -1;
 }
 
-int32_t __plugin_manager_shutdown(PluginManagerRuntimeContext *runtime_context)
+int32_t __plugin_manager_shutdown(PluginManagerSetupContext *setup_context, PluginManagerRuntimeContext *runtime_context)
 {
-    if (runtime_context->logger)
+    for (int i = (int) setup_context->plugin_providers_len - 1; i >= 0; i--)
     {
-        runtime_context->logger->on_exit(runtime_context->logger->context);
+        size_t current_idx = setup_context->sorted_plugin_providers_indices[i];
+        PluginProvider *plugin_provider = &setup_context->plugin_providers[current_idx];
+        InterfaceInstance *interface_instance = &runtime_context->interface_instances[i];
+        LOG_DBG(setup_context->logger, "Shutting down '%s' interface", plugin_provider->interface_name);
+
+        if (plugin_provider->shutdown)
+        {
+            plugin_provider->shutdown(interface_instance->iface->context);
+        }
     }
+
+    (void)logger_interface_on_program_exit(setup_context->logger->context);
 
     return 0;
 }

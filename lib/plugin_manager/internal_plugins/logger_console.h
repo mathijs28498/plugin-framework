@@ -11,3 +11,4 @@ typedef struct LoggerInterfaceContext
 
 struct LoggerInterface;
 struct LoggerInterface *logger_interface_get_interface(void);
+void logger_interface_on_program_exit(LoggerInterfaceContext *context);

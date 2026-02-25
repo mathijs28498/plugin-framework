@@ -47,11 +47,11 @@ int32_t calculate_plugin_provider_initialization_order(
     const struct LoggerInterface *logger,
     const struct PluginProvider *plugin_providers,
     size_t plugin_providers_len,
-    uint32_t *sorted_plugin_providers_indices);
+    size_t *sorted_plugin_providers_indices);
 
 int32_t initialize_plugins(
     const struct LoggerInterface *logger,
-    const uint32_t *sorted_plugin_providers_indices,
+    const size_t *sorted_plugin_providers_indices,
     const struct PluginProvider *plugin_providers,
     size_t plugin_providers_len,
     struct InterfaceInstance *interface_instances,

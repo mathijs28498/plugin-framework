@@ -2,6 +2,7 @@
 
 #include <plugin_sdk.h>
 #include <input_interface.h>
+#include <logger_interface.h>
 
 #include "input_default.h"
 

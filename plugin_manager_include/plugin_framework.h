@@ -12,40 +12,41 @@ struct PluginManagerSetupContext;
 
 struct PluginManagerRuntimeContext *__get_plugin_manager_runtime_context();
 
-int32_t __plugin_manager_init(struct PluginManagerSetupContext **setup_context, int argc, char **argv, void *platform_context);
+int32_t __plugin_manager_init(struct PluginManagerSetupContext **context, int argc, char **argv, void *platform_context);
 int32_t __plugin_manager_add(struct PluginManagerSetupContext *setup_context, const char *interface_name, const char *plugin_name);
 int32_t __plugin_manager_load(struct PluginManagerSetupContext *setup_context, struct PluginManagerRuntimeContext *runtime_context);
 int32_t __plugin_manager_get(struct PluginManagerRuntimeContext *runtime_context, const char *interface_name, void **iface);
-int32_t __plugin_manager_shutdown(struct PluginManagerRuntimeContext *runtime_context);
+int32_t __plugin_manager_shutdown(struct PluginManagerSetupContext *setup_context, struct PluginManagerRuntimeContext *runtime_context);
 
 #endif // #ifndef PLUGIN_MANAGER_STATIC_LINKING
 
+TODO("Add instance of runtime context and pass it to the plugin_manager_main, rather than getting it every time")
 #if WINDOWS_GUI
 #include <Windows.h>
-#define __PLUGIN_MANAGER_ENTRY_IMPL()                                                                   \
-    int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,                                   \
-                        LPWSTR lpCmdLine, int nCmdShow)                                                 \
-    {                                                                                                   \
-        (void)hPrevInstance;                                                                            \
-        (void)lpCmdLine;                                                                                \
-                                                                                                        \
-        HRESULT hr = {0};                                                                               \
-        hr = CoInitialize(NULL);                                                                        \
-                                                                                                        \
-        struct PluginManagerSetupContext *__context;                                                    \
-        static struct                                                                                   \
-        {                                                                                               \
-            void *hInstance;                                                                            \
-            int nCmdShow;                                                                               \
-        } platform_context;                                                                             \
-        platform_context.hInstance = hInstance;                                                         \
-        platform_context.nCmdShow = nCmdShow;                                                           \
-                                                                                                        \
-        (void)__plugin_manager_init(&__context, __argc, __argv, &platform_context);                     \
-        int ret = plugin_manager_main(__context);                                                       \
-        (void)__plugin_manager_shutdown(__get_plugin_manager_runtime_context());                        \
-        CoUninitialize();                                                                               \
-        return ret;                                                                                     \
+#define __PLUGIN_MANAGER_ENTRY_IMPL()                                                       \
+    int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,                       \
+                        LPWSTR lpCmdLine, int nCmdShow)                                     \
+    {                                                                                       \
+        (void)hPrevInstance;                                                                \
+        (void)lpCmdLine;                                                                    \
+                                                                                            \
+        HRESULT hr = {0};                                                                   \
+        hr = CoInitialize(NULL);                                                            \
+                                                                                            \
+        struct PluginManagerSetupContext *__context;                                        \
+        static struct                                                                       \
+        {                                                                                   \
+            void *hInstance;                                                                \
+            int nCmdShow;                                                                   \
+        } platform_context;                                                                 \
+        platform_context.hInstance = hInstance;                                             \
+        platform_context.nCmdShow = nCmdShow;                                               \
+                                                                                            \
+        (void)__plugin_manager_init(&__context, __argc, __argv, &platform_context);         \
+        int ret = plugin_manager_main(__context);                                           \
+        (void)__plugin_manager_shutdown(__context, __get_plugin_manager_runtime_context()); \
+        CoUninitialize();                                                                   \
+        return ret;                                                                         \
     }
 #else // #if WINDOWS_GUI
 #define __PLUGIN_MANAGER_ENTRY_IMPL()                              \
