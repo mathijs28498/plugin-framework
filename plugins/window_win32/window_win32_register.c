@@ -11,9 +11,7 @@
 #include "window_win32.h"
 #include "window_win32_window_events.h"
 
-#define PLUGIN_INTERFACE_NAME window
-
-#define PLUGIN_DEPENDENCIES(X)                                            \
+#define PLUGIN_DEPENDENCIES(X)                        \
     X(EnvironmentInterface, environment, environment) \
     X(LoggerInterface, logger, logger)
 
@@ -23,7 +21,7 @@ WindowInterface *get_interface()
 {
     static WindowInterfaceContext context = {0};
 
-    static WindowInterface iface= {
+    static WindowInterface iface = {
         .context = &context,
 
         .create_window = window_win32_create_window,

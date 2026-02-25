@@ -13,3 +13,6 @@ target_link_libraries(gui_application_default
     PRIVATE
         plugin_manager_include
 )
+
+add_compile_definitions(PLUGIN_BUILD_SHARED)
+add_compile_definitions(PLUGIN_INTERFACE_NAME=gui_application)

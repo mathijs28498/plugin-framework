@@ -42,10 +42,10 @@ def create_dir(path_dir: Path):
 
 
 def create_interface(interface_name: str, path_interface_dir: Path):
-    path_interface_header = path_interface_dir / f"{interface_name}.h"
+    path_interface_header = path_interface_dir / f"{interface_name}_interface.h"
     if path_interface_header.exists():
         print(
-            f"{interface_name} already has a header, skipping header creation: {str(path_interface_header)}"
+            f"{interface_name}_interface already has a header, skipping header creation: {str(path_interface_header)}"
         )
         return
 
@@ -55,19 +55,19 @@ def create_interface(interface_name: str, path_interface_dir: Path):
 
 #pragma pack(push, 8)
 
-struct {snake_to_camel_case(interface_name)}Context;
+struct {snake_to_camel_case(interface_name)}InterfaceContext;
 
-typedef struct {snake_to_camel_case(interface_name)}
+typedef struct {snake_to_camel_case(interface_name)}Interface
 {{
-    struct {snake_to_camel_case(interface_name)}Context *context;
-}} {snake_to_camel_case(interface_name)};
+    struct {snake_to_camel_case(interface_name)}InterfaceContext *context;
+}} {snake_to_camel_case(interface_name)}Interface;
 
 #pragma pack(pop)
 """,
     )
 
 
-def write_plugin_register_header(interface_name: str, path_file):
+def write_plugin_register_header(interface_name: str, path_file: Path):
     create_file(
         path_file,
         f"""#pragma once
@@ -76,16 +76,16 @@ def write_plugin_register_header(interface_name: str, path_file):
 
 struct LoggerInterface;
 
-typedef struct {snake_to_camel_case(interface_name)}Context
+typedef struct {snake_to_camel_case(interface_name)}InterfaceContext
 {{
     struct LoggerInterface *logger;
-}} {snake_to_camel_case(interface_name)}Context;
+}} {snake_to_camel_case(interface_name)}InterfaceContext;
 
 #pragma pack(pop)""",
     )
 
 
-def write_plugin_register_source(interface_name: str, plugin_name: str, path_file):
+def write_plugin_register_source(interface_name: str, plugin_name: str, path_file: Path):
     create_file(
         path_file,
         f"""#include "{plugin_name}_register.h"
@@ -94,33 +94,31 @@ def write_plugin_register_source(interface_name: str, plugin_name: str, path_fil
 
 #include <logger_interface.h>
 #include <plugin_sdk.h>
-#include <{interface_name}.h>
+#include <{interface_name}_interface.h>
 
 #include "{plugin_name}.h"
-
-#define PLUGIN_INTERFACE_NAME {interface_name}
 
 #define REGISTER_DEPENDENCIES(X) \\
     X(LoggerInterface, logger, logger)
 
-PLUGIN_REGISTER_DEPENDENCIES({snake_to_camel_case(interface_name)}Context, REGISTER_DEPENDENCIES);
+PLUGIN_REGISTER_DEPENDENCIES({snake_to_camel_case(interface_name)}InterfaceContext, REGISTER_DEPENDENCIES);
 
-{snake_to_camel_case(interface_name)} *get_interface()
+{snake_to_camel_case(interface_name)}Interface *get_interface(void)
 {{
-    static {snake_to_camel_case(interface_name)}Context context = {{0}};
+    static {snake_to_camel_case(interface_name)}InterfaceContext context = {{0}};
 
-    static {snake_to_camel_case(interface_name)} iface = {{
+    static {snake_to_camel_case(interface_name)}Interface iface = {{
         .context = &context,
     }};
 
-    return &interface;
+    return &iface;
 }}
 
-PLUGIN_REGISTER_INTERFACE(get_interface, {snake_to_camel_case(interface_name)});""",
+PLUGIN_REGISTER_INTERFACE(get_interface, {snake_to_camel_case(interface_name)}Interface);""",
     )
 
 
-def write_plugin_header(plugin_name: str, path_file):
+def write_plugin_header(plugin_name: str, path_file: Path):
     create_file(
         path_file,
         f"""#pragma once
@@ -128,7 +126,7 @@ def write_plugin_header(plugin_name: str, path_file):
     )
 
 
-def write_plugin_source(plugin_name: str, path_file):
+def write_plugin_source(plugin_name: str, path_file: Path):
     create_file(
         path_file,
         f"""#include "{plugin_name}.h"
@@ -140,7 +138,7 @@ LOGGER_INTERFACE_REGISTER({plugin_name}, LOG_LEVEL_DEBUG);
     )
 
 
-def write_plugin_cmakelists(plugin_name: str, path_file):
+def write_plugin_cmakelists(interface_name: str, plugin_name: str, path_file: Path):
     create_file(
         path_file,
         f"""add_library({plugin_name} SHARED)
@@ -157,7 +155,10 @@ target_sources({plugin_name}
 target_link_libraries({plugin_name}
     PRIVATE
         plugin_manager_include
-)""",
+)
+
+add_compile_definitions(PLUGIN_BUILD_SHARED)
+add_compile_definitions(PLUGIN_INTERFACE_NAME={interface_name})""",
     )
 
 
@@ -171,14 +172,14 @@ def create_plugin(interface_name: str, plugin_name: str, path_plugins_dir: Path)
     append_file(path_plugins_cmakelists, f"\nadd_subdirectory({plugin_name})")
 
     write_plugin_register_header(
-        plugin_name, path_plugin_dir / f"{plugin_name}_register.h"
+        interface_name, path_plugin_dir / f"{plugin_name}_register.h"
     )
     write_plugin_register_source(
         interface_name, plugin_name, path_plugin_dir / f"{plugin_name}_register.c"
     )
     write_plugin_header(plugin_name, path_plugin_dir / f"{plugin_name}.h")
     write_plugin_source(plugin_name, path_plugin_dir / f"{plugin_name}.c")
-    write_plugin_cmakelists(plugin_name, path_plugin_dir / f"CMakeLists.txt")
+    write_plugin_cmakelists(interface_name, plugin_name, path_plugin_dir / f"CMakeLists.txt")
 
 
 def parse_arguments() -> tuple[str, str]:

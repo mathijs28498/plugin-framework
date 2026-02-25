@@ -16,6 +16,7 @@ target_link_libraries(plugin_manager
         plugin_manager_include
         cjson
         internal_plugins
+        logger_console
 )
 
 add_subdirectory(internal_plugins)

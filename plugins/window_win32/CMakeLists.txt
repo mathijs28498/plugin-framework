@@ -17,3 +17,6 @@ target_link_libraries(window_win32
     PRIVATE
         plugin_manager_include
 )
+
+add_compile_definitions(PLUGIN_BUILD_SHARED)
+add_compile_definitions(PLUGIN_INTERFACE_NAME=window)

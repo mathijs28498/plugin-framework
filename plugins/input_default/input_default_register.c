@@ -6,8 +6,6 @@
 
 #include "input_default.h"
 
-#define PLUGIN_INTERFACE_NAME input
-
 InputInterface *get_interface(void)
 {
     static InputInterfaceContext context = {0};

@@ -16,7 +16,7 @@ int32_t __plugin_manager_init(struct PluginManagerSetupContext **context, int ar
 int32_t __plugin_manager_add(struct PluginManagerSetupContext *setup_context, const char *interface_name, const char *plugin_name);
 int32_t __plugin_manager_load(struct PluginManagerSetupContext *setup_context, struct PluginManagerRuntimeContext *runtime_context);
 int32_t __plugin_manager_get(struct PluginManagerRuntimeContext *runtime_context, const char *interface_name, void **iface);
-int32_t __plugin_manager_shutdown(struct PluginManagerSetupContext *setup_context, struct PluginManagerRuntimeContext *runtime_context);
+int32_t __plugin_manager_shutdown(struct PluginManagerSetupContext *setup_context, struct PluginManagerRuntimeContext *runtime_context, int exit_code);
 
 #endif // #ifndef PLUGIN_MANAGER_STATIC_LINKING
 
@@ -44,7 +44,7 @@ TODO("Add instance of runtime context and pass it to the plugin_manager_main, ra
                                                                                             \
         (void)__plugin_manager_init(&__context, __argc, __argv, &platform_context);         \
         int ret = plugin_manager_main(__context);                                           \
-        (void)__plugin_manager_shutdown(__context, __get_plugin_manager_runtime_context()); \
+        (void)__plugin_manager_shutdown(__context, __get_plugin_manager_runtime_context(), ret); \
         CoUninitialize();                                                                   \
         return ret;                                                                         \
     }

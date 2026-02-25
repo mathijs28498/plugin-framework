@@ -9,8 +9,6 @@
 
 #include "gui_application_default.h"
 
-#define PLUGIN_INTERFACE_NAME gui_application
-
 #define PLUGIN_DEPENDENCIES(X)           \
     X(LoggerInterface, logger, logger) \
     X(WindowInterface, window, window) \

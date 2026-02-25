@@ -10,17 +10,12 @@
 LOGGER_INTERFACE_REGISTER(logger_console, LOG_LEVEL_DEBUG);
 #include <plugin_utils.h>
 
-TODO("Use the known macros for the interface implementation")
+#include "logger_console_register.h" 
 
 STATIC_ASSERT(LOG_LEVEL_MAX == LOGGER_CONSOLE_LOG_LEVEL_MAX, "log_level max_mismatch!");
 
 #define TIME_STRING_LEN sizeof("[00:00:00.000,000]")
 
-#define ANSI_COLOR_RED "\x1b[31m"
-#define ANSI_COLOR_YELLOW "\x1b[33m"
-#define ANSI_COLOR_GREEN "\x1b[32m"
-#define ANSI_COLOR_CYAN "\x1b[36m"
-#define ANSI_COLOR_RESET "\x1b[0m"
 
 const char *LOG_LEVEL_STR_LIST[] = {"ERR", "WRN", "INF", "DBG"};
 
@@ -53,7 +48,9 @@ void get_time_str(char time_str[TIME_STRING_LEN])
         microseconds);
 }
 
-void log(const LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_level, LoggerInterfaceLogLevel urgent_log_level, const char *tag, const char *message, ...)
+
+
+void logger_console_log(const LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_level, LoggerInterfaceLogLevel urgent_log_level, const char *tag, const char *message, ...)
 {
     if (log_level > context->log_level || log_level <= LOG_LEVEL_NONE || log_level >= LOG_LEVEL_MAX)
     {
@@ -92,12 +89,12 @@ void log(const LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_leve
     printf("\n");
 }
 
-void set_level(LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_level)
+void logger_console_set_level(LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_level)
 {
     context->log_level = log_level;
 }
 
-void set_colors(LoggerInterfaceContext *context, const char *new_colors[LOG_LEVEL_MAX])
+void logger_console_set_colors(LoggerInterfaceContext *context, const char *new_colors[LOG_LEVEL_MAX])
 {
     for (int i = 0; i < ARRAY_SIZE(new_colors); i++)
     {
@@ -105,56 +102,11 @@ void set_colors(LoggerInterfaceContext *context, const char *new_colors[LOG_LEVE
     }
 }
 
-void logger_interface_on_program_exit(LoggerInterfaceContext *context)
+void logger_console_on_program_exit(LoggerInterfaceContext *context, int exit_code)
 {
     // #if IS_DEBUG && WINDOWS_GUI
-    log(context, LOG_LEVEL_INFO, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, "Press any key to exit...");
+    logger_console_log(context, LOG_LEVEL_INFO, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, "Program exited with code '%d'", exit_code);
+    logger_console_log(context, LOG_LEVEL_INFO, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, "Press any key to exit...");
     _getch();
     // #endif
-}
-
-TODO("Remove this and solve it better")
-bool to_remove_done_alloc_console = false;
-LoggerInterface *logger_interface_get_interface(void)
-{
-    static LoggerInterfaceContext context = {
-        .log_level = LOG_LEVEL_DEBUG,
-        .colors = {ANSI_COLOR_RED, ANSI_COLOR_YELLOW, ANSI_COLOR_GREEN, ANSI_COLOR_CYAN},
-    };
-
-    static LoggerInterface iface = {
-        .context = &context,
-        .log = log,
-        .set_level = set_level,
-        .set_colors = set_colors,
-    };
-
-    TODO("Add this to an init function")
-#if IS_DEBUG && WINDOWS_GUI
-    if (!to_remove_done_alloc_console)
-    {
-        if (AllocConsole())
-        {
-            FILE *fDummy;
-
-            // Redirect standard streams to the new console "CONOUT$" and "CONIN$"
-            freopen_s(&fDummy, "CONOUT$", "w", stdout);
-            freopen_s(&fDummy, "CONOUT$", "w", stderr);
-            freopen_s(&fDummy, "CONIN$", "r", stdin);
-            HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-            if (hOut != INVALID_HANDLE_VALUE)
-            {
-                DWORD dwMode = 0;
-                if (GetConsoleMode(hOut, &dwMode))
-                {
-                    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-                    SetConsoleMode(hOut, dwMode);
-                }
-            }
-        }
-        to_remove_done_alloc_console = true;
-    }
-#endif // #if IS_DEBUG && WINDOWS_GUI
-
-    return &iface;
 }

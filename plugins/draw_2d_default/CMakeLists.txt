@@ -13,3 +13,6 @@ target_link_libraries(draw_2d_default
     PRIVATE
         plugin_manager_include
 )
+
+add_compile_definitions(PLUGIN_BUILD_SHARED)
+add_compile_definitions(PLUGIN_INTERFACE_NAME=draw_2d)

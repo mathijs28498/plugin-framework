@@ -16,6 +16,7 @@
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 #include <logger_console.h>
+#include <logger_console_register.h>
 
 #include "file_io.h"
 #include "plugin_registry.h"
@@ -70,7 +71,7 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
             .interface_name = "logger",
             .plugin_name = "console",
             .dependencies_len = 0,
-            .get_interface = (PluginGetInterface_Fn)logger_interface_get_interface,
+            .get_interface = (PluginGetInterface_Fn)logger_get_interface,
             .init = NULL,
             .shutdown = NULL,
             .is_initialized = true,
@@ -270,7 +271,7 @@ int32_t __plugin_manager_get(PluginManagerRuntimeContext *runtime_context, const
     return -1;
 }
 
-int32_t __plugin_manager_shutdown(PluginManagerSetupContext *setup_context, PluginManagerRuntimeContext *runtime_context)
+int32_t __plugin_manager_shutdown(PluginManagerSetupContext *setup_context, PluginManagerRuntimeContext *runtime_context, int exit_code)
 {
     for (int i = (int) setup_context->plugin_providers_len - 1; i >= 0; i--)
     {
@@ -285,7 +286,7 @@ int32_t __plugin_manager_shutdown(PluginManagerSetupContext *setup_context, Plug
         }
     }
 
-    (void)logger_interface_on_program_exit(setup_context->logger->context);
+    (void)logger_console_on_program_exit(setup_context->logger->context, exit_code);
 
     return 0;
 }

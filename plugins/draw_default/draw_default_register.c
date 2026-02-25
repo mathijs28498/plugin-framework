@@ -8,8 +8,6 @@
 
 #include "draw_default.h"
 
-#define PLUGIN_INTERFACE_NAME draw
-
 #define REGISTER_DEPENDENCIES(X) \
     X(LoggerInterface, logger, logger)
 
