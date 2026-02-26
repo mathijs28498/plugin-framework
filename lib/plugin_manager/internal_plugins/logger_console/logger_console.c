@@ -104,9 +104,7 @@ void logger_console_set_colors(LoggerInterfaceContext *context, const char *new_
 
 void logger_console_on_program_exit(LoggerInterfaceContext *context, int exit_code)
 {
-    // #if IS_DEBUG && WINDOWS_GUI
-    logger_console_log(context, LOG_LEVEL_INFO, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, "Program exited with code '%d'", exit_code);
+    logger_console_log(context, LOG_LEVEL_INFO, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, "Program exited with code %d", exit_code);
     logger_console_log(context, LOG_LEVEL_INFO, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, "Press any key to exit...");
     _getch();
-    // #endif
 }

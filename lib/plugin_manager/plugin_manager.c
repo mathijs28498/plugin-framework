@@ -13,6 +13,7 @@
 
 #include <environment_interface.h>
 #include <environment_default.h>
+#include <environment_default_register.h>
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 #include <logger_console.h>
@@ -25,13 +26,7 @@ LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 
 #define PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH 256
 
-PluginManagerRuntimeContext *__get_plugin_manager_runtime_context()
-{
-    static PluginManagerRuntimeContext context = {0};
-    return &context;
-}
-
-int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int argc, char **argv, void *platform_context)
+int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, PluginManagerSetupContext **setup_context, PluginManagerRuntimeContext **runtime_context)
 {
     assert(setup_context != NULL);
 
@@ -41,17 +36,19 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
         .requested_plugins_len = 0,
     };
 
+    static PluginManagerRuntimeContext new_runtime_context = {0};
+
     {
         assert(new_setup_context.internal_plugins_len < ARRAY_SIZE(new_setup_context.internal_plugins));
 
-        EnvironmentInterface *environment = environment_interface_get_interface();
+        EnvironmentInterface *environment = environment_get_interface();
         environment_default_set_args(environment->context, argc, argv, platform_context);
 
         PluginProvider environment_plugin = {
             .interface_name = "environment",
             .plugin_name = "default",
             .dependencies_len = 0,
-            .get_interface = (PluginGetInterface_Fn)environment_interface_get_interface,
+            .get_interface = (PluginGetInterface_Fn)environment_get_interface,
             .init = NULL,
             .shutdown = NULL,
             .is_initialized = true,
@@ -78,13 +75,16 @@ int32_t __plugin_manager_init(PluginManagerSetupContext **setup_context, int arg
         };
 
         new_setup_context.logger = (LoggerInterface *)logger_plugin.get_interface();
+        new_runtime_context.logger = (LoggerInterface *)logger_plugin.get_interface();
 
         memcpy(&new_setup_context.internal_plugins[new_setup_context.internal_plugins_len],
                &logger_plugin,
                sizeof(new_setup_context.internal_plugins[new_setup_context.internal_plugins_len]));
         new_setup_context.internal_plugins_len++;
     }
+
     *setup_context = &new_setup_context;
+    *runtime_context = &new_runtime_context;
     return 0;
 }
 
@@ -273,7 +273,7 @@ int32_t __plugin_manager_get(PluginManagerRuntimeContext *runtime_context, const
 
 int32_t __plugin_manager_shutdown(PluginManagerSetupContext *setup_context, PluginManagerRuntimeContext *runtime_context, int exit_code)
 {
-    for (int i = (int) setup_context->plugin_providers_len - 1; i >= 0; i--)
+    for (int i = (int)setup_context->plugin_providers_len - 1; i >= 0; i--)
     {
         size_t current_idx = setup_context->sorted_plugin_providers_indices[i];
         PluginProvider *plugin_provider = &setup_context->plugin_providers[current_idx];

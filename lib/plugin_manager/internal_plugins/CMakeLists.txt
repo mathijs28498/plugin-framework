@@ -1,16 +1,17 @@
-add_library(internal_plugins)
+# add_library(internal_plugins)
 
-target_sources(internal_plugins
-    PRIVATE
-        environment_default.c
+# target_sources(internal_plugins
+#     PRIVATE
+#         # environment_default.c
 
-    PUBLIC
-        FILE_SET HEADERS
-)
+#     PUBLIC
+#         FILE_SET HEADERS
+# )
 
-target_link_libraries(internal_plugins
-    PRIVATE
-        plugin_manager_include
-)
+# target_link_libraries(internal_plugins
+#     PRIVATE
+#         plugin_manager_include
+# )
 
 add_subdirectory(logger_console)
+add_subdirectory(environment_default)
