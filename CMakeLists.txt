@@ -31,6 +31,8 @@ configure_file(
     COPYONLY
 )
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/lib/plugin_manager")
+
 add_subdirectory(lib)
 add_subdirectory(plugins)
 add_subdirectory(src)

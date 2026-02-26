@@ -88,13 +88,13 @@ int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, Plu
     return 0;
 }
 
-int32_t __plugin_manager_add(PluginManagerSetupContext *setup_context, const char *interface_name, const char *plugin_name)
+int32_t __plugin_manager_add(PluginManagerSetupContext *setup_context, const char *interface_name, const char *plugin_name, bool is_explicit)
 {
     return plugin_manager_add_internal(
         setup_context->logger,
         interface_name,
         plugin_name,
-        true,
+        is_explicit,
         setup_context->requested_plugins,
         &setup_context->requested_plugins_len);
 };

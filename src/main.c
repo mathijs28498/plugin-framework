@@ -4,13 +4,15 @@ LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
 #include <environment_interface.h>
 #include <window_interface.h>
 #include <gui_application_interface.h>
+#include "plugin_framework_generated.h"
 
 #include <stdio.h>
 #include <stdbool.h>
 
 TODO("Make this work")
-#define PLUGIN_FRAMEWORK_PLUGINS_LIST(X) \
-    X("gui_application", NULL)
+// #define PLUGIN_FRAMEWORK_PLUGINS_LIST(X) \
+//     /*empty*/
+//     // X("gui_application", NULL) X("logger", "database")
 
 PLUGIN_FRAMEWORK_MAIN()
 {
