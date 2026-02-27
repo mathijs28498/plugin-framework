@@ -7,7 +7,7 @@
 struct LoggerInterface;
 struct RequestedPlugin;
 
-int32_t  plugin_manager_add_internal(
+int32_t  plugin_manager_request_plugin(
     const struct LoggerInterface *logger,
     const char *interface_name,
     const char *plugin_name,

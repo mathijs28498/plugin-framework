@@ -273,7 +273,7 @@ int32_t resolve_plugin_provider_dependencies(
             }
 
             LOG_DBG(logger, "Dependency '%s' not found, adding to requested plugins", dependency->interface_name);
-            ret = plugin_manager_add_internal(logger, dependency->interface_name, NULL, false, requested_plugins, requested_plugins_len);
+            ret = plugin_manager_request_plugin(logger, dependency->interface_name, NULL, false, requested_plugins, requested_plugins_len);
             if (ret < 0)
             {
                 LOG_ERR(logger, "Unable to implicitly add dependency interface '%s'", dependency->interface_name);

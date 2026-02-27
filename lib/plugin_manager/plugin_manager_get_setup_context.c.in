@@ -1,15 +1,18 @@
 #include "plugin_manager_get_setup_context.h"
 
+#include <stdbool.h>
+
 #include "__plugin_manager_generated.h"
 #include "plugin_manager_types.h"
 
 struct PluginManagerSetupContext *plugin_manager_get_setup_context()
 {
     static PluginManagerSetupContext setup_context = {
-        .internal_plugins = {@INTERNAL_PLUGINS_LIST@},
+        .internal_plugins = {@INTERNAL_PLUGINS_TEXT@},
         .internal_plugins_len = @INTERNAL_PLUGINS_LEN@,
+        .requested_plugins = {@REQUESTED_PLUGINS_TEXT@},
+        .requested_plugins_len = @REQUESTED_PLUGINS_LEN@,
         .plugin_providers_len = 0,
-        .requested_plugins_len = 0,
     };
 
     return &setup_context;

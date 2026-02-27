@@ -25,99 +25,7 @@ LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 
 #define PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH 256
 
-int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, PluginManagerSetupContext **setup_context, PluginManagerRuntimeContext **runtime_context)
-{
-    assert(setup_context != NULL);
-    assert(runtime_context != NULL);
-
-    PluginManagerSetupContext *new_setup_context = plugin_manager_get_setup_context();
-
-    static PluginManagerRuntimeContext new_runtime_context = {0};
-
-    for (size_t i = 0; i < new_setup_context->internal_plugins_len; i++)
-    {
-        PluginProvider *internal_plugin = &new_setup_context->internal_plugins[i];
-        if (strcmp(internal_plugin->interface_name, "logger") == 0)
-        {
-            if (internal_plugin->init)
-            {
-                internal_plugin->init(internal_plugin->get_interface()->context);
-            }
-            internal_plugin->is_initialized = true;
-
-            new_setup_context->logger = (LoggerInterface *)internal_plugin->get_interface();
-            new_runtime_context.logger = (LoggerInterface *)internal_plugin->get_interface();
-        }
-        else if (strcmp(internal_plugin->interface_name, "environment") == 0)
-        {
-            if (internal_plugin->init)
-            {
-                internal_plugin->init(internal_plugin->get_interface()->context);
-            }
-            internal_plugin->is_initialized = true;
-
-            EnvironmentInterface *environment = (EnvironmentInterface *)internal_plugin->get_interface();
-            environment_default_set_args(environment->context, argc, argv, platform_context);
-        }
-    }
-
-    *setup_context = new_setup_context;
-    *runtime_context = &new_runtime_context;
-    return 0;
-}
-
-int32_t __plugin_manager_add(PluginManagerSetupContext *setup_context, const char *interface_name, const char *plugin_name, bool is_explicit)
-{
-    return plugin_manager_add_internal(
-        setup_context->logger,
-        interface_name,
-        plugin_name,
-        is_explicit,
-        setup_context->requested_plugins,
-        &setup_context->requested_plugins_len);
-};
-
-int32_t plugin_manager_add_internal(
-    const LoggerInterface *logger,
-    const char *interface_name,
-    const char *plugin_name,
-    bool is_explicit,
-    RequestedPlugin *requested_plugins,
-    size_t *requested_plugins_len)
-{
-    if (interface_name == NULL)
-    {
-        LOG_ERR(logger, "Interface name is NULL");
-        return -1;
-    }
-
-    if (*requested_plugins_len >= PLUGIN_MANAGER_MAX_PLUGINS_LEN)
-    {
-        LOG_ERR(logger, "Cannot add plugin as max plugin_definitions is reached. Max plugin count '%d'", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
-        return -1;
-    }
-
-    struct RequestedPlugin *requested_plugin = &requested_plugins[*requested_plugins_len];
-
-    snprintf(requested_plugin->interface_name, PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN, "%s", interface_name);
-
-    if (plugin_name == NULL)
-    {
-        requested_plugin->plugin_name[0] = '\0';
-    }
-    else
-    {
-        snprintf(requested_plugin->plugin_name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN, "%s", plugin_name);
-    }
-
-    requested_plugin->is_explicit = is_explicit;
-    requested_plugin->is_resolved = false;
-
-    (*requested_plugins_len)++;
-    return 0;
-}
-
-int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginManagerRuntimeContext *runtime_context)
+int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginManagerRuntimeContext *runtime_context)
 {
     int ret;
     LoggerInterface *logger = setup_context->logger;
@@ -197,7 +105,11 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
         }
     }
 
-    ret = calculate_plugin_provider_initialization_order(logger, setup_context->plugin_providers, setup_context->plugin_providers_len, setup_context->sorted_plugin_providers_indices);
+    ret = calculate_plugin_provider_initialization_order(
+        logger,
+        setup_context->plugin_providers,
+        setup_context->plugin_providers_len,
+        setup_context->sorted_plugin_providers_indices);
     if (ret < 0)
     {
         LOG_ERR(logger, "Error in calculate_plugin_provider_initialization_order: %d", ret);
@@ -217,6 +129,95 @@ int32_t __plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMa
         return ret;
     }
 
+    return 0;
+}
+
+int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, PluginManagerSetupContext **setup_context, PluginManagerRuntimeContext **runtime_context)
+{
+    assert(setup_context != NULL);
+    assert(runtime_context != NULL);
+
+    int ret;
+
+    PluginManagerSetupContext *new_setup_context = plugin_manager_get_setup_context();
+    static PluginManagerRuntimeContext new_runtime_context = {0};
+    *setup_context = new_setup_context;
+    *runtime_context = &new_runtime_context;
+
+    for (size_t i = 0; i < new_setup_context->internal_plugins_len; i++)
+    {
+        PluginProvider *internal_plugin = &new_setup_context->internal_plugins[i];
+        if (strcmp(internal_plugin->interface_name, "logger") == 0)
+        {
+            if (internal_plugin->init)
+            {
+                internal_plugin->init(internal_plugin->get_interface()->context);
+            }
+            internal_plugin->is_initialized = true;
+
+            new_setup_context->logger = (LoggerInterface *)internal_plugin->get_interface();
+            new_runtime_context.logger = (LoggerInterface *)internal_plugin->get_interface();
+        }
+        else if (strcmp(internal_plugin->interface_name, "environment") == 0)
+        {
+            if (internal_plugin->init)
+            {
+                internal_plugin->init(internal_plugin->get_interface()->context);
+            }
+            internal_plugin->is_initialized = true;
+
+            EnvironmentInterface *environment = (EnvironmentInterface *)internal_plugin->get_interface();
+            environment_default_set_args(environment->context, argc, argv, platform_context);
+        }
+    }
+
+    ret = plugin_manager_load(new_setup_context, &new_runtime_context);
+    if (ret < 0)
+    {
+        LOG_ERR(new_setup_context->logger, "Error loading plugins: '%d'", ret);
+        return ret;
+    }
+
+    return 0;
+}
+
+int32_t plugin_manager_request_plugin(
+    const LoggerInterface *logger,
+    const char *interface_name,
+    const char *plugin_name,
+    bool is_explicit,
+    RequestedPlugin *requested_plugins,
+    size_t *requested_plugins_len)
+{
+    if (interface_name == NULL)
+    {
+        LOG_ERR(logger, "Interface name is NULL");
+        return -1;
+    }
+
+    if (*requested_plugins_len >= PLUGIN_MANAGER_MAX_PLUGINS_LEN)
+    {
+        LOG_ERR(logger, "Cannot add plugin as max plugin_definitions is reached. Max plugin count '%d'", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
+        return -1;
+    }
+
+    struct RequestedPlugin *requested_plugin = &requested_plugins[*requested_plugins_len];
+
+    snprintf(requested_plugin->interface_name, PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN, "%s", interface_name);
+
+    if (plugin_name == NULL)
+    {
+        requested_plugin->plugin_name[0] = '\0';
+    }
+    else
+    {
+        snprintf(requested_plugin->plugin_name, PLUGIN_REGISTRY_MAX_PLUGIN_NAME_LEN, "%s", plugin_name);
+    }
+
+    requested_plugin->is_explicit = is_explicit;
+    requested_plugin->is_resolved = false;
+
+    (*requested_plugins_len)++;
     return 0;
 }
 
@@ -244,6 +245,12 @@ int32_t __plugin_manager_shutdown(PluginManagerSetupContext *setup_context, Plug
     {
         size_t current_idx = setup_context->sorted_plugin_providers_indices[i];
         PluginProvider *plugin_provider = &setup_context->plugin_providers[current_idx];
+        if (!plugin_provider->is_initialized)
+        {
+            LOG_DBG(setup_context->logger, "down '%s' interface", plugin_provider->interface_name);
+            continue;
+        }
+
         InterfaceInstance *interface_instance = &runtime_context->interface_instances[i];
         LOG_DBG(setup_context->logger, "Shutting down '%s' interface", plugin_provider->interface_name);
 

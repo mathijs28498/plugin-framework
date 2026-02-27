@@ -1,57 +1,11 @@
 include_guard(GLOBAL)
 
-# TODO: Create new code for statically loading the plugins with dependencies
-#       Insert this code under an #if defined(BUILD_STATIC) or something
-# TODO: Add proper name spaces to the macros and defines with PLUGIN_MANAGER
+message("TODO: Create new code for statically loading the plugins with dependencies - insert this code under an #if defined(BUILD_STATIC) or something")
 
-function(plugin_framework_add REQUESTED_PLUGINS_ARG INTERFACE_NAME)
-    set(ONE_VALUE_ARGS VARIANT)
-    cmake_parse_arguments(PFP "" "${ONE_VALUE_ARGS}" "" "${ARGN}")
-
-    if (NOT DEFINED PFP_VARIANT)
-        set(PFP_VARIANT "")
-    endif()
-
-    list(APPEND ${REQUESTED_PLUGINS_ARG} "${INTERFACE_NAME}|${PFP_VARIANT}|true")
-
-    set(${REQUESTED_PLUGINS_ARG} "${${REQUESTED_PLUGINS_ARG}}" PARENT_SCOPE)
-endfunction()
-
-function(plugin_framework_load REQUESTED_PLUGINS_ARG GEN_DIR)
-    set(X_MACRO_LIST "")
-    foreach (REQUESTED_PLUGIN IN LISTS ${REQUESTED_PLUGINS_ARG})
-        string(REPLACE "|" ";" REQUESTED_PLUGIN_VALUES "${REQUESTED_PLUGIN}")
-        list(GET REQUESTED_PLUGIN_VALUES 0 INTERFACE_NAME)
-        list(GET REQUESTED_PLUGIN_VALUES 1 PLUGIN_NAME)
-        list(GET REQUESTED_PLUGIN_VALUES 2 IS_EXPLICIT)
-        set(PLUGIN_NAME_ARGUMENT "\"${PLUGIN_NAME}\"")
-        if (PLUGIN_NAME STREQUAL "")
-            set(PLUGIN_NAME_ARGUMENT "NULL")
-        endif()
-        list(APPEND X_MACRO_LIST "X(\"${INTERFACE_NAME}\", ${PLUGIN_NAME_ARGUMENT}, ${IS_EXPLICIT}) ")
-    endforeach()
-
-    set(CONTENT "#pragma once\n\n#define __PLUGIN_FRAMEWORK_PLUGINS_LIST(X) \\\n")
-
-    list(LENGTH X_MACRO_LIST X_MACRO_LINES_LEN)
-    foreach(X_MACRO IN LISTS X_MACRO_LIST)
-        string(APPEND CONTENT "\t${X_MACRO} \\\n")
-    endforeach()
-    string(APPEND CONTENT "\t/* end */")
-
-    set(HEADER_LOCATION "${GEN_DIR}/plugin_framework_generated.h")
-    file(CONFIGURE
-        OUTPUT "${HEADER_LOCATION}"
-        CONTENT "${CONTENT}"
-    )
-
-    message(STATUS "Generated plugin header at: ${HEADER_LOCATION}")
-endfunction()
-
-function(__plugin_manager_load_registry JSON_DIR GEN_DIR)
+function(plugin_manager_load_registry JSON_DIR GEN_DIR)
     file(READ "${JSON_DIR}/plugin_registry.json" PLUGIN_REGISTRY_JSON)
 
-    set(INTERFACE_DEFINITIONS_LIST "")
+    set(INTERFACE_DEFINITIONS_TEXT "")
     string(JSON INTERFACE_DEFINITIONS_LEN ERROR_VARIABLE err LENGTH "${PLUGIN_REGISTRY_JSON}" interfaces)
     math(EXPR MAX_I "${INTERFACE_DEFINITIONS_LEN} - 1")
 
@@ -101,7 +55,7 @@ function(__plugin_manager_load_registry JSON_DIR GEN_DIR)
                 ")
         endforeach()
         
-        string(APPEND INTERFACE_DEFINITIONS_LIST "
+        string(APPEND INTERFACE_DEFINITIONS_TEXT "
             {
                 .interface_name = \"${INTERFACE_NAME}\",
                 .default_plugin = \"${DEFAULT_PLUGIN_NAME}\",
@@ -163,12 +117,7 @@ const PluginRegistry *plugin_registry_get(void);
     message(STATUS "Generated plugin manager header at: ${HEADER_LOCATION}")
 endfunction()
 
-function(__plugin_manager_load_internal JSON_DIR GEN_DIR)
-    # TODO: Add better name for CONTENT here
-    set(HEADER_CONTENT "#pragma once\n\n#include <stdint.h>\n\n")
-    file(READ "${JSON_DIR}/plugin_registry.json" PLUGIN_REGISTRY_JSON)
-
-    set(INTERNAL_PLUGINS_LIST "")
+function(plugin_manager_load_internal_plugins PLUGIN_REGISTRY_JSON OUT_PLUGIN_MANAGER_HEADER_CONTENT OUT_INTERNAL_PLUGINS_TEXT OUT_INTERNAL_PLUGINS_LEN)
     string(JSON INTERNAL_PLUGINS_LEN ERROR_VARIABLE err LENGTH "${PLUGIN_REGISTRY_JSON}" "internal_plugins")
     math(EXPR MAX_I "${INTERNAL_PLUGINS_LEN} - 1")
 
@@ -182,7 +131,7 @@ function(__plugin_manager_load_internal JSON_DIR GEN_DIR)
         math(EXPR MAX_J "${INTERNAL_PLUGIN_FW_DECLARATION_COUNT} - 1")
         foreach(j RANGE ${MAX_J})
             string(JSON INTERNAL_PLUGIN_FW_DECLARATION GET ${INTERNAL_PLUGIN_JSON} plugin_forward_declarations ${j})
-            string(APPEND HEADER_CONTENT "${INTERNAL_PLUGIN_FW_DECLARATION}\n")
+            string(APPEND ${OUT_PLUGIN_MANAGER_HEADER_CONTENT} "${INTERNAL_PLUGIN_FW_DECLARATION}\n")
         endforeach()
 
         file(READ "${PLUGIN_SOURCE}/${INTERFACE_NAME}_${PLUGIN_NAME}_register.c" PLUGIN_REGISTER_FILE)
@@ -196,27 +145,27 @@ function(__plugin_manager_load_internal JSON_DIR GEN_DIR)
         if (NOT HAS_INTERFACE EQUAL -1)
             set(FUNCTION_NAME "${INTERFACE_NAME}_get_interface")
             set(INTERFACE_FUNCTION_GET_INTERFACE "(PluginGetInterface_Fn)${FUNCTION_NAME}")
-            string(APPEND HEADER_CONTENT "void *${FUNCTION_NAME}(void);\n")
+            string(APPEND ${OUT_PLUGIN_MANAGER_HEADER_CONTENT} "void *${FUNCTION_NAME}(void);\n")
         endif()
 
         string(FIND "${PLUGIN_REGISTER_FILE}" "PLUGIN_REGISTER_INIT" HAS_INIT)
         if (NOT HAS_INIT EQUAL -1)
             set(FUNCTION_NAME "${INTERFACE_NAME}_init")
             set(INTERFACE_FUNCTION_INIT "(PluginInit_Fn)${FUNCTION_NAME}")
-            string(APPEND HEADER_CONTENT "int32_t ${FUNCTION_NAME}(void* context);\n")
+            string(APPEND ${OUT_PLUGIN_MANAGER_HEADER_CONTENT} "int32_t ${FUNCTION_NAME}(void* context);\n")
         endif()
 
         string(FIND "${PLUGIN_REGISTER_FILE}" "PLUGIN_REGISTER_SHUTDOWN" HAS_SHUTDOWN)
         if (NOT HAS_SHUTDOWN EQUAL -1)
             set(FUNCTION_NAME "${INTERFACE_NAME}_shutdown")
             set(INTERFACE_FUNCTION_INIT "(PluginShutdown_Fn)${FUNCTION_NAME}")
-            string(APPEND HEADER_CONTENT "int32_t ${FUNCTION_NAME}(void* context);\n")
+            string(APPEND ${OUT_PLUGIN_MANAGER_HEADER_CONTENT} "int32_t ${FUNCTION_NAME}(void* context);\n")
         endif()
 
-        string(APPEND HEADER_CONTENT "\n")
+        string(APPEND ${OUT_PLUGIN_MANAGER_HEADER_CONTENT} "\n")
 
-        # TODO: Handle dependencies
-        string(APPEND INTERNAL_PLUGINS_LIST "
+        message("TODO: Handle dependencies")
+        string(APPEND ${OUT_INTERNAL_PLUGINS_TEXT} "
             {
                 .interface_name = \"${INTERFACE_NAME}\",
                 .plugin_name = \"${PLUGIN_NAME}\",
@@ -228,8 +177,63 @@ function(__plugin_manager_load_internal JSON_DIR GEN_DIR)
                 .is_initialized = false,
             },")
     endforeach()
-    string(APPEND INTERNAL_PLUGINS_LIST "
+
+    string(APPEND ${OUT_INTERNAL_PLUGINS_TEXT} "
         ")
+
+    set(${OUT_PLUGIN_MANAGER_HEADER_CONTENT} "${${OUT_PLUGIN_MANAGER_HEADER_CONTENT}}" PARENT_SCOPE)
+    set(${OUT_INTERNAL_PLUGINS_TEXT} "${${OUT_INTERNAL_PLUGINS_TEXT}}" PARENT_SCOPE)
+    set(${OUT_INTERNAL_PLUGINS_LEN} "${INTERNAL_PLUGINS_LEN}" PARENT_SCOPE)
+endfunction()
+
+function(plugin_manager_load_requested_plugins REQUESTED_PLUGINS_JSON OUT_REQUESTED_PLUGINS_TEXT OUT_REQUESTED_PLUGINS_LEN)
+    message("TODO: Add recursive dependency resolver for static loading")
+    string(JSON REQUESTED_PLUGINS_LEN ERROR_VARIABLE err LENGTH "${REQUESTED_PLUGINS_JSON}" "plugins")
+    math(EXPR MAX_I "${REQUESTED_PLUGINS_LEN} - 1")
+
+    foreach(i RANGE ${MAX_I})
+        string(JSON REQUESTED_PLUGIN GET ${REQUESTED_PLUGINS_JSON} plugins ${i})
+        string(JSON REQUESTED_INTERFACE_NAME GET ${REQUESTED_PLUGIN} interface_name)
+
+        string(JSON REQUESTED_PLUGIN_NAME ERROR_VARIABLE JSON_ERR GET ${REQUESTED_PLUGIN} plugin_name)
+        if(JSON_ERR)
+            set(REQUESTED_PLUGIN_NAME "")
+        endif()
+
+        set(REQUESTED_PLUGIN_IS_EXPLICIT "true")
+
+        string(APPEND ${OUT_REQUESTED_PLUGINS_TEXT} "
+            {
+                .interface_name = \"${REQUESTED_INTERFACE_NAME}\",
+                .plugin_name = \"${REQUESTED_PLUGIN_NAME}\",
+                .is_explicit = ${REQUESTED_PLUGIN_IS_EXPLICIT},
+                .is_resolved = false,
+            },")
+    endforeach()
+
+    string(APPEND ${OUT_REQUESTED_PLUGINS_TEXT} "
+        ")
+
+    set(${OUT_REQUESTED_PLUGINS_TEXT} "${${OUT_REQUESTED_PLUGINS_TEXT}}" PARENT_SCOPE)
+    set(${OUT_REQUESTED_PLUGINS_LEN} "${REQUESTED_PLUGINS_LEN}" PARENT_SCOPE)
+endfunction()
+
+function(plugin_manager_load_plugins JSON_DIR GEN_DIR)
+    file(READ "${JSON_DIR}/plugin_registry.json" PLUGIN_REGISTRY_JSON)
+    file(READ "${JSON_DIR}/plugin_list.json" REQUESTED_PLUGINS_JSON)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS 
+        "${JSON_DIR}/plugin_list.json"
+        "${JSON_DIR}/plugin_registry.json"
+    )
+
+    set(PLUGIN_MANAGER_HEADER_CONTENT "#pragma once\n\n#include <stdint.h>\n\n")
+    set(INTERNAL_PLUGINS_TEXT "")
+    set(INTERNAL_PLUGINS_LEN)
+    plugin_manager_load_internal_plugins(${PLUGIN_REGISTRY_JSON} PLUGIN_MANAGER_HEADER_CONTENT INTERNAL_PLUGINS_TEXT INTERNAL_PLUGINS_LEN)
+
+    set(REQUESTED_PLUGINS_TEXT "")
+    set(REQUESTED_PLUGINS_LEN)
+    plugin_manager_load_requested_plugins(${REQUESTED_PLUGINS_JSON} REQUESTED_PLUGINS_TEXT REQUESTED_PLUGINS_LEN)
 
     set(GENERATED_GET_SETUP_CONTEXT_FILE "${CMAKE_CURRENT_BINARY_DIR}/plugin_manager_get_setup_context.c")
     configure_file(
@@ -248,7 +252,7 @@ function(__plugin_manager_load_internal JSON_DIR GEN_DIR)
     set(HEADER_LOCATION "${GEN_DIR}/__plugin_manager_generated.h")
     file(CONFIGURE
         OUTPUT "${HEADER_LOCATION}"
-        CONTENT "${HEADER_CONTENT}"
+        CONTENT "${PLUGIN_MANAGER_HEADER_CONTENT}"
     )
 
     message(STATUS "Generated plugin manager header at: ${HEADER_LOCATION}")

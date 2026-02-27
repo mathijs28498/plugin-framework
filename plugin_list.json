@@ -1,0 +1,7 @@
+{
+    "plugins": [
+        {
+            "interface_name": "gui_application"
+        }
+    ]
+}

@@ -8,10 +8,6 @@ LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
 #include <window_interface.h>
 #include <gui_application_interface.h>
 
-#include "plugin_framework_generated.h"
-
-TODO("Make this work")
-
 PLUGIN_FRAMEWORK_MAIN()
 {
     int32_t ret = 0;
@@ -27,11 +23,6 @@ PLUGIN_FRAMEWORK_MAIN()
 
     // ret = PLUGIN_MANAGER_LINK_INTERFACES("draw", "draw_interfaces",
     //                                "draw_2d", "draw_3d", "draw_ui");
-
-    if (ret < 0)
-    {
-        return ret;
-    }
 
     GuiApplicationInterface *gui_application;
     ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);

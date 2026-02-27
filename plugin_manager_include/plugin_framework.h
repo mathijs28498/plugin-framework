@@ -12,15 +12,10 @@ struct PluginManagerRuntimeContext;
 struct PluginManagerSetupContext;
 
 int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, struct PluginManagerSetupContext **context, struct PluginManagerRuntimeContext **runtime_context);
-int32_t __plugin_manager_add(struct PluginManagerSetupContext *setup_context, const char *interface_name, const char *plugin_name, bool is_explicit);
-int32_t __plugin_manager_load(struct PluginManagerSetupContext *setup_context, struct PluginManagerRuntimeContext *runtime_context);
 int32_t __plugin_manager_get(struct PluginManagerRuntimeContext *runtime_context, const char *interface_name, void **iface);
 int32_t __plugin_manager_shutdown(struct PluginManagerSetupContext *setup_context, struct PluginManagerRuntimeContext *runtime_context, int exit_code);
 
 #endif // #ifndef PLUGIN_MANAGER_STATIC_LINKING
-
-#define __PLUGIN_FRAMEWORK_ADD(interface_name, plugin_name, is_explicit) \
-    (void)__plugin_manager_add(__setup_context, interface_name, plugin_name, is_explicit);
 
 TODO("Add instance of runtime context and pass it to the plugin_manager_main, rather than getting it every time")
 #if WINDOWS_GUI
@@ -49,15 +44,10 @@ TODO("Add instance of runtime context and pass it to the plugin_manager_main, ra
         ret = __plugin_manager_init(__argc, __argv, &platform_context, &__setup_context, &__runtime_context); \
         if (ret < 0)                                                                                          \
         {                                                                                                     \
-            return ret;                                                                                       \
-        }                                                                                                     \
-        __PLUGIN_FRAMEWORK_PLUGINS_LIST(__PLUGIN_FRAMEWORK_ADD);                                              \
-        ret = __plugin_manager_load(__setup_context, __runtime_context);                                      \
-        if (ret < 0)                                                                                          \
-        {                                                                                                     \
             (void)__plugin_manager_shutdown(__setup_context, __runtime_context, ret);                         \
             return ret;                                                                                       \
         }                                                                                                     \
+                                                                                                              \
         ret = plugin_manager_main(__runtime_context);                                                         \
         (void)__plugin_manager_shutdown(__setup_context, __runtime_context, ret);                             \
         CoUninitialize();                                                                                     \
@@ -73,15 +63,10 @@ TODO("Add instance of runtime context and pass it to the plugin_manager_main, ra
         ret = __plugin_manager_init(argc, argv, NULL, &__setup_context, &__runtime_context); \
         if (ret < 0)                                                                         \
         {                                                                                    \
-            return ret;                                                                      \
-        }                                                                                    \
-        PLUGIN_FRAMEWORK_PLUGINS_LIST(__PLUGIN_FRAMEWORK_ADD);                               \
-        ret = __plugin_manager_load(__setup_context, __runtime_context);                     \
-        if (ret < 0)                                                                         \
-        {                                                                                    \
             (void)__plugin_manager_shutdown(__setup_context, __runtime_context, ret);        \
             return ret;                                                                      \
         }                                                                                    \
+                                                                                             \
         ret = plugin_manager_main(__runtime_context);                                        \
         (void)__plugin_manager_shutdown(__setup_context, __runtime_context, ret);            \
         return ret;                                                                          \
