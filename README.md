@@ -18,13 +18,16 @@
 - [x] Json registration of plugins
 - [x] Remove build to get a clean build
 
+### 1
 - [ ] Fix all todos
 
+### 2
 - [ ] Change char[] to char* where static chars are
 - [ ] Add configurations to plugins
 - [ ] Add sub interfaces for logic and draw
 - [ ] Add conjoined plugin structure to json
 
+### 3
 - [ ] Add logging to a file
 - [ ] Add static loading
     - [ ] Figure out naming collisions
