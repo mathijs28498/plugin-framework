@@ -30,11 +30,9 @@ LoggerInterface *get_interface(void)
         .set_level = logger_console_set_level,
     };
 
-    TODO("Add this to an init function")
     return &iface;
 }
 
-TODO("Figure out how to make this work with the macro")
 PLUGIN_REGISTER_INTERFACE(get_interface, LoggerInterface);
 
 int32_t init(LoggerInterfaceContext *context)

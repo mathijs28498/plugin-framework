@@ -28,7 +28,10 @@
 - [ ] Add conjoined plugin structure to json
 
 ### 3
+- [ ] Look into json parsing code generation inside of python rather than cmake
 - [ ] Add logging to a file
+- [ ] Add error handling in cmake
+- [ ] Add error handling for each part of json parsing in cmake
 - [ ] Add static loading
     - [ ] Figure out naming collisions
 - [ ] Look into multiple threads

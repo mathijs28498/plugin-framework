@@ -15,6 +15,4 @@ target_link_libraries(program
     PRIVATE
         plugin_manager_include
         plugin_manager
-        test_lib
-        test_yes
 )

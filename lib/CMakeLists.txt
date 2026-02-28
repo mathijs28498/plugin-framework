@@ -1,7 +1,4 @@
-add_subdirectory(test_lib)
-add_subdirectory(test_lib_i)
 add_subdirectory(cglm)
 add_subdirectory(jsmn)
 add_subdirectory(cjson)
-add_subdirectory(test_yes)
 add_subdirectory(plugin_manager)
