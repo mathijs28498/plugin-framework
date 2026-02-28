@@ -1,7 +1,7 @@
 {
     "plugins": [
         {
-            "interface_name": "gui_application"
+            "interface_name": "input"
         }
     ]
 }

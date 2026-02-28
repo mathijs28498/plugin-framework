@@ -17,8 +17,7 @@ target_link_libraries(gui_application_default
         plugin_manager_include
 )
 
-# TODO: Change all add_compile_definitions to target_compile_definitions
-if (PLUGIN_MANAGER_BUILD_SHARED_LIBS)
+if (BUILD_SHARED_LIBS)
     target_compile_definitions(gui_application_default PRIVATE PLUGIN_BUILD_SHARED)
 endif()
-add_compile_definitions(gui_application_default PRIVATE PLUGIN_INTERFACE_NAME=gui_application)
+target_compile_definitions(gui_application_default PRIVATE PLUGIN_INTERFACE_NAME=gui_application)

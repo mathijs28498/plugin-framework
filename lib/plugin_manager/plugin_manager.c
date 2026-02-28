@@ -173,7 +173,7 @@ int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, Plu
     ret = plugin_manager_load(new_setup_context, &new_runtime_context);
     if (ret < 0)
     {
-        LOG_ERR(new_setup_context->logger, "Error loading plugins: '%d'", ret);
+        LOG_ERR(new_setup_context->logger, "Error loading plugins: %d", ret);
         return ret;
     }
 

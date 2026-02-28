@@ -14,4 +14,4 @@ target_link_libraries(environment_default
         plugin_manager_include
 )
 
-add_compile_definitions(PLUGIN_INTERFACE_NAME=environment)
+target_compile_definitions(environment_default PRIVATE PLUGIN_INTERFACE_NAME=environment)

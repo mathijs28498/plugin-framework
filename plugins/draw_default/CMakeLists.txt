@@ -1,4 +1,4 @@
-add_library(draw_default SHARED)
+add_library(draw_default)
 
 target_sources(draw_default
     PRIVATE
@@ -14,5 +14,7 @@ target_link_libraries(draw_default
         plugin_manager_include
 )
 
-add_compile_definitions(PLUGIN_BUILD_SHARED)
-add_compile_definitions(PLUGIN_INTERFACE_NAME=draw)
+if (BUILD_SHARED_LIBS)
+    target_compile_definitions(draw_default PRIVATE PLUGIN_BUILD_SHARED)
+endif()
+target_compile_definitions(draw_default PRIVATE PLUGIN_INTERFACE_NAME=draw)

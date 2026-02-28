@@ -2,9 +2,19 @@
     "version": 4,
     "configurePresets": [
         {
-            "name": "main",
+            "name": "dev-dynamic",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_SHARED_LIBS": "ON"
+            }
+        },
+        {
+            "name": "dev-static",
+            "binaryDir": "${sourceDir}/build",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "BUILD_SHARED_LIBS": "OFF"
             }
         }
     ]

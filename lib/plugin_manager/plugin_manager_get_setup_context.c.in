@@ -12,7 +12,8 @@ struct PluginManagerSetupContext *plugin_manager_get_setup_context()
         .internal_plugins_len = @INTERNAL_PLUGINS_LEN@,
         .requested_plugins = {@REQUESTED_PLUGINS_TEXT@},
         .requested_plugins_len = @REQUESTED_PLUGINS_LEN@,
-        .plugin_providers_len = 0,
+        .plugin_providers = {@PLUGIN_PROVIDERS_TEXT@},
+        .plugin_providers_len = @PLUGIN_PROVIDERS_LEN@,
     };
 
     return &setup_context;

@@ -14,4 +14,4 @@ target_link_libraries(logger_console
         plugin_manager_include
 )
 
-add_compile_definitions(PLUGIN_INTERFACE_NAME=logger)
+target_compile_definitions(logger_console PRIVATE PLUGIN_INTERFACE_NAME=logger)

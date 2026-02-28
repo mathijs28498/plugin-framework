@@ -143,44 +143,46 @@ LOGGER_INTERFACE_REGISTER({plugin_name}, LOG_LEVEL_DEBUG);
 def write_plugin_cmakelists(interface_name: str, plugin_name: str, path_file: Path):
     create_file(
         path_file,
-        f"""add_library({plugin_name} SHARED)
+        f"""add_library{interface_name}_{plugin_name})
 
-target_sources({plugin_name}
+target_sources({interface_name}_{plugin_name}
     PRIVATE
-        {plugin_name}.c
-        {plugin_name}_register.c
+        {interface_name}_{plugin_name}.c
+        {interface_name}_{plugin_name}_register.c
 
     PUBLIC
         FILE_SET HEADERS
 )
 
-target_link_libraries({plugin_name}
+target_link_libraries({interface_name}_{plugin_name}
     PRIVATE
         plugin_manager_include
 )
 
-add_compile_definitions(PLUGIN_BUILD_SHARED)
-add_compile_definitions(PLUGIN_INTERFACE_NAME={interface_name})""",
+if (BUILD_SHARED_LIBS)
+    target_compile_definitions({interface_name}_{plugin_name} PRIVATE PLUGIN_BUILD_SHARED)
+endif()
+add_compile_definitions({interface_name}_{plugin_name} PRIVATE PLUGIN_INTERFACE_NAME={interface_name})""",
     )
 
 
 def create_plugin(interface_name: str, plugin_name: str, path_plugins_dir: Path):
-    path_plugin_dir = path_plugins_dir / f"{plugin_name}"
+    path_plugin_dir = path_plugins_dir / f"{interface_name}_{plugin_name}"
 
     create_dir(path_plugin_dir)
 
     path_plugins_cmakelists = path_plugins_dir / f"CMakeLists.txt"
 
-    append_file(path_plugins_cmakelists, f"\nadd_subdirectory({plugin_name})")
+    append_file(path_plugins_cmakelists, f"\nadd_subdirectory({interface_name}_{plugin_name})")
 
     write_plugin_register_header(
-        interface_name, path_plugin_dir / f"{plugin_name}_register.h"
+        interface_name, path_plugin_dir / f"{interface_name}_{plugin_name}_register.h"
     )
     write_plugin_register_source(
-        interface_name, plugin_name, path_plugin_dir / f"{plugin_name}_register.c"
+        interface_name, plugin_name, path_plugin_dir / f"{interface_name}_{plugin_name}_register.c"
     )
-    write_plugin_header(plugin_name, path_plugin_dir / f"{plugin_name}.h")
-    write_plugin_source(plugin_name, path_plugin_dir / f"{plugin_name}.c")
+    write_plugin_header(plugin_name, path_plugin_dir / f"{interface_name}_{plugin_name}.h")
+    write_plugin_source(plugin_name, path_plugin_dir / f"{interface_name}_{plugin_name}.c")
     write_plugin_cmakelists(interface_name, plugin_name, path_plugin_dir / f"CMakeLists.txt")
 
 
@@ -193,7 +195,7 @@ def parse_arguments() -> tuple[str, str]:
         help="Interface name (e.g. renderer_interface)",
     )
     parser.add_argument(
-        "--plugin_name", required=True, help="Plugin name (e.g. renderer_vulkan)"
+        "--plugin_name", required=True, help="Plugin name (e.g. vulkan)"
     )
 
     args = parser.parse_args()

@@ -145,7 +145,7 @@ int32_t load_plugin_modules(
                           plugin_provider->get_interface);
         if (!plugin_provider->get_interface)
         {
-            LOG_ERR(logger, "no interface method found for plugin: %s", plugin_module->plugin_name);
+            LOG_ERR(logger, "no get interface method found for plugin: '%s' - '%s'",  plugin_module->interface_name, plugin_module->plugin_name);
             return -1;
         }
 

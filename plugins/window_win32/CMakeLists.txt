@@ -1,4 +1,4 @@
-add_library(window_win32 SHARED)
+add_library(window_win32)
 
 target_sources(window_win32
     PRIVATE
@@ -18,5 +18,7 @@ target_link_libraries(window_win32
         plugin_manager_include
 )
 
-add_compile_definitions(PLUGIN_BUILD_SHARED)
-add_compile_definitions(PLUGIN_INTERFACE_NAME=window)
+if (BUILD_SHARED_LIBS)
+    target_compile_definitions(window_win32 PRIVATE PLUGIN_BUILD_SHARED)
+endif()
+target_compile_definitions(window_win32 PRIVATE PLUGIN_INTERFACE_NAME=window)

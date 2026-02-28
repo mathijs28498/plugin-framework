@@ -4,6 +4,7 @@
 #include <plugin_framework.h>
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
+#include <input_interface.h>
 #include <environment_interface.h>
 #include <window_interface.h>
 #include <gui_application_interface.h>
@@ -24,19 +25,29 @@ PLUGIN_FRAMEWORK_MAIN()
     // ret = PLUGIN_MANAGER_LINK_INTERFACES("draw", "draw_interfaces",
     //                                "draw_2d", "draw_3d", "draw_ui");
 
-    GuiApplicationInterface *gui_application;
-    ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
+    InputInterface *input;
+    ret = PLUGIN_FRAMEWORK_GET("input", &input);
     if (ret < 0)
     {
         return ret;
     }
 
-    WindowInterfaceCreateWindowOptions create_window_options = {
-        .window_name = "My app",
-    };
-    ret = gui_application->setup(gui_application->context, &create_window_options);
+    int32_t prep_processing = input->prepare_processing(input->context);
+    (void)prep_processing;
 
-    ret = gui_application->run(gui_application->context);
+    // GuiApplicationInterface *gui_application;
+    // ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);
+    // if (ret < 0)
+    // {
+    //     return ret;
+    // }
+
+    // WindowInterfaceCreateWindowOptions create_window_options = {
+    //     .window_name = "My app",
+    // };
+    // ret = gui_application->setup(gui_application->context, &create_window_options);
+
+    // ret = gui_application->run(gui_application->context);
 
     return 0;
 }
