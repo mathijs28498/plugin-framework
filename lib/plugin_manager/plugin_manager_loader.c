@@ -11,7 +11,7 @@ LOGGER_INTERFACE_REGISTER(plugin_manager_loader, LOG_LEVEL_DEBUG)
 
 #include "plugin_manager_types.h"
 #include "plugin_manager.h"
-#include "plugin_registry_generated.h"
+#include "plugin_registry.h"
 
 TODO("Check if this algorithm can/should be made better/faster")
 int32_t resolve_requested_plugins_dynamic(

@@ -15,8 +15,8 @@
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 
-#include "plugin_manager_generated.h"
-#include "plugin_registry_generated.h"
+#include "plugin_manager_interface_declarations.h"
+#include "plugin_registry.h"
 #include "plugin_manager_types.h"
 #include "plugin_manager_loader.h"
 #include "plugin_manager_get_setup_context.h"

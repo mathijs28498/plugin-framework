@@ -1,0 +1,25 @@
+#pragma once
+
+#include <stddef.h>
+
+typedef struct PluginDefinition
+{
+    const char *plugin_name;
+    const char *module_path;
+} PluginDefinition;
+
+typedef struct InterfaceDefinition
+{
+    const char *interface_name;
+    const char *default_plugin;
+    PluginDefinition plugin_definitions[@PLUGIN_DEFINITIONS_LEN@];
+    size_t plugin_definitions_len;
+} InterfaceDefinition;
+
+typedef struct PluginRegistry
+{
+    InterfaceDefinition interface_definitions[@INTERFACE_DEFINITIONS_LEN@];
+    size_t interface_definitions_len;
+} PluginRegistry;
+
+const PluginRegistry *plugin_registry_get(void);

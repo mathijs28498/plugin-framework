@@ -1,0 +1,14 @@
+include_guard(GLOBAL)
+
+@ADD_SUBDIRECTORY_TEXT@
+
+target_link_libraries(@TARGET_NAME@
+    PRIVATE
+        @PLUGIN_TARGET_CMAKE_LIST@
+)
+
+target_sources(@TARGET_NAME@
+    PRIVATE
+        "@GENERATED_GET_SETUP_CONTEXT_SRC_PATH@"
+        "@GENERATED_PLUGIN_REGISTRY_SRC_PATH@"
+)

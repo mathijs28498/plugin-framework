@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#include "plugin_manager_generated.h"
+#include "plugin_manager_interface_declarations.h"
 #include "plugin_manager_types.h"
 
 struct PluginManagerSetupContext *plugin_manager_get_setup_context()

@@ -1,4 +1,4 @@
-#include "plugin_registry_generated.h"
+#include "plugin_registry.h"
 
 const PluginRegistry *plugin_registry_get(void)
 {

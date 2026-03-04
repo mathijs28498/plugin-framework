@@ -14,7 +14,7 @@ def check_cmake_subdirectory_already_added(
         re.IGNORECASE
     )
 
-    with open(path_file, "r") as f:
+    with open(path_file, "r", encoding="utf-8") as f:
         for line in f:
             if re_pattern.search(line):
                 return True
@@ -28,13 +28,13 @@ def snake_to_camel_case(snake_str: str):
 
 def create_file(path_file: Path, content: str):
     print(f"Creating file: {path_file}")
-    with open(path_file, "w") as f:
+    with open(path_file, "w", encoding="utf-8") as f:
         f.write(content)
 
 
 def append_file(path_file: Path, content: str):
     print(f"Appending to file: {path_file}")
-    with open(path_file, "a") as f:
+    with open(path_file, "a", encoding="utf-8") as f:
         f.write(content)
 
 

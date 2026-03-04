@@ -17,6 +17,7 @@
 - [x] Add compile step to create plugin registry from json
 - [x] Json registration of plugins
 - [x] Remove build to get a clean build
+- [x] Look into json parsing code generation inside of python rather than cmake
 
 ### 1
 - [ ] Fix all todos
@@ -25,10 +26,13 @@
 - [ ] Change char[] to char* where static chars are
 - [ ] Add configurations to plugins
 - [ ] Add sub interfaces for logic and draw
-- [ ] Add conjoined plugin structure to json
+- [ ] Add loops in my .in template files 
+- [ ] Separate array c generation and parsing
+- [ ] Split python code generator between generating compile time/ configure time (only make cmake at configure time)
 
 ### 3
-- [ ] Look into json parsing code generation inside of python rather than cmake
+- [ ] Create proper templating stuff with loops and everything
+  - [ ] Look into string.Template
 - [ ] Add logging to a file
 - [ ] Add error handling in cmake
 - [ ] Add error handling for each part of json parsing in cmake
