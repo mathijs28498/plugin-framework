@@ -363,29 +363,25 @@ def generate_register_inc(
     )
 
     register_macros_text_list = [
-        f"PLUGIN_REGISTER_INTERFACE({plugin_manifest.get_interface_fn}, {interfacePascalCase}Interface)"
+        f"PLUGIN_REGISTER_INTERFACE({plugin_manifest.get_interface_fn})"
     ]
 
     if plugin_manifest.init_fn:
         register_macros_text_list.append(
-            f"PLUGIN_REGISTER_INIT({plugin_manifest.init_fn}, {interfacePascalCase}InterfaceContext)"
+            f"PLUGIN_REGISTER_INIT({plugin_manifest.init_fn})"
         )
 
     if plugin_manifest.shutdown_fn:
         register_macros_text_list.append(
-            f"PLUGIN_REGISTER_SHUTDOWN({plugin_manifest.shutdown_fn}, {interfacePascalCase}InterfaceContext)"
+            f"PLUGIN_REGISTER_SHUTDOWN({plugin_manifest.shutdown_fn})"
         )
 
     if plugin_manifest.dependencies:
-        dependency_x_macro_text_list = f" \\\n{indent_prefix}".join(
-            f"X({dependency.variable_name}, {dependency.interface_name})"
-            for dependency in plugin_manifest.dependencies
-        )
         register_macros_text_list.append(
-            f"#define PLUGIN_DEPENDENCIES(X) \\\n{indent_prefix}{dependency_x_macro_text_list}"
-        )
-        register_macros_text_list.append(
-            f"PLUGIN_REGISTER_DEPENDENCIES({interfacePascalCase}InterfaceContext, PLUGIN_DEPENDENCIES)"
+            f"\n".join(
+                f"PLUGIN_REGISTER_DEPENDENCY({interfacePascalCase}InterfaceContext, {dependency.variable_name}, {dependency.interface_name})"
+                for dependency in plugin_manifest.dependencies
+            )
         )
 
     replacements = {

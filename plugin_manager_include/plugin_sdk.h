@@ -3,7 +3,6 @@
 #include "plugin_utils.h"
 
 TODO("Add optional dependencies")
-TODO("Check if types as arguments (like context_type) are really necessary")
 
 #if defined(WIN32) && defined(PLUGIN_BUILD_SHARED)
 #define PLUGIN_FUNCTION_PREFIX __declspec(dllexport)
@@ -15,41 +14,26 @@ TODO("Check if types as arguments (like context_type) are really necessary")
 #define _CONCAT(a, b) a##b
 #define CONCAT(a, b) _CONCAT(a, b)
 
-#define PLUGIN_DEPENDENCY_STRING(interface_var_name, interface_name) #interface_name,
-#define PLUGIN_DEPENDENCY_SETTER(interface_var_name, interface_name)                                               \
-    PLUGIN_FUNCTION_PREFIX void CONCAT(PLUGIN_TARGET_NAME, _set_##interface_name)(void *void_context, void *iface) \
-    {                                                                                                              \
-        __PLUGIN_CONTEXT_TYPE *context = (__PLUGIN_CONTEXT_TYPE *)void_context;                                    \
-        context->interface_var_name = iface;                                                                       \
+#define PLUGIN_REGISTER_DEPENDENCY(context_type, interface_var_name, interface_name)                          \
+    PLUGIN_FUNCTION_PREFIX void CONCAT(PLUGIN_TARGET_NAME, _set_##interface_name)(void *context, void *iface) \
+    {                                                                                                         \
+        ((context_type *)context)->interface_var_name = iface;                                                \
     }
 
-#define PLUGIN_REGISTER_DEPENDENCIES(CONTEXT_TYPE, DEPENDENCY_LIST)                                  \
-    typedef CONTEXT_TYPE __PLUGIN_CONTEXT_TYPE;                                                      \
-    PLUGIN_FUNCTION_PREFIX void                                                                      \
-    CONCAT(PLUGIN_TARGET_NAME, _get_dependencies)(const char *const **dependencies, uint32_t *count) \
-    {                                                                                                \
-        static const char *const plugin_dependencies[] = {                                           \
-            DEPENDENCY_LIST(PLUGIN_DEPENDENCY_STRING)};                                              \
-                                                                                                     \
-        *dependencies = plugin_dependencies;                                                         \
-        *count = (uint32_t)(sizeof(plugin_dependencies) / sizeof(plugin_dependencies[0]));           \
-    }                                                                                                \
-    DEPENDENCY_LIST(PLUGIN_DEPENDENCY_SETTER)
-
-#define PLUGIN_REGISTER_INTERFACE(get_interface_fn, interface_type)                         \
-    PLUGIN_FUNCTION_PREFIX interface_type *CONCAT(PLUGIN_TARGET_NAME, _get_interface)(void) \
-    {                                                                                       \
-        return get_interface_fn();                                                          \
+#define PLUGIN_REGISTER_INTERFACE(get_interface_fn)                               \
+    PLUGIN_FUNCTION_PREFIX void *CONCAT(PLUGIN_TARGET_NAME, _get_interface)(void) \
+    {                                                                             \
+        return get_interface_fn();                                                \
     }
 
-#define PLUGIN_REGISTER_INIT(init_fn, context_type)                                          \
-    PLUGIN_FUNCTION_PREFIX int32_t CONCAT(PLUGIN_TARGET_NAME, _init)(context_type * context) \
-    {                                                                                        \
-        return init_fn(context);                                                             \
+#define PLUGIN_REGISTER_INIT(init_fn)                                               \
+    PLUGIN_FUNCTION_PREFIX int32_t CONCAT(PLUGIN_TARGET_NAME, _init)(void *context) \
+    {                                                                               \
+        return init_fn(context);                                                    \
     }
 
-#define PLUGIN_REGISTER_SHUTDOWN(shutdown_fn, context_type)                                      \
-    PLUGIN_FUNCTION_PREFIX int32_t CONCAT(PLUGIN_TARGET_NAME, _shutdown)(context_type * context) \
-    {                                                                                            \
-        return shutdown_fn(context);                                                             \
+#define PLUGIN_REGISTER_SHUTDOWN(shutdown_fn)                                           \
+    PLUGIN_FUNCTION_PREFIX int32_t CONCAT(PLUGIN_TARGET_NAME, _shutdown)(void *context) \
+    {                                                                                   \
+        return shutdown_fn(context);                                                    \
     }
