@@ -105,7 +105,7 @@ def main():
         ],
         [
             arguments.generated_plugin_registry_src,
-            arguments.generated_get_setup_context_src,
+            arguments.generated_init_contexts_src,
         ],
         static_plugin_providers,
     )

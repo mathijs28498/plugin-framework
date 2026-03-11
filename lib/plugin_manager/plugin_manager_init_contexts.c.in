@@ -1,6 +1,7 @@
-#include "plugin_manager_get_setup_context.h"
+#include "plugin_manager_init_contexts.h"
 
 #include <stdbool.h>
+#include <stdint.h>
 
 #include <logger_interface.h>
 #include <environment_interface.h>
@@ -9,7 +10,7 @@
 #include "plugin_manager_interface_declarations.h"
 #include "plugin_manager_types.h"
 
-struct PluginManagerSetupContext *plugin_manager_get_setup_context()
+int32_t plugin_manager_init_contexts(struct PluginManagerSetupContext **out_setup_context, struct PluginManagerRuntimeContext **out_runtime_context)
 {
     static PluginManagerSetupContext setup_context = {
         .requested_plugins = {@REQUESTED_PLUGINS_TEXT@},
@@ -19,17 +20,31 @@ struct PluginManagerSetupContext *plugin_manager_get_setup_context()
         .plugin_providers_len = @PLUGIN_PROVIDERS_LEN@,
     };
 
+    static PluginManagerRuntimeContext runtime_context = {
+        .interface_instances = {@INTERFACE_INSTANCES_TEXT@},
+        .interface_instances_len = {@INTERFACE_INSTANCES_LEN@},
+    };
+
+    *out_setup_context = &setup_context;
+    *out_runtime_context = &runtime_context;
+
+    @PLUGIN_PROVIDER_INITIALIZATION_TEXT@
+
+    TODO("Do init for these plugins when available in generated code");
     TODO("Make sure these plugins are statically initialized 1 by 1 in order via python")
+
     PluginProvider *logger_plugin_provider = &setup_context.plugin_providers[@LOGGER_PLUGIN_PROVIDER_INDEX@];
     LoggerInterface *logger_interface = (LoggerInterface *)logger_plugin_provider->get_interface();
+    setup_context.logger = logger_interface;
+    runtime_context.logger = logger_interface;
+    setup_context.environment = (EnvironmentInterface *)setup_context.plugin_providers[@ENVIRONMENT_PLUGIN_PROVIDER_INDEX@].get_interface();
+
     if (logger_plugin_provider->init)
     {
         (void)logger_plugin_provider->init(logger_interface->context);
     }
     logger_plugin_provider->is_initialized = true;
-    setup_context.logger = logger_interface;
 
-    setup_context.environment = (EnvironmentInterface *)setup_context.plugin_providers[@ENVIRONMENT_PLUGIN_PROVIDER_INDEX@].get_interface();
 
-    return &setup_context;
+    return 0;
 }

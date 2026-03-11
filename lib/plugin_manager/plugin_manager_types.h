@@ -32,12 +32,12 @@ typedef int32_t (*PluginInit_Fn)(void *context);
 typedef int32_t (*PluginShutdown_Fn)(void *context);
 
 TODO("Check if char arrays can become char pointer with static string")
-typedef struct PluginDependency
+typedef struct PluginProviderDependency
 {
     const char *interface_name;
     bool is_resolved;
     PluginSetDependency_Fn set;
-} PluginDependency;
+} PluginProviderDependency;
 
 struct PluginDefinition;
 typedef struct PluginModule
@@ -52,7 +52,7 @@ typedef struct PluginProvider
     const char *interface_name;
     const char *plugin_name;
 
-    PluginDependency dependencies[PLUGIN_MANAGER_MAX_DEPENDENCIES];
+    PluginProviderDependency dependencies[PLUGIN_MANAGER_MAX_DEPENDENCIES];
     uint32_t dependencies_len;
 
     PluginGetInterface_Fn get_interface;

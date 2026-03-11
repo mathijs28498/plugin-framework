@@ -19,7 +19,7 @@ LOGGER_INTERFACE_REGISTER(plugin_manager, LOG_LEVEL_DEBUG)
 #include "plugin_registry.h"
 #include "plugin_manager_types.h"
 #include "plugin_manager_loader.h"
-#include "plugin_manager_get_setup_context.h"
+#include "plugin_manager_init_contexts.h"
 
 #define PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH 256
 
@@ -29,6 +29,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
     LoggerInterface *logger = setup_context->logger;
     runtime_context->logger = logger;
 
+#if PLUGIN_BUILD_SHARED
     const PluginRegistry *plugin_registry = plugin_registry_get();
 
     SAFE_WHILE(
@@ -89,7 +90,22 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
             return ret;
         }
     }
+#else
+    ret = resolve_plugin_provider_dependencies(
+        logger,
+        setup_context->plugin_providers,
+        setup_context->plugin_providers_len,
+        setup_context->requested_plugins,
+        &setup_context->requested_plugins_len);
 
+    if (ret < 0)
+    {
+        LOG_ERR(logger, "Error in resolve_plugin_provider_dependencies: %d", ret);
+        return ret;
+    }
+#endif // #if PLUGIN_BUILD_SHARED
+
+    TODO("Only run this if is shared")
     ret = calculate_plugin_provider_initialization_order(
         logger,
         setup_context->plugin_providers,
@@ -124,19 +140,22 @@ int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, Plu
 
     int ret;
 
-    PluginManagerSetupContext *new_setup_context = plugin_manager_get_setup_context();
-    static PluginManagerRuntimeContext new_runtime_context = {0};
-    *setup_context = new_setup_context;
-    *runtime_context = &new_runtime_context;
-
-    TODO("Do init for these plugins when available in generated code");
-    new_runtime_context.logger = new_setup_context->logger;
-    environment_default_set_args(new_setup_context->environment->context, argc, argv, platform_context);
-
-    ret = plugin_manager_load(new_setup_context, &new_runtime_context);
+    ret = plugin_manager_init_contexts(setup_context, runtime_context);
     if (ret < 0)
     {
-        LOG_ERR(new_setup_context->logger, "Error loading plugins: %d", ret);
+        if (*setup_context != NULL && (*setup_context)->logger)
+        {
+            LOG_ERR((*setup_context)->logger, "Error getting setup context: %d", ret);
+        }
+        return ret;
+    }
+
+    environment_default_set_args((*setup_context)->environment->context, argc, argv, platform_context);
+
+    ret = plugin_manager_load(*setup_context, *runtime_context);
+    if (ret < 0)
+    {
+        LOG_ERR((*setup_context)->logger, "Error loading plugins: %d", ret);
         return ret;
     }
 

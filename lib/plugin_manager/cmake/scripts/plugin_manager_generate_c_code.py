@@ -5,6 +5,7 @@ from plugin_manager_plugin_resolver import (
     create_static_plugin_providers,
     create_interface_definitions,
 )
+from plugin_manager_generate_init_contexts import generate_init_contexts_src
 
 
 def main():
@@ -17,13 +18,18 @@ def main():
         plugin_registry_dict,
         arguments.build_platform,
     )
-    static_plugin_providers = create_static_plugin_providers(
+    requested_plugins = parse_plugin_list(plugin_list_dict)
+
+    plugin_providers = create_static_plugin_providers(
         plugin_registry,
         arguments.build_dynamic_plugins,
     )
     interface_definitions = create_interface_definitions(plugin_registry)
+    interface_instances = []
 
-    requested_plugins = parse_plugin_list(plugin_list_dict)
+    if not arguments.build_dynamic_plugins:
+        requested_plugins = []
+        interface_definitions = []
 
     #     TODO: Configure time:
     #     - Check requested plugins
@@ -53,7 +59,7 @@ def main():
     generate_plugin_manager_header(
         arguments.source_plugin_manager_header,
         arguments.generated_plugin_manager_header,
-        static_plugin_providers,
+        plugin_providers,
     )
 
     generate_plugin_registry_src(
@@ -62,11 +68,14 @@ def main():
         interface_definitions,
     )
 
-    generate_get_setup_context_src(
-        arguments.source_get_setup_context_src,
-        arguments.generated_get_setup_context_src,
-        static_plugin_providers,
+    generate_init_contexts_src(
+        arguments.source_init_contexts_src,
+        arguments.generated_init_contexts_src,
         requested_plugins,
+        # The plugin_providers list is assumed to be properly sorted already, so sorted plugin indices can be created like this
+        [i for i in range(len(plugin_providers))],
+        plugin_providers,
+        interface_instances,
     )
 
 

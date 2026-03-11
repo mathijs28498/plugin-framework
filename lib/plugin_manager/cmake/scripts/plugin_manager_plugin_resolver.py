@@ -1,12 +1,10 @@
 from plugin_manager_types import *
 
 
-def create_plugin_provider_from_static_manifest(
+def create_plugin_provider_from_manifest(
     plugin_manifest: PluginManifest,
 ) -> PluginProvider:
-    function_name = (
-        f"{plugin_manifest.interface_name}_{plugin_manifest.plugin_name}_get_interface"
-    )
+    function_name = f"{plugin_manifest.target_name}_get_interface"
     get_interface_fn_text = f"(PluginGetInterface_Fn){function_name}"
     framework_declarations = [f"void *{function_name}(void);"]
 
@@ -14,26 +12,37 @@ def create_plugin_provider_from_static_manifest(
     shutdown_fn_text = "NULL"
 
     if plugin_manifest.init_fn:
-        function_name = (
-            f"{plugin_manifest.interface_name}_{plugin_manifest.plugin_name}_init"
-        )
+        function_name = f"{plugin_manifest.target_name}_init"
         init_fn_text = f"(PluginInit_Fn){function_name}"
         framework_declarations.append(f"int32_t {function_name}(void *context);")
 
     if plugin_manifest.shutdown_fn:
-        function_name = (
-            f"{plugin_manifest.interface_name}_{plugin_manifest.plugin_name}_shutdown"
-        )
+        function_name = f"{plugin_manifest.target_name}_shutdown"
         shutdown_fn_text = f"(PluginShutdown_Fn){function_name}"
         framework_declarations.append(f"int32_t {function_name}(void *context);")
 
+    plugin_provider_dependencies: list[PluginProviderDependency] = []
+    for dependency in plugin_manifest.dependencies:
+        function_name = f"{plugin_manifest.target_name}_set_{dependency.interface_name}"
+        plugin_provider_dependencies.append(
+            PluginProviderDependency(
+                interface_name=dependency.interface_name,
+                set_fn=f"(PluginSetDependency_Fn){function_name}",
+            )
+        )
+        framework_declarations.append(
+            f"void {function_name}(void *context, void *iface);"
+        )
+
+    # TODO: Make is explicit False and only true when is requested and also static only build
     return PluginProvider(
         plugin_manifest=plugin_manifest,
         framework_declarations=framework_declarations,
+        dependencies=plugin_provider_dependencies,
         get_interface_fn_text=get_interface_fn_text,
         init_fn_text=init_fn_text,
         shutdown_fn_text=shutdown_fn_text,
-        is_explicit=False,
+        is_explicit=True,
         is_initialized=False,
     )
 
@@ -42,7 +51,7 @@ def create_static_plugin_providers(
     plugin_registry: PluginRegistry, build_dynamic_plugins: bool
 ) -> list[PluginProvider]:
     return [
-        create_plugin_provider_from_static_manifest(manifest)
+        create_plugin_provider_from_manifest(manifest)
         for manifest in plugin_registry.plugin_manifests
         if not build_dynamic_plugins or manifest.static_only
     ]

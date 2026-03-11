@@ -67,111 +67,6 @@ def generate_plugin_manager_header(
     configure_file(source_path, destination_path, replacements, False)
 
 
-def get_formatted_plugin_provider_c_struct(plugin_provider: PluginProvider) -> str:
-    plugin_manifest = plugin_provider.plugin_manifest
-
-    return textwrap.dedent(
-        f"""\
-        {{
-            .interface_name = "{plugin_manifest.interface_name}",
-            .plugin_name = "{plugin_manifest.plugin_name}",
-            .get_interface = {plugin_provider.get_interface_fn_text},
-            .init = {plugin_provider.init_fn_text},
-            .shutdown = {plugin_provider.shutdown_fn_text},
-            .dependencies = {{0}},
-            .dependencies_len = {str(len(plugin_manifest.dependencies))},
-            .is_explicit = {str(plugin_provider.is_explicit).lower()},
-            .is_initialized = {str(plugin_provider.is_initialized).lower()},
-        }}"""
-    )
-
-
-def get_plugin_provider_index_by_interface_name(
-    plugin_providers: list[PluginProvider], interface_name: str
-) -> Optional[int]:
-    return next(
-        (
-            i
-            for i, plugin_provider in enumerate(plugin_providers)
-            if plugin_provider.plugin_manifest.interface_name == interface_name
-        ),
-        None,
-    )
-
-
-def generate_get_setup_context_src(
-    source_path: Path,
-    destination_path: Path,
-    static_plugin_providers: list[PluginProvider],
-    requested_plugins: list[RequestedPlugin],
-):
-    requested_plugins_text = f"{{0}}"
-    sorted_plugin_providers_indices_text = f"{{0}}"
-    plugin_providers_text = f"{{0}}"
-
-    if requested_plugins:
-        requested_plugins_text = ",\n".join(
-            textwrap.dedent(
-                f"""\
-                {{
-                    .interface_name = "{requested_plugin.interface_name}",
-                    .plugin_name = "{requested_plugin.plugin_name or ""}",
-                    .is_explicit = true,
-                    .is_resolved = false,
-                }}"""
-            )
-            for requested_plugin in requested_plugins
-        )
-
-        requested_plugins_text = textwrap.indent(
-            f"\n{requested_plugins_text},\n{indent_prefix * 2}",
-            indent_prefix * 3,
-        )
-
-    if static_plugin_providers:
-        plugin_providers_text = ",\n".join(
-            get_formatted_plugin_provider_c_struct(plugin_provider)
-            for plugin_provider in static_plugin_providers
-        )
-        plugin_providers_text = textwrap.indent(
-            f"\n{plugin_providers_text},\n{indent_prefix * 2}",
-            indent_prefix * 3,
-        )
-
-    logger_interface_name = "logger"
-    logger_plugin_provider_index = get_plugin_provider_index_by_interface_name(
-        static_plugin_providers, logger_interface_name
-    )
-
-    if logger_plugin_provider_index is None:
-        raise ValueError(
-            f"plugin provider implementing interface '{logger_interface_name}' not found, please provide '{logger_interface_name}' statically"
-        )
-
-    environment_interface_name = "environment"
-    environment_plugin_provider_index = get_plugin_provider_index_by_interface_name(
-        static_plugin_providers, environment_interface_name
-    )
-
-    if environment_plugin_provider_index is None:
-        raise ValueError(
-            f"plugin provider implementing interface '{environment_interface_name}' not found, please provide '{environment_interface_name}' statically"
-        )
-
-    # TODO: Make this work with plugin providers and stuff
-    replacements = {
-        "REQUESTED_PLUGINS_TEXT": requested_plugins_text,
-        "REQUESTED_PLUGINS_LEN": str(len(requested_plugins)),
-        "SORTED_PLUGIN_PROVIDERS_INDICES_TEXT": sorted_plugin_providers_indices_text,
-        "PLUGIN_PROVIDERS_TEXT": plugin_providers_text,
-        "PLUGIN_PROVIDERS_LEN": str(len(static_plugin_providers)),
-        "LOGGER_PLUGIN_PROVIDER_INDEX": str(logger_plugin_provider_index),
-        "ENVIRONMENT_PLUGIN_PROVIDER_INDEX": str(environment_plugin_provider_index),
-    }
-
-    configure_file(source_path, destination_path, replacements, False)
-
-
 def generate_plugin_registry_header(
     source_path: Path,
     destination_path: Path,
@@ -179,11 +74,14 @@ def generate_plugin_registry_header(
 ):
     # TODO: Figure out how to do this properly
     max_plugin_definitions_len = max(
-        (
-            len(interface_definition.plugin_manifests)
-            for interface_definition in interface_definitions
+        max(
+            (
+                len(interface_definition.plugin_manifests)
+                for interface_definition in interface_definitions
+            ),
+            default=1,
         ),
-        default=1,
+        1,
     )
 
     max_plugin_dependencies_len = max(
@@ -201,7 +99,7 @@ def generate_plugin_registry_header(
     )
 
     replacements = {
-        "INTERFACE_DEFINITIONS_LEN": str(len(interface_definitions)),
+        "INTERFACE_DEFINITIONS_LEN": str(max(len(interface_definitions), 1)),
         "PLUGIN_DEFINITIONS_LEN": str(max_plugin_definitions_len),
         "PLUGIN_DEPENDENCY_DEFINITIONS_LEN": str(max_plugin_dependencies_len),
     }
@@ -223,7 +121,6 @@ def generate_plugin_registry_src(
                 plugin_definitions_text_list: list[str] = []
                 for manifest in interface_definition.plugin_manifests:
 
-                    # Dependencies follow the same pattern as plugin_definitions
                     plugin_dependencies_text = f"{{0}}"
                     if manifest.dependencies:
                         dependency_text_list: list[str] = []

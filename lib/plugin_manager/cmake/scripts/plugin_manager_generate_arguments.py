@@ -17,7 +17,7 @@ class GenerateCmakeArguments:
 
     generated_include_dir: Path
     generated_plugin_registry_src: Path
-    generated_get_setup_context_src: Path
+    generated_init_contexts_src: Path
     generated_cmake: Path
 
     @classmethod
@@ -35,7 +35,7 @@ class GenerateCmakeArguments:
             #
             generated_include_dir=args.generated_include_dir_path,
             generated_plugin_registry_src=args.generated_plugin_registry_src_path,
-            generated_get_setup_context_src=args.generated_get_setup_context_src_path,
+            generated_init_contexts_src=args.generated_init_contexts_src_path,
             generated_cmake=args.generated_cmake_path,
         )
 
@@ -58,11 +58,12 @@ def parse_cmake_arguments() -> GenerateCmakeArguments:
         "--generated-plugin-registry-src-path", required=True, type=Path
     )
     parser.add_argument(
-        "--generated-get-setup-context-src-path", required=True, type=Path
+        "--generated-init-contexts-src-path", required=True, type=Path
     )
     parser.add_argument("--generated-cmake-path", required=True, type=Path)
 
     args = parser.parse_args()
+    print(f"get contexts src path {args.generated_init_contexts_src_path}")
 
     return GenerateCmakeArguments.from_args(args)
 
@@ -80,12 +81,12 @@ class GenerateCCodeArguments:
     source_plugin_registry_header: Path
     source_plugin_manager_header: Path
     source_plugin_registry_src: Path
-    source_get_setup_context_src: Path
+    source_init_contexts_src: Path
 
     generated_plugin_registry_header: Path
     generated_plugin_manager_header: Path
     generated_plugin_registry_src: Path
-    generated_get_setup_context_src: Path
+    generated_init_contexts_src: Path
 
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "GenerateCCodeArguments":
@@ -101,12 +102,12 @@ class GenerateCCodeArguments:
             source_plugin_registry_header=args.source_plugin_registry_header_path,
             source_plugin_manager_header=args.source_plugin_manager_header_path,
             source_plugin_registry_src=args.source_plugin_registry_src_path,
-            source_get_setup_context_src=args.source_get_setup_context_src_path,
+            source_init_contexts_src=args.source_init_contexts_src_path,
             #
             generated_plugin_registry_header=args.generated_plugin_registry_header_path,
             generated_plugin_manager_header=args.generated_plugin_manager_header_path,
             generated_plugin_registry_src=args.generated_plugin_registry_src_path,
-            generated_get_setup_context_src=args.generated_get_setup_context_src_path,
+            generated_init_contexts_src=args.generated_init_contexts_src_path,
         )
 
 
@@ -126,7 +127,7 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
     )
     parser.add_argument("--source-plugin-manager-header-path", required=True, type=Path)
     parser.add_argument("--source-plugin-registry-src-path", required=True, type=Path)
-    parser.add_argument("--source-get-setup-context-src-path", required=True, type=Path)
+    parser.add_argument("--source-init-contexts-src-path", required=True, type=Path)
 
     parser.add_argument(
         "--generated-plugin-registry-header-path", required=True, type=Path
@@ -138,10 +139,11 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
         "--generated-plugin-registry-src-path", required=True, type=Path
     )
     parser.add_argument(
-        "--generated-get-setup-context-src-path", required=True, type=Path
+        "--generated-init-contexts-src-path", required=True, type=Path
     )
 
     args = parser.parse_args()
+    print(f"get contexts src path {args.generated_init_contexts_src_path}")
 
     return GenerateCCodeArguments.from_args(args)
 

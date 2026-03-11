@@ -30,3 +30,7 @@ target_link_libraries(plugin_manager
     # logger_console
     # environment_default
 )
+
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(plugin_manager PRIVATE PLUGIN_BUILD_SHARED)
+endif()

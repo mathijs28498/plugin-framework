@@ -31,14 +31,14 @@ function(plugin_manager_setup TARGET_NAME)
     set(SOURCE_PLUGIN_REGISTRY_HEADER_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_registry.h.in")
     set(SOURCE_PLUGIN_MANAGER_HEADER_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_manager_interface_declarations.h.in")
     set(SOURCE_PLUGIN_REGISTRY_SRC_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_registry.c.in")
-    set(SOURCE_GET_SETUP_CONTEXT_SRC_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_manager_get_setup_context.c.in")
+    set(SOURCE_INIT_CONTEXTS_SRC_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_manager_init_contexts.c.in")
     set(SOURCE_CMAKE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/PluginManagerGenerated.cmake.in")
 
     set(GENERATED_PLUGIN_REGISTRY_HEADER_PATH "${GENERATED_INCLUDE_PATH}/plugin_registry.h")
     message("TODO: Change this variable name to the appropriate one and change it everywhere")
     set(GENERATED_PLUGIN_MANAGER_HEADER_PATH "${GENERATED_INCLUDE_PATH}/plugin_manager_interface_declarations.h")
     set(GENERATED_PLUGIN_REGISTRY_SRC_PATH "${GENERATED_SRC_PATH}/plugin_registry.c")
-    set(GENERATED_GET_SETUP_CONTEXT_SRC_PATH "${GENERATED_SRC_PATH}/plugin_manager_get_setup_context.c")
+    set(GENERATED_INIT_CONTEXTS_SRC_PATH "${GENERATED_SRC_PATH}/plugin_manager_init_contexts.c")
     set(GENERATED_CMAKE_PATH "${GENERATED_CMAKE_DIR_PATH}/PluginManagerGenerated.cmake")
 
     set_property(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
@@ -68,7 +68,7 @@ function(plugin_manager_setup TARGET_NAME)
 
         --generated-include-dir-path "${GENERATED_INCLUDE_PATH}"
         --generated-plugin-registry-src-path "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
-        --generated-get-setup-context-src-path "${GENERATED_GET_SETUP_CONTEXT_SRC_PATH}"
+        --generated-init-contexts-src-path "${GENERATED_INIT_CONTEXTS_SRC_PATH}"
         --generated-cmake-path "${GENERATED_CMAKE_PATH}"
 
         COMMAND_ERROR_IS_FATAL ANY
@@ -84,7 +84,7 @@ function(plugin_manager_setup TARGET_NAME)
         "${GENERATED_PLUGIN_REGISTRY_HEADER_PATH}"
         "${GENERATED_PLUGIN_MANAGER_HEADER_PATH}"
         "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
-        "${GENERATED_GET_SETUP_CONTEXT_SRC_PATH}"
+        "${GENERATED_INIT_CONTEXTS_SRC_PATH}"
 
         COMMAND "${Python3_EXECUTABLE}" "${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}"
         --target-name "${TARGET_NAME}"
@@ -98,12 +98,12 @@ function(plugin_manager_setup TARGET_NAME)
         --source-plugin-registry-header-path "${SOURCE_PLUGIN_REGISTRY_HEADER_PATH}"
         --source-plugin-manager-header-path "${SOURCE_PLUGIN_MANAGER_HEADER_PATH}"
         --source-plugin-registry-src-path "${SOURCE_PLUGIN_REGISTRY_SRC_PATH}"
-        --source-get-setup-context-src-path "${SOURCE_GET_SETUP_CONTEXT_SRC_PATH}"
+        --source-init-contexts-src-path "${SOURCE_INIT_CONTEXTS_SRC_PATH}"
 
         --generated-plugin-registry-header-path "${GENERATED_PLUGIN_REGISTRY_HEADER_PATH}"
         --generated-plugin-manager-header-path "${GENERATED_PLUGIN_MANAGER_HEADER_PATH}"
         --generated-plugin-registry-src-path "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
-        --generated-get-setup-context-src-path "${GENERATED_GET_SETUP_CONTEXT_SRC_PATH}"
+        --generated-init-contexts-src-path "${GENERATED_INIT_CONTEXTS_SRC_PATH}"
 
         DEPENDS
         "${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}"
@@ -112,8 +112,9 @@ function(plugin_manager_setup TARGET_NAME)
         "${SOURCE_PLUGIN_REGISTRY_HEADER_PATH}"
         "${SOURCE_PLUGIN_MANAGER_HEADER_PATH}"
         "${SOURCE_PLUGIN_REGISTRY_SRC_PATH}"
-        "${SOURCE_GET_SETUP_CONTEXT_SRC_PATH}"
+        "${SOURCE_INIT_CONTEXTS_SRC_PATH}"
         "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_templates.py"
+        "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_init_contexts.py"
         "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_parse.py"
         "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_types.py"
         "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_arguments.py"
@@ -127,7 +128,7 @@ function(plugin_manager_setup TARGET_NAME)
         "${GENERATED_PLUGIN_REGISTRY_HEADER_PATH}"
         "${GENERATED_PLUGIN_MANAGER_HEADER_PATH}"
         "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
-        "${GENERATED_GET_SETUP_CONTEXT_SRC_PATH}"
+        "${GENERATED_INIT_CONTEXTS_SRC_PATH}"
         PROPERTIES GENERATED TRUE
     )
 endfunction()

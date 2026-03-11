@@ -200,7 +200,7 @@ int32_t resolve_plugin_provider_dependencies(
         PluginProvider *plugin_provider = &plugin_providers[i];
         for (uint32_t j = 0; j < plugin_provider->dependencies_len; j++)
         {
-            PluginDependency *dependency = &plugin_provider->dependencies[j];
+            PluginProviderDependency *dependency = &plugin_provider->dependencies[j];
             if (dependency->is_resolved)
             {
                 continue;

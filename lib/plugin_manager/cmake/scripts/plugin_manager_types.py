@@ -43,35 +43,30 @@ class InterfaceDefinition:
     plugin_manifests: list[PluginManifest]
 
 
-# @dataclass
-# class InternalPlugin:
-#     source_data: PluginSourceData
-#     forward_declarations: list[str]
-#     plugin_provider: PluginProvider
-
-
 @dataclass
 class RequestedPlugin:
     interface_name: str
     plugin_name: str
 
 
-# @dataclass
-# class PluginDefinition:
-#     plugin_name: str
-#     module_path: Optional[Path]
-#     source_path: Path
+@dataclass
+class PluginProviderDependency:
+    interface_name: str
+    set_fn: str
 
 
 @dataclass
 class PluginProvider:
     plugin_manifest: PluginManifest
     framework_declarations: list[str]
-    # interface_name: str
-    # plugin_name: str
-    # dependencies: list[PluginDependency]
+    dependencies: list[PluginProviderDependency]
     get_interface_fn_text: str
     init_fn_text: str
     shutdown_fn_text: str
     is_explicit: bool
     is_initialized: bool
+
+
+@dataclass
+class InterfaceInstance:
+    pass
