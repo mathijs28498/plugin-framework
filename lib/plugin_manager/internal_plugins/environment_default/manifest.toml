@@ -1,6 +1,7 @@
 interface_name = "environment"
 plugin_name = "default"
 static_only = true
+core = true
 get_interface = "get_interface"
 
 exported_declarations = [

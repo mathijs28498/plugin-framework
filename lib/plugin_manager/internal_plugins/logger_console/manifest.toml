@@ -1,6 +1,7 @@
 interface_name = "logger"
 plugin_name = "console"
 static_only = true
+core = true
 get_interface = "get_interface"
 init = "init"
 
