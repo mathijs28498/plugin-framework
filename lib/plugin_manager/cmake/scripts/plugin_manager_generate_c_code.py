@@ -11,7 +11,7 @@ def main():
     arguments = parce_c_code_arguments()
 
     plugin_registry_dict = read_toml(arguments.plugin_registry_toml)
-    plugin_list_dict = read_toml(arguments.plugin_list_toml)
+    requested_plugins_dict = read_toml(arguments.requested_plugins_toml)
     statically_resolved_plugins_dict = read_json(
         arguments.statically_resolved_plugins_json
     )
@@ -22,7 +22,7 @@ def main():
     )
     requested_plugins: list[RequestedPlugin] = []
     if arguments.build_dynamic_plugins:
-        requested_plugins = parse_plugin_list(plugin_list_dict)
+        requested_plugins = parse_requested_plugins(requested_plugins_dict)
 
     plugin_providers = list(
         parse_statically_resolved_plugins(statically_resolved_plugins_dict)

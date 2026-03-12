@@ -28,6 +28,7 @@
 - [x] Add static loading
     - [x] Figure out naming collisions
 - [x] Fix static dependencies
+- [x] Fix gen_plugin.py
 
 ### 1
 - [ ] Fix all todos

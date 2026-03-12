@@ -268,8 +268,8 @@ def generate_register_inc(
     if not plugin_manifest.static_only and build_dynamic:
         define_build_shared_text = "#define PLUGIN_BUILD_SHARED"
 
-    interfacePascalCase = (
-        plugin_manifest.interface_name.replace("_", " ").title().replace(" ", "")
+    interfacePascalCase = "".join(
+        word.capitalize() for word in plugin_manifest.interface_name.split("_")
     )
 
     register_macros_text_list = [

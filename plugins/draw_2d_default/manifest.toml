@@ -1,0 +1,9 @@
+interface_name = "draw_2d"
+plugin_name = "default"
+get_interface = "get_interface"
+# TODO: Fix paths
+module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/draw_2d_default.dll"
+
+dependencies = [
+    { interface_name = "logger" },
+]

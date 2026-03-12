@@ -1,0 +1,13 @@
+#pragma once
+
+#pragma pack(push, 8)
+
+struct @INTERFACE_CONTEXT_TYPE_NAME@;
+
+typedef struct @INTERFACE_TYPE_NAME@
+{
+    struct @INTERFACE_CONTEXT_TYPE_NAME@ *context;
+
+} @INTERFACE_TYPE_NAME@;
+
+#pragma pack(pop)

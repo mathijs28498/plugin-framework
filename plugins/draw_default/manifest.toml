@@ -3,6 +3,5 @@ plugin_name = "default"
 get_interface = "get_interface"
 # TODO: Fix paths
 module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/draw_default.dll"
-source_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/draw_default"
 
 dependencies = [{ interface_name = "logger" }]

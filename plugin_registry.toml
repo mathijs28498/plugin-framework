@@ -5,6 +5,7 @@ plugin_manifests = [
     "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/window_win32",
     "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/input_default",
     "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/draw_default",
+    "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/draw_2d_default",
 ]
 
 interfaces = [
@@ -16,24 +17,5 @@ interfaces = [
     { interface_name = "gui_application", default = "default" },
     { interface_name = "draw", default = "default" },
     { interface_name = "input", default = "default" },
+    { interface_name = "draw_2d", default = "default" },
 ]
-
-# [[interfaces]]
-# interface_name = "logger"
-# default = "console"
-
-# [[interfaces]]
-# interface_name = "window"
-# default = [{ target = "win32", plugin_name = "win32" }]
-
-# [[interfaces]]
-# interface_name = "gui_application"
-# default = "default"
-
-# [[interfaces]]
-# interface_name = "draw"
-# default = "default"
-
-# [[interfaces]]
-# interface_name = "input"
-# default = "default"

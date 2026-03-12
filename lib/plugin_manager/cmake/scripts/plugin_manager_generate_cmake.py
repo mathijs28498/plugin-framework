@@ -17,7 +17,7 @@ def main():
     arguments = parse_cmake_arguments()
 
     plugin_registry_dict = read_toml(arguments.plugin_registry_toml)
-    plugin_list_dict = read_toml(arguments.plugin_list_toml)
+    requested_plugins_dict = read_toml(arguments.requested_plugins_toml)
 
     plugin_registry = parse_plugin_registry(
         plugin_registry_dict, arguments.build_platform
@@ -28,7 +28,7 @@ def main():
     )
 
     if not arguments.build_dynamic_plugins:
-        requested_plugins = parse_plugin_list(plugin_list_dict)
+        requested_plugins = parse_requested_plugins(requested_plugins_dict)
         # Make sure the same plugin is not requested more than once as this is not supported
         requested_plugins.extend(
             ensure_core_plugins_requested(plugin_providers, requested_plugins)

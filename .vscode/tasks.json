@@ -4,20 +4,32 @@
         {
             "label": "Generate interface and plugin",
             "type": "shell",
-            "command": "python ${workspaceFolder}/tools/gen_plugin.py --interface_name ${input:interfaceName} --plugin_name ${input:pluginName}",
-            "problemMatcher": [],
+            "command": "\"${command:python.interpreterPath}\" \"${workspaceFolder}/lib/plugin_manager/tools/gen_plugin/gen_plugin.py\" --interface-name \"${input:interfaceName}\" --plugin-name \"${input:pluginName}\" --interface-include-directory \"${input:interfaceIncludeDirectory}\" --plugin-base-directory \"${input:pluginBaseDirectory}\"",
+            "problemMatcher": []
         }
     ],
     "inputs": [
         {
             "id": "interfaceName",
             "type": "promptString",
-            "description": "Interface name (e.g. renderer_interface)"
+            "description": "Interface name (e.g. renderer)"
         },
         {
             "id": "pluginName",
             "type": "promptString",
-            "description": "Plugin name (e.g. renderer_vulkan)"
+            "description": "Plugin name (e.g. vulkan)"
+        },
+        {
+            "id": "interfaceIncludeDirectory",
+            "type": "promptString",
+            "description": "Directory where the interface header lives",
+            "default": "${workspaceFolder}/plugin_manager_include"
+        },
+        {
+            "id": "pluginBaseDirectory",
+            "type": "promptString",
+            "description": "Base directory where the plugin will be placed",
+            "default": "${workspaceFolder}/plugins"
         }
     ]
 }

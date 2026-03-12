@@ -3,6 +3,7 @@
 
 #include <plugin_framework.h>
 #include <input_interface.h>
+#include <draw_2d_interface.h>
 #include <logger_interface.h>
 LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
 #include <input_interface.h>
@@ -57,6 +58,16 @@ PLUGIN_FRAMEWORK_MAIN()
 
     //     }
     // }
+
+    Draw2dInterface *draw_2d;
+    ret = PLUGIN_FRAMEWORK_GET("draw_2d", &draw_2d);
+    if (ret < 0)
+    {
+        return ret;
+    }
+
+    draw_2d->test(draw_2d->context, 32);
+
 
     GuiApplicationInterface *gui_application;
     ret = PLUGIN_FRAMEWORK_GET("gui_application", &gui_application);

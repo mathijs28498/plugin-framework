@@ -1,5 +1,5 @@
-# TODO: Change name to requested plugins
 plugins = [
     { interface_name = "logger" },
     { interface_name = "gui_application" },
+    { interface_name = "draw_2d" },
 ]

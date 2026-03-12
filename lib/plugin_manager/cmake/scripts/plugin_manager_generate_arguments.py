@@ -10,7 +10,7 @@ class GenerateCmakeArguments:
     build_dynamic_plugins: bool
 
     plugin_registry_toml: Path
-    plugin_list_toml: Path
+    requested_plugins_toml: Path
 
     source_cmake: Path
 
@@ -28,7 +28,7 @@ class GenerateCmakeArguments:
             build_dynamic_plugins=args.build_dynamic_plugins,
             #
             plugin_registry_toml=args.plugin_registry_toml_path,
-            plugin_list_toml=args.plugin_list_toml_path,
+            requested_plugins_toml=args.requested_plugins_toml_path,
             #
             source_cmake=args.source_cmake_path,
             #
@@ -48,7 +48,7 @@ def parse_cmake_arguments() -> GenerateCmakeArguments:
     parser.add_argument("--build-dynamic-plugins", action="store_true")
 
     parser.add_argument("--plugin-registry-toml-path", required=True, type=Path)
-    parser.add_argument("--plugin-list-toml-path", required=True, type=Path)
+    parser.add_argument("--requested-plugins-toml-path", required=True, type=Path)
 
     parser.add_argument("--source-cmake-path", required=True, type=Path)
 
@@ -74,7 +74,7 @@ class GenerateCCodeArguments:
     build_dynamic_plugins: bool
 
     plugin_registry_toml: Path
-    plugin_list_toml: Path
+    requested_plugins_toml: Path
     statically_resolved_plugins_json: Path
 
     source_plugin_registry_header: Path
@@ -95,7 +95,7 @@ class GenerateCCodeArguments:
             build_dynamic_plugins=args.build_dynamic_plugins,
             #
             plugin_registry_toml=args.plugin_registry_toml_path,
-            plugin_list_toml=args.plugin_list_toml_path,
+            requested_plugins_toml=args.requested_plugins_toml_path,
             statically_resolved_plugins_json=args.statically_resolved_plugins_json_path,
             #
             source_plugin_registry_header=args.source_plugin_registry_header_path,
@@ -118,7 +118,7 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
     parser.add_argument("--build-dynamic-plugins", action="store_true")
 
     parser.add_argument("--plugin-registry-toml-path", required=True, type=Path)
-    parser.add_argument("--plugin-list-toml-path", required=True, type=Path)
+    parser.add_argument("--requested-plugins-toml-path", required=True, type=Path)
     parser.add_argument("--statically-resolved-plugins-json-path", required=True, type=Path)
 
     parser.add_argument(

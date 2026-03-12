@@ -128,7 +128,7 @@ def parse_plugin_manifest(
     )
 
 
-def parse_plugin_list(plugin_list_dict: dict[str, Any]) -> list[RequestedPlugin]:
+def parse_requested_plugins(requested_plugins_dict: dict[str, Any]) -> list[RequestedPlugin]:
     # TODO: Add error handling
     requested_plugins = [
         RequestedPlugin(
@@ -136,7 +136,7 @@ def parse_plugin_list(plugin_list_dict: dict[str, Any]) -> list[RequestedPlugin]
             plugin_name=requested_plugin.get("plugin_name", ""),
             is_explicit=True,
         )
-        for requested_plugin in plugin_list_dict["plugins"]
+        for requested_plugin in requested_plugins_dict["plugins"]
     ]
 
     interface_counts = Counter(req.interface_name for req in requested_plugins)

@@ -25,7 +25,7 @@ function(plugin_manager_setup TARGET_NAME)
     set(GENERATED_JSON_DIR_PATH "${arg_GEN_DIR_PATH}/json")
 
     set(PLUGIN_REGISTRY_TOML_PATH "${arg_TOML_DIR_PATH}/plugin_registry.toml")
-    set(PLUGIN_LIST_TOML_PATH "${arg_TOML_DIR_PATH}/plugin_list.toml")
+    set(REQUESTED_PLUGINS_TOML_PATH "${arg_TOML_DIR_PATH}/requested_plugins.toml")
     set(GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH "${GENERATED_JSON_DIR_PATH}/statically_resolved_plugins.json")
 
     set(SOURCE_PLUGIN_REGISTRY_HEADER_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_registry.h.in")
@@ -44,7 +44,7 @@ function(plugin_manager_setup TARGET_NAME)
     set_property(DIRECTORY "${CMAKE_CURRENT_LIST_DIR}" APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
         "${SOURCE_CMAKE_PATH}"
         "${PLUGIN_REGISTRY_TOML_PATH}"
-        "${PLUGIN_LIST_TOML_PATH}"
+        "${REQUESTED_PLUGINS_TOML_PATH}"
         "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_cmake.py"
         "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_templates.py"
         "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_parse.py"
@@ -62,7 +62,7 @@ function(plugin_manager_setup TARGET_NAME)
         ${DYNAMIC_PLUGIN_ARG}
 
         --plugin-registry-toml-path "${PLUGIN_REGISTRY_TOML_PATH}"
-        --plugin-list-toml-path "${PLUGIN_LIST_TOML_PATH}"
+        --requested-plugins-toml-path "${REQUESTED_PLUGINS_TOML_PATH}"
 
         --source-cmake-path "${SOURCE_CMAKE_PATH}"
 
@@ -93,7 +93,7 @@ function(plugin_manager_setup TARGET_NAME)
         ${DYNAMIC_PLUGIN_ARG}
 
         --plugin-registry-toml-path "${PLUGIN_REGISTRY_TOML_PATH}"
-        --plugin-list-toml-path "${PLUGIN_LIST_TOML_PATH}"
+        --requested-plugins-toml-path "${REQUESTED_PLUGINS_TOML_PATH}"
         --statically-resolved-plugins-json-path "${GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH}"
 
         --source-plugin-registry-header-path "${SOURCE_PLUGIN_REGISTRY_HEADER_PATH}"
@@ -109,7 +109,7 @@ function(plugin_manager_setup TARGET_NAME)
         DEPENDS
         "${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}"
         "${PLUGIN_REGISTRY_TOML_PATH}"
-        "${PLUGIN_LIST_TOML_PATH}"
+        "${REQUESTED_PLUGINS_TOML_PATH}"
         "${GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH}"
         "${SOURCE_PLUGIN_REGISTRY_HEADER_PATH}"
         "${SOURCE_PLUGIN_MANAGER_HEADER_PATH}"

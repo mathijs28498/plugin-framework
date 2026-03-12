@@ -1,0 +1,18 @@
+#include "@PLUGIN_REGISTER_HEADER_FILE_NAME@"
+
+#include <@PLUGIN_INTERFACE_HEADER_FILE_NAME@>
+
+#include "@PLUGIN_HEADER_FILE_NAME@"
+
+static @INTERFACE_TYPE_NAME@ *get_interface(void)
+{
+    static @INTERFACE_CONTEXT_TYPE_NAME@ context = {0};
+
+    static @INTERFACE_TYPE_NAME@ iface = {
+        .context = &context,
+    };
+
+    return &iface;
+}
+
+#include "plugin_register.c.inc"

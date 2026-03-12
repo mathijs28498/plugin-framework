@@ -4,10 +4,10 @@
 
 struct LoggerInterface;
 
-typedef struct Draw2dInterfaceContext
+typedef struct @INTERFACE_CONTEXT_TYPE_NAME@
 {
     struct LoggerInterface *logger;
-} Draw2dInterfaceContext;
+} @INTERFACE_CONTEXT_TYPE_NAME@;
 
 #pragma pack(pop)
 
