@@ -32,7 +32,6 @@
 #define WINDOWS_GUI 0
 #endif // #if defined(_WIN32) && defined(_WINDOWS)
 
-// TODO: Look at naming
 #define SAFE_WHILE_CONCAT_(x, y) x##y
 #define SAFE_WHILE_CONCAT(x, y) SAFE_WHILE_CONCAT_(x, y)
 #define UNIQUE_VAR(prefix) SAFE_WHILE_CONCAT(prefix, __LINE__)
@@ -60,7 +59,6 @@
     typedef char STATIC_ASSERT_CONCAT(assertion_failed_, __LINE__)[(expr) ? 1 : -1]
 #endif
 
-TODO("Make a macro for addressing any function that uses the context when you give the interface")
 #define NOT_IMPLEMENTED(return_type, ...) \
     ((void)(__VA_ARGS__),                 \
      assert(0 && "Not implemented"),      \

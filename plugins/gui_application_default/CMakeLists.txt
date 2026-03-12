@@ -1,6 +1,3 @@
-# TODO: Make every plugin work properly like this
-#       Maybe start with window plugin?
-# TODO: Add option for turning static vs dynamic building, add this to CMakePresets.toml
 add_library(gui_application_default)
 
 target_sources(gui_application_default

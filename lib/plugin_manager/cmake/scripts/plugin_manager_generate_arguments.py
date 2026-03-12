@@ -78,12 +78,12 @@ class GenerateCCodeArguments:
     statically_resolved_plugins_json: Path
 
     source_plugin_registry_header: Path
-    source_plugin_manager_header: Path
+    source_plugin_manager_interface_declarations: Path
     source_plugin_registry_src: Path
     source_init_contexts_src: Path
 
     generated_plugin_registry_header: Path
-    generated_plugin_manager_header: Path
+    generated_plugin_manager_interface_declarations: Path
     generated_plugin_registry_src: Path
     generated_init_contexts_src: Path
 
@@ -99,12 +99,12 @@ class GenerateCCodeArguments:
             statically_resolved_plugins_json=args.statically_resolved_plugins_json_path,
             #
             source_plugin_registry_header=args.source_plugin_registry_header_path,
-            source_plugin_manager_header=args.source_plugin_manager_header_path,
+            source_plugin_manager_interface_declarations=args.source_plugin_manager_interface_declarations_path,
             source_plugin_registry_src=args.source_plugin_registry_src_path,
             source_init_contexts_src=args.source_init_contexts_src_path,
             #
             generated_plugin_registry_header=args.generated_plugin_registry_header_path,
-            generated_plugin_manager_header=args.generated_plugin_manager_header_path,
+            generated_plugin_manager_interface_declarations=args.generated_plugin_manager_interface_declarations_path,
             generated_plugin_registry_src=args.generated_plugin_registry_src_path,
             generated_init_contexts_src=args.generated_init_contexts_src_path,
         )
@@ -124,7 +124,7 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
     parser.add_argument(
         "--source-plugin-registry-header-path", required=True, type=Path
     )
-    parser.add_argument("--source-plugin-manager-header-path", required=True, type=Path)
+    parser.add_argument("--source-plugin-manager-interface-declarations-path", required=True, type=Path)
     parser.add_argument("--source-plugin-registry-src-path", required=True, type=Path)
     parser.add_argument("--source-init-contexts-src-path", required=True, type=Path)
 
@@ -132,7 +132,7 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
         "--generated-plugin-registry-header-path", required=True, type=Path
     )
     parser.add_argument(
-        "--generated-plugin-manager-header-path", required=True, type=Path
+        "--generated-plugin-manager-interface-declarations-path", required=True, type=Path
     )
     parser.add_argument(
         "--generated-plugin-registry-src-path", required=True, type=Path

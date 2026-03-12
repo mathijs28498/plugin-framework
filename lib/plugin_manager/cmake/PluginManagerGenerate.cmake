@@ -29,14 +29,13 @@ function(plugin_manager_setup TARGET_NAME)
     set(GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH "${GENERATED_JSON_DIR_PATH}/statically_resolved_plugins.json")
 
     set(SOURCE_PLUGIN_REGISTRY_HEADER_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_registry.h.in")
-    set(SOURCE_PLUGIN_MANAGER_HEADER_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_manager_interface_declarations.h.in")
+    set(SOURCE_PLUGIN_MANAGER_INTERFACE_DECLARATIONS_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_manager_interface_declarations.h.in")
     set(SOURCE_PLUGIN_REGISTRY_SRC_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_registry.c.in")
     set(SOURCE_INIT_CONTEXTS_SRC_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_manager_init_contexts.c.in")
     set(SOURCE_CMAKE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/PluginManagerGenerated.cmake.in")
 
     set(GENERATED_PLUGIN_REGISTRY_HEADER_PATH "${GENERATED_INCLUDE_PATH}/plugin_registry.h")
-    message("TODO: Change this variable name to the appropriate one and change it everywhere")
-    set(GENERATED_PLUGIN_MANAGER_HEADER_PATH "${GENERATED_INCLUDE_PATH}/plugin_manager_interface_declarations.h")
+    set(GENERATED_PLUGIN_MANAGER_INTERFACE_DECLARATIONS_PATH "${GENERATED_INCLUDE_PATH}/plugin_manager_interface_declarations.h")
     set(GENERATED_PLUGIN_REGISTRY_SRC_PATH "${GENERATED_SRC_PATH}/plugin_registry.c")
     set(GENERATED_INIT_CONTEXTS_SRC_PATH "${GENERATED_SRC_PATH}/plugin_manager_init_contexts.c")
     set(GENERATED_CMAKE_PATH "${GENERATED_CMAKE_DIR_PATH}/PluginManagerGenerated.cmake")
@@ -83,7 +82,7 @@ function(plugin_manager_setup TARGET_NAME)
     add_custom_command(
         OUTPUT
         "${GENERATED_PLUGIN_REGISTRY_HEADER_PATH}"
-        "${GENERATED_PLUGIN_MANAGER_HEADER_PATH}"
+        "${GENERATED_PLUGIN_MANAGER_INTERFACE_DECLARATIONS_PATH}"
         "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
         "${GENERATED_INIT_CONTEXTS_SRC_PATH}"
 
@@ -97,12 +96,12 @@ function(plugin_manager_setup TARGET_NAME)
         --statically-resolved-plugins-json-path "${GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH}"
 
         --source-plugin-registry-header-path "${SOURCE_PLUGIN_REGISTRY_HEADER_PATH}"
-        --source-plugin-manager-header-path "${SOURCE_PLUGIN_MANAGER_HEADER_PATH}"
+        --source-plugin-manager-interface-declarations-path "${SOURCE_PLUGIN_MANAGER_INTERFACE_DECLARATIONS_PATH}"
         --source-plugin-registry-src-path "${SOURCE_PLUGIN_REGISTRY_SRC_PATH}"
         --source-init-contexts-src-path "${SOURCE_INIT_CONTEXTS_SRC_PATH}"
 
         --generated-plugin-registry-header-path "${GENERATED_PLUGIN_REGISTRY_HEADER_PATH}"
-        --generated-plugin-manager-header-path "${GENERATED_PLUGIN_MANAGER_HEADER_PATH}"
+        --generated-plugin-manager-interface-declarations-path "${GENERATED_PLUGIN_MANAGER_INTERFACE_DECLARATIONS_PATH}"
         --generated-plugin-registry-src-path "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
         --generated-init-contexts-src-path "${GENERATED_INIT_CONTEXTS_SRC_PATH}"
 
@@ -112,7 +111,7 @@ function(plugin_manager_setup TARGET_NAME)
         "${REQUESTED_PLUGINS_TOML_PATH}"
         "${GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH}"
         "${SOURCE_PLUGIN_REGISTRY_HEADER_PATH}"
-        "${SOURCE_PLUGIN_MANAGER_HEADER_PATH}"
+        "${SOURCE_PLUGIN_MANAGER_INTERFACE_DECLARATIONS_PATH}"
         "${SOURCE_PLUGIN_REGISTRY_SRC_PATH}"
         "${SOURCE_INIT_CONTEXTS_SRC_PATH}"
         "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_templates.py"
@@ -128,7 +127,7 @@ function(plugin_manager_setup TARGET_NAME)
 
     set_source_files_properties(
         "${GENERATED_PLUGIN_REGISTRY_HEADER_PATH}"
-        "${GENERATED_PLUGIN_MANAGER_HEADER_PATH}"
+        "${GENERATED_PLUGIN_MANAGER_INTERFACE_DECLARATIONS_PATH}"
         "${GENERATED_PLUGIN_REGISTRY_SRC_PATH}"
         "${GENERATED_INIT_CONTEXTS_SRC_PATH}"
         PROPERTIES GENERATED TRUE

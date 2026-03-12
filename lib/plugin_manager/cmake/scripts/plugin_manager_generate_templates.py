@@ -46,7 +46,7 @@ def configure_file(
     )
 
 
-def generate_plugin_manager_header(
+def generate_plugin_manager_interface_declarations(
     source_path: Path,
     destination_path: Path,
     static_plugin_providers: list[PluginProvider],
@@ -74,7 +74,6 @@ def generate_plugin_registry_header(
     destination_path: Path,
     interface_definitions: list[InterfaceDefinition],
 ):
-    # TODO: Figure out how to do this properly
     max_plugin_definitions_len = max(
         max(
             (

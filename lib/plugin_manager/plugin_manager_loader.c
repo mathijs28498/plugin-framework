@@ -255,7 +255,6 @@ int32_t calculate_plugin_provider_initialization_order(
                 continue;
             }
 
-            TODO("Check if dependent is the right term here")
             const PluginProvider *dependent_plugin_provider = &plugin_providers[i];
             if (plugin_provider_depends_on_interface(
                     dependent_plugin_provider,
@@ -317,7 +316,6 @@ int32_t resolve_plugin_provider_dependencies(
 
             for (uint32_t k = 0; k < plugin_providers_len; k++)
             {
-                TODO("Check if dependent is the right term here")
                 const PluginProvider *dependent_plugin_provider = &plugin_providers[k];
                 if (strcmp(dependency->interface_name, dependent_plugin_provider->interface_name) != 0)
                 {

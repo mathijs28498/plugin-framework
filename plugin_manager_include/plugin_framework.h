@@ -4,8 +4,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-TODO("Add static linking functionality")
-
 #ifndef PLUGIN_MANAGER_STATIC_LINKING
 
 struct PluginManagerRuntimeContext;
@@ -17,7 +15,6 @@ int32_t __plugin_manager_shutdown(struct PluginManagerSetupContext *setup_contex
 
 #endif // #ifndef PLUGIN_MANAGER_STATIC_LINKING
 
-TODO("Add instance of runtime context and pass it to the plugin_manager_main, rather than getting it every time")
 #if WINDOWS_GUI
 #include <Windows.h>
 #define __PLUGIN_MANAGER_ENTRY_IMPL()                                                                         \

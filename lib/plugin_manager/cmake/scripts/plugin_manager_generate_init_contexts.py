@@ -141,7 +141,6 @@ def generate_init_contexts_src(
         plugin_providers, "environment"
     )
 
-    # TODO: Make this work with plugin providers and stuff
     replacements = {
         "REQUESTED_PLUGINS_TEXT": requested_plugins_text,
         "REQUESTED_PLUGINS_LEN": str(len(requested_plugins)),

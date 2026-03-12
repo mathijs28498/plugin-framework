@@ -31,7 +31,6 @@ typedef PluginManagerBaseInterface *(*PluginGetInterface_Fn)(void);
 typedef int32_t (*PluginInit_Fn)(void *context);
 typedef int32_t (*PluginShutdown_Fn)(void *context);
 
-TODO("Check if char arrays can become char pointer with static string")
 typedef struct PluginProviderDependency
 {
     const char *interface_name;

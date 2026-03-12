@@ -37,9 +37,9 @@ def main():
         interface_definitions,
     )
 
-    generate_plugin_manager_header(
-        arguments.source_plugin_manager_header,
-        arguments.generated_plugin_manager_header,
+    generate_plugin_manager_interface_declarations(
+        arguments.source_plugin_manager_interface_declarations,
+        arguments.generated_plugin_manager_interface_declarations,
         plugin_providers,
     )
 

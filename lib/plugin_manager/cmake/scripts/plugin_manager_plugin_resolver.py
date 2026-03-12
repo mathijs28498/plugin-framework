@@ -35,7 +35,6 @@ def create_plugin_provider_from_manifest(
             f"void {function_name}(void *context, void *iface);"
         )
 
-    # TODO: Make is explicit False and only true when is requested and also static only build
     return PluginProvider(
         plugin_manifest=plugin_manifest,
         framework_declarations=framework_declarations,

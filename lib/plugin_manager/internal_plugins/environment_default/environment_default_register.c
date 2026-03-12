@@ -9,7 +9,6 @@
 
 #include "environment_default.h"
 
-TODO("Make this work with get_interface with naming collision figure out how to")
 static EnvironmentInterface *get_interface(void)
 {
     static EnvironmentInterfaceContext context = {0};
