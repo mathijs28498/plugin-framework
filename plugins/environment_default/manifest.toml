@@ -1,10 +1,10 @@
 interface_name = "environment"
 plugin_name = "default"
-static_only = true
-core = true
-get_interface = "get_interface"
+module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/environment_default.dll"
+supported_lifetimes = ["singleton"]
 
-exported_declarations = [
-    "struct EnvironmentInterfaceContext;",
-    "int32_t environment_default_set_args(struct EnvironmentInterfaceContext *context, int argc, char **argv, void *platform_context);",
-]
+
+# exported_declarations = [
+#     "struct EnvironmentInterfaceContext;",
+#     "int32_t environment_default_set_args(struct EnvironmentInterfaceContext *context, int argc, char **argv, void *platform_context);",
+# ]

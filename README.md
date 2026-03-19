@@ -31,11 +31,28 @@
 - [x] Fix gen_plugin.py
 - [x] Make interface context dependencies automatically added to context
 - [x] Create inline functions for interfaces
+- [x] Change register macros to a vtable (sigh)
+- [x] Decouple vtable from interface
+- [x] Make plugin manager into an interface
+- [x] Create minimal plugin manager bootloader
+- [x] Make plugin manager own the lifetime of context and interface
+- [x] allow for plugins to create and destroy elements with malloc and free
+- [x] Figure out how it binds the methods
+- [x] Figure out how the plugin_manager does not get loaded to its scope
+- [x] dont force "core" in manifests, have a compile time check that at least the logger and environment are added, if not add them as interfaces with the default
+- [x] Look into using extern const PluginMetadata instead of a getter function for static analyzation
+- [x] Figure out if exported declarations can also be supported dynamically where they are using dllexport so the framework can use them dynamically or if theyre purely for plugin_manager
 
 ### 1
 - [ ] Fix all todos
 
 ### 2
+- [ ] Change calloc for context to use a static allocator
+  - [ ] Also make it work with scopes
+- [ ] Figure out singleton and scoped and transient 
+  - [ ] Create a macro for a scope that automatically destroys the scope (using the macro forloop trick)
+- [ ] Create logger fallback for initial plugin_manager dependency resolver
+- [ ] Make plugin_manager work static and dynamic (or always static)
 - [ ] Add attachments that are defined in .toml
   - [ ] attachments are just interfaces
   - [ ] if attachment wants to be callable it has to have own interface and needs to embed the attachment interface
@@ -44,13 +61,16 @@
 - [ ] Add compile time configurations to plugins via toml
   - [ ] figure out good structure for this
 - [ ] add option for requested plugins to be created at statically
-- [ ] dont force "core" in manifests, have a compile time check that at least the logger and environment are added, if not add them as interfaces with the default
 - [ ] Add sub interfaces for logic and draw
 - [ ] Add loops in my .in template files 
 - [ ] Figure out how to handle capacity in dynamic plugin resolution
+- [ ] Change plugin_name meaning to be the entire plugin_name (eg. renderer_vulkan)
+  - [ ] Think of a new term for the former plugin_name
+- [ ] Create different cmake target that houses the pm_interface headers and remove these from the general include
+  - [ ] Think if the include target has the correct name
 
 ### 3
-- [ ] Figure out if exported declarations can also be supported dynamically where they are using dllexport so the framework can use them dynamically or if theyre purely for plugin_manager
+- [ ] Add proper error numbers
 - [ ] Get rid of all static, non relative paths
 - [ ] Add configurations to plugins
 - [ ] Create proper templating stuff in python with loops and everything

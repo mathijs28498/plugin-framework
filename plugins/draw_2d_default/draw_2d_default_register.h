@@ -4,10 +4,10 @@
 
 #pragma pack(push, 8)
 
-typedef struct Draw2dInterfaceContext
+typedef struct Draw2dContext
 {
     PLUGIN_CONTEXT_DEPENDENCIES
-} Draw2dInterfaceContext;
+} Draw2dContext;
 
 #pragma pack(pop)
 

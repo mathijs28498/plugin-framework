@@ -17,54 +17,56 @@ LOGGER_INTERFACE_REGISTER(window_win32, LOG_LEVEL_DEBUG);
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-int32_t window_win32_create_window(WindowInterfaceContext *context, WindowInterfaceCreateWindowOptions *options)
+int32_t window_win32_create_window(WindowContext *context, WindowInterfaceCreateWindowOptions *options)
 {
-    WindowsPlatformContext *windows_context;
-    ENVIRONMENT_INTERFACE_GET_WINDOWS_CONTEXT(context->environment, &windows_context);
+    TODO("Fix this function")
+    (void) context, options;
+    // WindowsPlatformContext *windows_context;
+    // ENVIRONMENT_INTERFACE_GET_WINDOWS_CONTEXT(context->environment, &windows_context);
 
-    const wchar_t CLASS_NAME[] = L"MainWindowClass";
+    // const wchar_t CLASS_NAME[] = L"MainWindowClass";
 
-    WNDCLASS wc = {0};
-    wc.lpfnWndProc = window_proc;
-    wc.hInstance = windows_context->hInstance;
-    wc.lpszClassName = CLASS_NAME;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    // WNDCLASS wc = {0};
+    // wc.lpfnWndProc = window_proc;
+    // wc.hInstance = windows_context->hInstance;
+    // wc.lpszClassName = CLASS_NAME;
+    // wc.hCursor = LoadCursor(NULL, IDC_ARROW);
 
-    RegisterClass(&wc);
+    // RegisterClass(&wc);
 
-    TODO("Check if this can be done without fixed sized array (I want options->window_name to be a const char *)")
-    wchar_t wide_window_name[sizeof(options->window_name)];
-    if (MultiByteToWideChar(CP_UTF8, 0, options->window_name, -1, wide_window_name, sizeof(options->window_name)) == 0)
-    {
-        wide_window_name[0] = L'\0';
-    }
+    // TODO("Check if this can be done without fixed sized array (I want options->window_name to be a const char *)")
+    // wchar_t wide_window_name[sizeof(options->window_name)];
+    // if (MultiByteToWideChar(CP_UTF8, 0, options->window_name, -1, wide_window_name, sizeof(options->window_name)) == 0)
+    // {
+    //     wide_window_name[0] = L'\0';
+    // }
 
-    context->hwnd = CreateWindow(
-        CLASS_NAME,
-        wide_window_name,
-        WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        NULL,
-        NULL,
-        windows_context->hInstance,
-        context);
+    // context->hwnd = CreateWindow(
+    //     CLASS_NAME,
+    //     wide_window_name,
+    //     WS_OVERLAPPEDWINDOW,
+    //     CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+    //     NULL,
+    //     NULL,
+    //     windows_context->hInstance,
+    //     context);
 
-    if (context->hwnd == NULL)
-    {
-        return 1;
-    }
+    // if (context->hwnd == NULL)
+    // {
+    //     return 1;
+    // }
 
-    ShowWindow(context->hwnd, windows_context->nCmdShow);
+    // ShowWindow(context->hwnd, windows_context->nCmdShow);
     return 0;
 }
 
-int32_t window_win32_close_window(struct WindowInterfaceContext *context)
+int32_t window_win32_close_window(struct WindowContext *context)
 {
     DestroyWindow(context->hwnd);
     return 0;
 }
 
-int32_t window_win32_poll_os_events(WindowInterfaceContext *context)
+int32_t window_win32_poll_os_events(WindowContext *context)
 {
     MSG msg;  
     LoggerInterface *logger = context->logger;
@@ -90,25 +92,25 @@ int32_t window_win32_poll_os_events(WindowInterfaceContext *context)
     return 0;
 }
 
-int32_t window_win32_wait_for_os_events(WindowInterfaceContext *context)
+int32_t window_win32_wait_for_os_events(WindowContext *context)
 {
     return NOT_IMPLEMENTED(int32_t, context);
 }
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    WindowInterfaceContext *context = NULL;
+    WindowContext *context = NULL;
 
     if (uMsg == WM_NCCREATE)
     {
         LPCREATESTRUCT pCreate = (LPCREATESTRUCT)lParam;
-        context = (WindowInterfaceContext *)pCreate->lpCreateParams;
+        context = (WindowContext *)pCreate->lpCreateParams;
 
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)context);
     }
     else
     {
-        context = (WindowInterfaceContext *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+        context = (WindowContext *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     }
 
     if (context == NULL)

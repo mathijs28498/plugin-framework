@@ -4,17 +4,8 @@
 
 #include "renderer_vulkan.h"
 
-static RendererInterface *get_interface(void)
-{
-    static RendererInterfaceContext context = {0};
-
-    static RendererInterface iface = {
-        .context = &context,
-
-        .init = renderer_vulkan_init,
-    };
-
-    return &iface;
-}
+static const RendererVtable plugin_vtable = {
+    .init = renderer_vulkan_init,
+};
 
 #include "plugin_register.c.inc"

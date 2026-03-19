@@ -10,7 +10,7 @@ LOGGER_INTERFACE_REGISTER(draw_default, LOG_LEVEL_DEBUG);
 
 #include "draw_default_register.h"
 
-int32_t draw_default_present(DrawInterfaceContext *context)
+int32_t draw_default_present(DrawContext *context)
 {
     // return NOT_IMPLEMENTED(int32_t, context);
     (void) context;

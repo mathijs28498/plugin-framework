@@ -1,11 +1,12 @@
 interface_name = "logger"
 plugin_name = "console"
-static_only = true
-core = true
-get_interface = "get_interface"
-init = "init"
+init = true
+shutdown = true
+supported_lifetimes = ["singleton"]
+module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/logger_console.dll"
 
-exported_declarations = [
-    "struct LoggerInterfaceContext;",
-    "void logger_console_on_program_exit(struct LoggerInterfaceContext *context, int exit_code);",
-]
+# TODO: Check if this is still necessary, maybe this can just be in the second shutdown phase 
+# exported_declarations = [
+#     "struct LoggerInterfaceContext;",
+#     "void logger_console_on_program_exit(struct LoggerInterfaceContext *context, int exit_code);",
+# ]

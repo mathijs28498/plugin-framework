@@ -4,17 +4,22 @@
 
 #pragma pack(push, 8)
 
-struct DrawInterfaceContext;
+struct DrawContext;
+
+typedef struct DrawVtable
+{
+    int32_t (*present)(struct DrawContext *context);
+} DrawVtable;
 
 typedef struct DrawInterface
 {
-    struct DrawInterfaceContext *context;
+    struct DrawContext *context;
+    DrawVtable *vtable;
 
-    int32_t (*present)(struct DrawInterfaceContext *context);
 } DrawInterface;
 
 #pragma pack(pop)
 static inline int32_t draw_present(DrawInterface *interface)
 {
-    return interface->present(interface->context);
+    return interface->vtable->present(interface->context);
 }

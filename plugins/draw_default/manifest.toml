@@ -1,7 +1,8 @@
 interface_name = "draw"
 plugin_name = "default"
-get_interface = "get_interface"
 # TODO: Fix paths
 module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/draw_default.dll"
+supported_lifetimes = ["singleton"]
 
-dependencies = [{ interface_name = "logger" }]
+[dependencies]
+logger = {}

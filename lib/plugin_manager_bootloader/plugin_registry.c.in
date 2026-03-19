@@ -1,0 +1,23 @@
+#include "plugin_registry.h"
+
+#include <stdbool.h>
+
+#include <plugin_manager_pm_interface.h>
+
+@PLUGIN_DEPENDENCIES_TEXT@
+
+@PLUGIN_DEFINITIONS_TEXT@
+
+static const InterfaceDefinition interface_definitions[] = {
+@INTERFACE_DEFINITIONS_TEXT@
+};
+
+static const PluginRegistry plugin_registry = {
+    .interface_definitions = interface_definitions,
+    .interface_definitions_len = @INTERFACE_DEFINITIONS_LEN@,
+};
+
+const PluginRegistry *get_plugin_registry()
+{
+    return &plugin_registry;
+}

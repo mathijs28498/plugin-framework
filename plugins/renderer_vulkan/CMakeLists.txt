@@ -17,7 +17,7 @@ target_link_libraries(renderer_vulkan
     Vulkan::Vulkan
 )
 
-set(PLUGIN_MANAGER_DIR_PATH "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/lib/plugin_manager")
+set(PLUGIN_MANAGER_DIR_PATH "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/lib/plugin_manager_bootloader")
 
 include("${PLUGIN_MANAGER_DIR_PATH}/cmake/PluginSDK.cmake")
 plugin_generate_register_inc(renderer_vulkan

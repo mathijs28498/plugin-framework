@@ -4,9 +4,9 @@
 
 #pragma pack(push, 8)
 
-typedef struct DrawInterfaceContext
+typedef struct DrawContext
 {
     PLUGIN_CONTEXT_DEPENDENCIES
-} DrawInterfaceContext;
+} DrawContext;
 
 #pragma pack(pop)

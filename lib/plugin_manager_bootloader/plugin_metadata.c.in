@@ -1,0 +1,30 @@
+#include "plugin_metadata.h"
+
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
+
+#include <plugin_utils.h>
+#include <plugin_sdk_types.h>
+
+// const PluginMetadata *plugin_manager_default_get_plugin_metadata(void);
+@GET_PLUGIN_METADATA_FORWARD_DECLARATIONS@
+
+TODO("Check if you want to create a struct containing the output and return that in stead of these out arguments")
+TODO("Check how to do plugin_metadatas initialzied by exposing extern structs rather than get_metadata methods")
+int32_t get_plugin_metadatas(const PluginMetadata ***out_plugin_metadatas, size_t *out_plugin_metadatas_len, const PluginMetadata **out_plugin_manager_metadata)
+{
+    static const PluginMetadata *plugin_metadatas[@PLUGIN_METADATAS_LEN@];
+    static bool is_initialized = false;
+    if (!is_initialized)
+    {
+        // plugin_metadatas[0] = plugin_manager_default_get_plugin_metadata();
+        @PLUGIN_METADATAS_INITIALIZE_TEXT@
+        is_initialized = true;
+    }
+
+    *out_plugin_metadatas = plugin_metadatas;
+    *out_plugin_metadatas_len = ARRAY_SIZE(plugin_metadatas);
+    *out_plugin_manager_metadata = plugin_metadatas[@PLUGIN_MANAGER_METADATA_INDEX@];
+    return 0;
+}

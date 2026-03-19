@@ -5,4 +5,8 @@ if(BUILD_SHARED_LIBS)
     add_subdirectory(draw_default)
     add_subdirectory(draw_2d_default)
     add_subdirectory(renderer_vulkan)
+    add_subdirectory(logger_console)
+    add_subdirectory(environment_default)
+    #TODO: Figure out how to include this non statically too
+    add_subdirectory(plugin_manager_default)
 endif()

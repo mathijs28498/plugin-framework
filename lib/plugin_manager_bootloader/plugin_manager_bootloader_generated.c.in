@@ -1,0 +1,67 @@
+
+#include "plugin_manager_bootloader_generated.h"
+
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
+
+#include <plugin_utils.h>
+#include <plugin_sdk_types.h>
+#include <plugin_manager_pm_interface.h>
+
+@PLUGIN_DEPENDENCIES_TEXT@
+
+@PLUGIN_DEFINITIONS_TEXT@
+
+static const InterfaceDefinition interface_definitions[] = {
+@INTERFACE_DEFINITIONS_TEXT@
+};
+
+static const PluginRegistry plugin_registry = {
+    .interface_definitions = interface_definitions,
+    .interface_definitions_len = @INTERFACE_DEFINITIONS_LEN@,
+};
+
+const PluginRegistry *get_plugin_registry(void)
+{
+    return &plugin_registry;
+}
+
+
+// const PluginMetadata *plugin_manager_default_get_plugin_metadata(void);
+@GET_PLUGIN_METADATA_FORWARD_DECLARATIONS@
+
+static const PluginMetadata *plugin_metadatas[@PLUGIN_METADATAS_LEN@] = {
+@PLUGIN_METADATAS_TEXT@
+};
+
+TODO("Check how to do plugin_metadatas initialzied by exposing extern structs rather than get_metadata methods")
+const BootloaderPluginMetadatas* get_bootloader_plugin_metadatas(void)
+{
+    // static bool is_initialized = false;
+    // if (!is_initialized)
+    // {
+    //     @PLUGIN_METADATAS_INITIALIZE_TEXT@
+    //     is_initialized = true;
+    // }
+
+    static const BootloaderPluginMetadatas bootloader_plugin_metadatas = {
+        .plugin_metadatas = plugin_metadatas,
+        .plugin_metadatas_len = ARRAY_SIZE(plugin_metadatas),
+        .plugin_manager_metadata = @PLUGIN_MANAGER_METADATA_TEXT@,
+    };
+    return &bootloader_plugin_metadatas;
+}
+
+static const RequestedPlugin requested_plugins[] = {
+@REQUESTED_PLUGINS_TEXT@
+};
+
+static const BootloaderRequestedPlugins bootloader_requested_plugins = {
+    .requested_plugins = requested_plugins,
+    .requested_plugins_len = @REQUESTED_PLUGINS_LEN@,
+};
+
+const BootloaderRequestedPlugins *get_bootloader_requested_plugins(void){
+    return &bootloader_requested_plugins;
+}

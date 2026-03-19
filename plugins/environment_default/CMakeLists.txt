@@ -1,4 +1,4 @@
-add_library(environment_default STATIC)
+add_library(environment_default)
 
 target_sources(environment_default
     PRIVATE
@@ -15,7 +15,7 @@ target_link_libraries(environment_default
 )
 
 message("TODO: Make this path relative and not hardcoded likeuh this")
-set(PLUGIN_MANAGER_DIR_PATH "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/lib/plugin_manager")
+set(PLUGIN_MANAGER_DIR_PATH "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/lib/plugin_manager_bootloader")
 
 include("${PLUGIN_MANAGER_DIR_PATH}/cmake/PluginSDK.cmake")
 plugin_generate_register_inc(environment_default

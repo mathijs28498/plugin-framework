@@ -50,7 +50,7 @@ void get_time_str(char time_str[TIME_STRING_LEN])
 
 
 
-void logger_console_log(const LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_level, LoggerInterfaceLogLevel urgent_log_level, const char *tag, const char *message, ...)
+void logger_console_log(const LoggerContext *context, LoggerInterfaceLogLevel log_level, LoggerInterfaceLogLevel urgent_log_level, const char *tag, const char *message, ...)
 {
     if (log_level > context->log_level || log_level <= LOG_LEVEL_NONE || log_level >= LOG_LEVEL_MAX)
     {
@@ -89,12 +89,12 @@ void logger_console_log(const LoggerInterfaceContext *context, LoggerInterfaceLo
     printf("\n");
 }
 
-void logger_console_set_level(LoggerInterfaceContext *context, LoggerInterfaceLogLevel log_level)
+void logger_console_set_level(LoggerContext *context, LoggerInterfaceLogLevel log_level)
 {
     context->log_level = log_level;
 }
 
-void logger_console_set_colors(LoggerInterfaceContext *context, const char *new_colors[LOG_LEVEL_MAX])
+void logger_console_set_colors(LoggerContext *context, const char *new_colors[LOG_LEVEL_MAX])
 {
     for (int i = 0; i < ARRAY_SIZE(new_colors); i++)
     {
@@ -102,7 +102,7 @@ void logger_console_set_colors(LoggerInterfaceContext *context, const char *new_
     }
 }
 
-void logger_console_on_program_exit(LoggerInterfaceContext *context, int exit_code)
+void logger_console_on_program_exit(LoggerContext *context, int exit_code)
 {
     logger_console_log(context, LOG_LEVEL_INFO, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, "Program exited with code %d", exit_code);
     logger_console_log(context, LOG_LEVEL_INFO, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, "Press any key to exit...");

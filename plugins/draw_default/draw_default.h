@@ -2,6 +2,6 @@
 
 #include <stdint.h>
 
-struct DrawInterfaceContext;
+struct DrawContext;
 
-int32_t draw_default_present(struct DrawInterfaceContext *context);
+int32_t draw_default_present(struct DrawContext *context);

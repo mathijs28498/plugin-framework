@@ -4,10 +4,10 @@
 
 #pragma pack(push, 8)
 
-typedef struct RendererInterfaceContext
+typedef struct RendererContext
 {
     PLUGIN_CONTEXT_DEPENDENCIES
-} RendererInterfaceContext;
+} RendererContext;
 
 #pragma pack(pop)
 

@@ -1,0 +1,9 @@
+interface_name = "plugin_manager"
+plugin_name = "default"
+module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/plugin_manager_default.dll"
+supported_lifetimes = ["singleton"]
+
+[dependencies]
+logger = { deferred = true }
+environment = { deferred = true }
+

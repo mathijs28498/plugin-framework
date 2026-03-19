@@ -26,11 +26,9 @@
 #define DEBUG_ONLY(code)
 #endif // #if IS_DEBUG
 
-#if defined(_WIN32) && defined(_WINDOWS)
-#define WINDOWS_GUI 1
-#else // #if defined(_WIN32) && defined(_WINDOWS)
+#ifndef WINDOWS_GUI
 #define WINDOWS_GUI 0
-#endif // #if defined(_WIN32) && defined(_WINDOWS)
+#endif // #ifndef WINDOWS_GUI
 
 #define SAFE_WHILE_CONCAT_(x, y) x##y
 #define SAFE_WHILE_CONCAT(x, y) SAFE_WHILE_CONCAT_(x, y)

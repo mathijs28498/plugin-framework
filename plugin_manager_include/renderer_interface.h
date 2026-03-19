@@ -6,7 +6,7 @@
 
 #pragma pack(push, 8)
 
-struct RendererInterfaceContext;
+struct RendererContext;
 
 TODO("Figure out what variables config needs to have")
 typedef struct RendererWindowConfig
@@ -19,18 +19,21 @@ typedef struct RendererWindowConfig
     bool enable_vsync;
 } RendererWindowConfig;
 
+typedef struct RendererVtable
+{
+    // int32_t (*create_swapchain)(struct RendererContext *context, RendererWindowConfig *window_config);
+    int32_t (*init)(struct RendererContext *context);
+} RendererVtable;
+
 typedef struct RendererInterface
 {
-    struct RendererInterfaceContext *context;
-
-    // int32_t (*create_swapchain)(struct RendererInterfaceContext *context, RendererWindowConfig *window_config);
-    int32_t (*init)(struct RendererInterfaceContext *context);
-
+    struct RendererContext *context;
+    RendererVtable *vtable;
 } RendererInterface;
 
 static inline int32_t renderer_init(RendererInterface *iface)
 {
-    return iface->init(iface->context);
+    return iface->vtable->init(iface->context);
 }
 
 #pragma pack(pop)

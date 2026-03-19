@@ -1,8 +1,0 @@
-#include <stdint.h>
-
-@DEFINE_BUILD_SHARED_TEXT@
-@DEFINE_PLUGIN_TARGET_NAME_TEXT@
-
-#include <plugin_sdk.h>
-
-@REGISTER_MACROS_TEXT@

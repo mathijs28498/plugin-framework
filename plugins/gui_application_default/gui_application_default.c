@@ -14,16 +14,16 @@ LOGGER_INTERFACE_REGISTER(gui_application_default, LOG_LEVEL_DEBUG)
 
 #define GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME 256
 
-int32_t gui_application_default_setup(GuiApplicationInterfaceContext *context, WindowInterfaceCreateWindowOptions *create_window_options)
+int32_t gui_application_default_setup(GuiApplicationContext *context, WindowInterfaceCreateWindowOptions *create_window_options)
 {
     int32_t ret;
     ret = window_create_window(context->window, create_window_options);
-    ret = renderer_init(context->renderer);
+    // ret = renderer_init(context->renderer);
 
     return 0;
 }
 
-int32_t gui_application_default_run(GuiApplicationInterfaceContext *context)
+int32_t gui_application_default_run(GuiApplicationContext *context)
 {
     LoggerInterface *logger = context->logger;
 

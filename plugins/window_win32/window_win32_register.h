@@ -13,7 +13,7 @@ typedef struct HWND__ *HWND;
 
 #define WINDOW_WIN32_WINDOW_EVENTS_SIZE 256
 
-typedef struct WindowInterfaceContext
+typedef struct WindowContext
 {
     PLUGIN_CONTEXT_DEPENDENCIES
 
@@ -21,6 +21,6 @@ typedef struct WindowInterfaceContext
     uint32_t window_events_head;
     uint32_t window_events_tail;
     HWND hwnd;
-} WindowInterfaceContext;
+} WindowContext;
 
 #pragma pack(pop)

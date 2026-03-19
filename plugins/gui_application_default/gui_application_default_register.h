@@ -4,10 +4,10 @@
 
 #pragma pack(push, 8)
 
-typedef struct GuiApplicationInterfaceContext
+typedef struct GuiApplicationContext
 {
     PLUGIN_CONTEXT_DEPENDENCIES
-} GuiApplicationInterfaceContext;
+} GuiApplicationContext;
 
 #pragma pack(pop)
 

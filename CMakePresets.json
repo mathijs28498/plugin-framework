@@ -2,17 +2,19 @@
     "version": 4,
     "configurePresets": [
         {
-            "name": "dev-dynamic",
+            "name": "dev-gui-dynamic",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
-                "BUILD_SHARED_LIBS": "ON"
+                "BUILD_SHARED_LIBS": true,
+                "PLUGIN_MANAGER_GUI": true
             }
         },
         {
-            "name": "dev-static",
+            "name": "dev-gui-static",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
-                "BUILD_SHARED_LIBS": "OFF"
+                "BUILD_SHARED_LIBS": false,
+                "PLUGIN_MANAGER_GUI": true
             }
         }
     ]

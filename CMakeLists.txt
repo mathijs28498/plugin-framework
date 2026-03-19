@@ -22,9 +22,11 @@ else()
    
 endif()
 
+option(PLUGIN_MANAGER_GUI "Build plugin manager as a GUI" OFF)
+
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/lib/plugin_manager")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/lib/plugin_manager_bootloader")
 
 add_subdirectory(lib)
 add_subdirectory(plugins)

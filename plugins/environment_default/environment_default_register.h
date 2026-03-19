@@ -4,12 +4,12 @@
 
 struct LoggerInterface;
 
-typedef struct EnvironmentInterfaceContext
+typedef struct EnvironmentContext
 {
     int argc;
     char **argv;
     void *platform_context;
-} EnvironmentInterfaceContext;
+} EnvironmentContext;
 
 struct EnvironmentInterface *environment_get_interface(void);
 

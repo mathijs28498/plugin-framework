@@ -8,7 +8,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan, LOG_LEVEL_DEBUG)
 
 #include "renderer_vulkan_register.h"
 
-int32_t renderer_vulkan_init(RendererInterfaceContext *context)
+int32_t renderer_vulkan_init(RendererContext *context)
 {
     LoggerInterface *logger = context->logger;
 

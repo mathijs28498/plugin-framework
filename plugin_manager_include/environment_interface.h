@@ -4,14 +4,19 @@
 
 #pragma pack(push, 8)
 
-struct EnvironmentInterfaceContext;
+struct EnvironmentContext;
+
+
+typedef struct EnvironmentVtable
+{
+    void (*get_args)(struct EnvironmentContext *context, int *argc, char ***argv);
+    void (*get_platform_context)(struct EnvironmentContext *context, void **platform_context);
+} EnvironmentVtable;
 
 typedef struct EnvironmentInterface
 {
-    struct EnvironmentInterfaceContext *context;
-
-    void (*get_args)(struct EnvironmentInterfaceContext *context, int *argc, char ***argv);
-    void (*get_platform_context)(struct EnvironmentInterfaceContext *context, void **platform_context);
+    struct EnvironmentContext *context;
+    EnvironmentVtable *vtable;
 } EnvironmentInterface;
 
 #if WINDOWS_GUI
@@ -29,10 +34,10 @@ typedef struct WindowsPlatformContext
 
 static inline void environment_get_args(EnvironmentInterface *iface, int *argc, char ***argv)
 {
-    iface->get_args(iface->context, argc, argv);
+    iface->vtable->get_args(iface->context, argc, argv);
 }
 
 static inline void environment_get_platform_context(struct EnvironmentInterface *iface, void **platform_context)
 {
-    iface->get_platform_context(iface->context, platform_context);
+    iface->vtable->get_platform_context(iface->context, platform_context);
 }

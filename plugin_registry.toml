@@ -1,4 +1,5 @@
 plugin_manifests = [
+    "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/plugin_manager_default",
     "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/environment_default",
     "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/logger_console",
     "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/plugins/gui_application_default",
@@ -10,6 +11,7 @@ plugin_manifests = [
 ]
 
 interfaces = [
+    { interface_name = "plugin_manager", default = "default" },
     { interface_name = "environment", default = "default" },
     { interface_name = "logger", default = "console" },
     { interface_name = "window", default = [
@@ -21,3 +23,20 @@ interfaces = [
     { interface_name = "draw_2d", default = "default" },
     { interface_name = "renderer", default = "vulkan" },
 ]
+
+# TODO: Make this work like this
+# [defaults]
+# plugin_manager = "default"
+# environment = "default"
+# logger = "console"
+# gui_application = "default"
+# draw = "default"
+# input = "default"
+# draw_2d = "default"
+# renderer = "vulkan"
+
+# # Platform-specific overrides use a nested table
+# [defaults.window]
+# win32 = "win32"
+# linux = "x11"
+# wasm = "html5"

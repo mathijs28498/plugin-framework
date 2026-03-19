@@ -1,0 +1,64 @@
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
+@DEFINE_BUILD_SHARED_TEXT@
+
+#include <plugin_sdk_types.h>
+
+@INJECT_DEPENDENCY_FN_DEFINITION_TEXT@
+
+static @INTERFACE_NAME_PASCAL_CASE@Context *create_context()
+{
+    @INTERFACE_NAME_PASCAL_CASE@Context *context = (@INTERFACE_NAME_PASCAL_CASE@Context *) calloc(1, sizeof(@INTERFACE_NAME_PASCAL_CASE@Context));
+
+    return context;
+}
+
+static int32_t destroy_context(@INTERFACE_NAME_PASCAL_CASE@Context *context)
+{
+    free(context);
+    return 0;
+}
+
+static const PluginProvider plugin_provider = {
+    .vtable = &plugin_vtable,
+    .create_context = (PluginCreateContext_Fn)create_context,
+    .inject_dependency = @INJECT_DEPENDENCY_FN_TEXT@,
+    .init = @PLUGIN_INIT_FN_TEXT@,
+    .shutdown = @PLUGIN_SHUTDOWN_FN_TEXT@,
+    .destroy_context = (PluginDestroyContext_Fn)destroy_context,
+};
+
+@PLUGIN_DEPENDENCIES_TEXT@
+
+static const PluginLifetime supported_lifetimes[@SUPPORTED_LIFETIMES_LEN@] = {
+    @SUPPORTED_LIFETIMES_TEXT@
+};
+
+extern const PluginMetadata @TARGET_NAME@_plugin_metadata = {
+    .interface_name = "@INTERFACE_NAME@",
+    .plugin_name = "@PLUGIN_NAME@",
+    .dependencies = @PLUGIN_DEPENDENCIES_VARIABLE_TEXT@,
+    .dependencies_len = @PLUGIN_DEPENDENCIES_LEN@,
+    .supported_lifetimes = supported_lifetimes,
+    .supported_lifetimes_len = @SUPPORTED_LIFETIMES_LEN@,
+    .preferred_lifetime = @PREFERRED_LIFETIME@,
+    .provider = &plugin_provider,
+};
+
+#if defined(PLUGIN_BUILD_SHARED)
+// TODO: Figure out cross platform, also figure out PLUGIN_USE_SHARED with dllimport
+__declspec(dllexport) const PluginMetadata *@TARGET_NAME@_get_plugin_metadata(void)
+{
+    return &@TARGET_NAME@_plugin_metadata;
+};
+#endif // #if defined(PLUGIN_BUILD_SHARED)
+
+// #if defined(WIN32) && defined(PLUGIN_BUILD_SHARED)
+// #define PLUGIN_FUNCTION_PREFIX __declspec(dllexport)
+// #elif defined(WIN32) && defined(PLUGIN_USE_SHARED)
+// #define PLUGIN_FUNCTION_PREFIX __declspec(dllimport)
+// #else
+// #define PLUGIN_FUNCTION_PREFIX
+// #endif // defined(WIN32) && defined(PLUGIN_BUILD_SHARED)

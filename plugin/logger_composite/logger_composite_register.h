@@ -6,10 +6,10 @@
 
 struct LoggerInterface;
 
-typedef struct LoggerInterfaceContext
+typedef struct LoggerContext
 {
     PLUGIN_CONTEXT_DEPENDENCIES
-} LoggerInterfaceContext;
+} LoggerContext;
 
 #pragma pack(pop)
 

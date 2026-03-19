@@ -2,6 +2,6 @@
 
 #include <stdint.h>
 
-struct RendererInterfaceContext;
+struct RendererContext;
 
-int32_t renderer_vulkan_init(struct RendererInterfaceContext *context);
+int32_t renderer_vulkan_init(struct RendererContext *context);
