@@ -31,30 +31,54 @@ static int32_t plugin_init(LoggerContext *context)
     context->colors[2] = ANSI_COLOR_GREEN;
     context->colors[3] = ANSI_COLOR_CYAN;
 
-    if (!AttachConsole(ATTACH_PARENT_PROCESS))
+    TODO("Check why AttachConsole should be here and how it should be done");
+    // // if (!AttachConsole(ATTACH_PARENT_PROCESS))
+    // // {
+    // if (!AllocConsole())
+    // {
+    //     return 0;
+    // }
+    // // }
+
+    // FILE *fDummy;
+
+    // // Redirect standard streams to the new console "CONOUT$" and "CONIN$"
+    // freopen_s(&fDummy, "CONOUT$", "w", stdout);
+    // freopen_s(&fDummy, "CONOUT$", "w", stderr);
+    // freopen_s(&fDummy, "CONIN$", "r", stdin);
+    // HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    // if (hOut != INVALID_HANDLE_VALUE)
+    // {
+    //     DWORD dwMode = 0;
+    //     if (GetConsoleMode(hOut, &dwMode))
+    //     {
+    //         dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    //         SetConsoleMode(hOut, dwMode);
+    //     }
+    // }
+
+    TODO("Do this properly with consoles and such")
+#if IS_DEBUG && WINDOWS_GUI
+    if (AllocConsole())
     {
-        if (!AllocConsole())
+        FILE *fDummy;
+
+        // Redirect standard streams to the new console "CONOUT$" and "CONIN$"
+        freopen_s(&fDummy, "CONOUT$", "w", stdout);
+        freopen_s(&fDummy, "CONOUT$", "w", stderr);
+        freopen_s(&fDummy, "CONIN$", "r", stdin);
+        HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (hOut != INVALID_HANDLE_VALUE)
         {
-            return 0;
+            DWORD dwMode = 0;
+            if (GetConsoleMode(hOut, &dwMode))
+            {
+                dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+                SetConsoleMode(hOut, dwMode);
+            }
         }
     }
-
-    FILE *fDummy;
-
-    // Redirect standard streams to the new console "CONOUT$" and "CONIN$"
-    freopen_s(&fDummy, "CONOUT$", "w", stdout);
-    freopen_s(&fDummy, "CONOUT$", "w", stderr);
-    freopen_s(&fDummy, "CONIN$", "r", stdin);
-    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
-    if (hOut != INVALID_HANDLE_VALUE)
-    {
-        DWORD dwMode = 0;
-        if (GetConsoleMode(hOut, &dwMode))
-        {
-            dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-            SetConsoleMode(hOut, dwMode);
-        }
-    }
+#endif // #if IS_DEBUG && WINDOWS_GUI
     return 0;
 }
 

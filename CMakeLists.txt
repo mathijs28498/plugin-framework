@@ -6,6 +6,9 @@ message(STATUS "C compiler: ${CMAKE_C_COMPILER}")
 message(STATUS "C compiler ID: ${CMAKE_C_COMPILER_ID}")
 message(STATUS "C compiler version: ${CMAKE_C_COMPILER_VERSION}")
 
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+
 if(MSVC)
     add_compile_options(
         /W4       # Warning level 4 (Production quality - standard "strict")

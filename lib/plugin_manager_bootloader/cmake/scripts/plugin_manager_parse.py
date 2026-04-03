@@ -160,6 +160,7 @@ def parse_requested_plugins(
         RequestedPlugin(
             interface_name=requested_plugin_interface_name,
             plugin_name=requested_plugin.get("plugin_name"),
+            lifetime=PluginLifetime(requested_plugin.get("lifetime", "unknown")),
             is_explicit=True,
         )
         for requested_plugin_interface_name, requested_plugin in requested_plugins_dict.get(

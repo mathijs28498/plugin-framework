@@ -5,340 +5,130 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
-TODO("Hide this in a separate place behind a define to make it platform independent")
-#include <Windows.h>
 
+TODO("Remove unnecessary includes")
 #include <logger_interface.h>
-LOGGER_INTERFACE_REGISTER(logger_console, LOG_LEVEL_DEBUG);
+LOGGER_INTERFACE_REGISTER(plugin_manager_default, LOG_LEVEL_DEBUG);
 #include <plugin_manager_pm_interface.h>
 #include <plugin_sdk_types.h>
+#include <environment_interface.h>
+#include <environment_pm_interface.h>
 
 #include "plugin_manager_default_register.h"
 
-TODO("Figure out where these belong")
-#define PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN 256
-#define PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH 256
-TODO("Figure out where to put this")
-#define MAX_REGISTERED_PLUGINS 64
-
-int32_t resolve_requested_plugins(
-    const RequestedPlugin *requested_plugins, size_t requested_plugins_len,
-    const PluginRegistry *plugin_registry,
-    const PluginDefinition **out_plugin_definitions, size_t *out_plugin_definitions_len)
+bool is_lifetime_supported(const PluginMetadata *plugin_metadata, PluginLifetime lifetime)
 {
-    for (size_t i = 0; i < requested_plugins_len; i++)
+    for (size_t j = 0; j < plugin_metadata->supported_lifetimes_len; j++)
     {
-        const RequestedPlugin *requested_plugin = &requested_plugins[i];
-        bool use_default = strlen(requested_plugin->plugin_name) == 0;
-        bool definition_found = false;
-
-        for (size_t j = 0; j < plugin_registry->interface_definitions_len; j++)
+        PluginLifetime supported_lifetime = plugin_metadata->supported_lifetimes[j];
+        if (supported_lifetime == lifetime)
         {
-            const InterfaceDefinition *interface_definition = &plugin_registry->interface_definitions[j];
-            if (strcmp(requested_plugin->interface_name, interface_definition->interface_name) != 0)
-            {
-                continue;
-            }
-
-            const char *plugin_name = use_default
-                                          ? interface_definition->default_plugin
-                                          : requested_plugin->plugin_name;
-
-            for (size_t k = 0; k < interface_definition->plugin_definitions_len; k++)
-            {
-                const PluginDefinition *plugin_definition = &interface_definition->plugin_definitions[k];
-                if (strcmp(plugin_name, plugin_definition->plugin_name) != 0)
-                {
-                    continue;
-                }
-
-                out_plugin_definitions[*out_plugin_definitions_len] = plugin_definition;
-                (*out_plugin_definitions_len)++;
-                TODO("Add max size check here")
-                definition_found = true;
-                break;
-            }
-
-            if (definition_found)
-            {
-                break;
-            }
-        }
-
-        if (!definition_found)
-        {
-            TODO("Write error message");
-            return -1;
+            return true;
         }
     }
 
-    return 0;
+    return false;
 }
 
-int32_t resolve_get_metadata_fn_dynamic(const char *module_path, const char *target_name, PluginGetMetadata_Fn *out_get_metadata_fn)
+int32_t add_plugin_to_scope(const LoggerInterface *logger,
+                            const PluginScope *singleton_scope,
+                            RegisteredPlugin *registered_plugins, size_t registered_plugins_len,
+                            const char *interface_name_to_add, PluginScope *scope)
 {
-    assert(out_get_metadata_fn != NULL);
-
-    TODO("Figure out how to destroy the handle if that is necessary, also allow this code to be optionally compiled based on platform/PLUGIN_BUILD_SHARED")
-    HMODULE handle = LoadLibrary(module_path);
-    if (!handle)
-    {
-        TODO("Add error log here")
-        return -1;
-    }
-
-    char function_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
-    snprintf(function_name, sizeof(function_name), "%s_get_plugin_metadata", target_name);
-
-    FARPROC proc_address = GetProcAddress(handle, function_name);
-
-    if (!proc_address)
-    {
-        // TODO: Add error log here (Symbol not found)
-        TODO("Add error log here")
-        FreeLibrary(handle);
-        return -2;
-    }
-
-    *out_get_metadata_fn = (PluginGetMetadata_Fn)proc_address;
-
-    return 0;
-}
-
-int32_t resolve_plugin_metadatas(
-    const PluginDefinition **plugin_definitions, size_t plugin_definitions_len,
-    const PluginMetadata **static_plugin_metadatas, size_t static_plugin_metadatas_len,
-    const PluginMetadata **out_plugin_metadatas, size_t *out_plugin_metadatas_len)
-{
+    (void)singleton_scope;
     int32_t ret;
-    for (size_t i = 0; i < plugin_definitions_len; i++)
+
+    RegisteredPlugin *registered_plugin_to_add = NULL;
+    for (size_t j = 0; j < registered_plugins_len; j++)
     {
-        const PluginDefinition *plugin_definition = plugin_definitions[i];
-        bool static_metadata_found = false;
-
-        for (size_t j = 0; j < static_plugin_metadatas_len; j++)
+        RegisteredPlugin *registered_plugin = &registered_plugins[j];
+        if (strcmp(interface_name_to_add, registered_plugin->metadata->interface_name) == 0)
         {
-            const PluginMetadata *static_plugin_metadata = static_plugin_metadatas[j];
-            if (strcmp(plugin_definition->interface_name, static_plugin_metadata->interface_name) == 0)
-            {
-                out_plugin_metadatas[*out_plugin_metadatas_len] = static_plugin_metadata;
-                (*out_plugin_metadatas_len)++;
-                TODO("Add dbg text here")
-                TODO("Add max size check here")
-                static_metadata_found = true;
-                break;
-            }
-        }
-
-        if (static_metadata_found)
-        {
-            continue;
-        }
-
-        PluginGetMetadata_Fn get_metadata_fn = NULL;
-        ret = resolve_get_metadata_fn_dynamic(plugin_definition->module_path, plugin_definition->target_name, &get_metadata_fn);
-        if (ret < 0)
-        {
-            TODO("Add error log here")
-            return ret;
-        }
-        const PluginMetadata *plugin_metadata = get_metadata_fn();
-        if (plugin_metadata == NULL)
-        {
-            TODO("Add error log here")
-            return -1;
-        }
-
-        out_plugin_metadatas[*out_plugin_metadatas_len] = plugin_metadata;
-        (*out_plugin_metadatas_len)++;
-        TODO("Add dbg text here")
-        TODO("Add max size check here")
-    }
-
-    return 0;
-}
-
-int32_t resolve_plugin_metadata_dependencies(
-    const PluginMetadata **plugin_metadatas, size_t plugin_metadatas_len, size_t resolved_plugin_metadata_offset,
-    RequestedPlugin *out_requested_plugins, size_t *out_requested_plugins_len)
-{
-    for (size_t i = resolved_plugin_metadata_offset; i < plugin_metadatas_len; i++)
-    {
-        const PluginMetadata *plugin_metadata = plugin_metadatas[i];
-        for (size_t j = 0; j < plugin_metadata->dependencies_len; j++)
-        {
-            const PluginDependency *plugin_dependency = &plugin_metadata->dependencies[j];
-
-            bool dependency_already_present = false;
-
-            for (size_t k = 0; k < plugin_metadatas_len; k++)
-            {
-                const PluginMetadata *plugin_metadata_to_check = plugin_metadatas[k];
-                if (strcmp(plugin_dependency->interface_name, plugin_metadata_to_check->interface_name) == 0)
-                {
-                    dependency_already_present = true;
-                    break;
-                }
-            }
-
-            if (dependency_already_present)
-            {
-                continue;
-            }
-
-            for (size_t k = 0; k < *out_requested_plugins_len; k++)
-            {
-                const RequestedPlugin *requested_plugin_to_check = &out_requested_plugins[k];
-                if (strcmp(plugin_dependency->interface_name, requested_plugin_to_check->interface_name) == 0)
-                {
-                    dependency_already_present = true;
-                    break;
-                }
-            }
-
-            if (dependency_already_present)
-            {
-                continue;
-            }
-
-            // The dependency is not plugin metadatas, and is not already requested, now we will request it
-            out_requested_plugins[*out_requested_plugins_len].interface_name = plugin_dependency->interface_name;
-            out_requested_plugins[*out_requested_plugins_len].plugin_name = "";
-            (*out_requested_plugins_len)++;
-            TODO("Add dbg text here")
-            TODO("Add max size check here")
-        }
-    }
-    return 0;
-}
-int32_t load_requested_plugins(
-    const PluginRegistry *plugin_registry,
-    const PluginMetadata **static_plugin_metadatas, size_t static_plugin_metadatas_len,
-    RequestedPlugin *requested_plugins, size_t requested_plugins_len,
-    const PluginMetadata **out_plugin_metadatas, size_t *out_plugin_metadatas_len)
-{
-    int ret;
-    size_t resolved_plugin_metadata_offset = *out_plugin_metadatas_len;
-
-    SAFE_WHILE(
-        requested_plugins_len > 0,
-        PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH,
-        {
-            TODO("Add error log")
-            return -1;
-        })
-    {
-        const PluginDefinition *plugin_definitions[MAX_REGISTERED_PLUGINS];
-        size_t plugin_definitions_len = 0;
-
-        TODO("Add error handling messages")
-        ret = resolve_requested_plugins(
-            requested_plugins, requested_plugins_len,
-            plugin_registry,
-            plugin_definitions, &plugin_definitions_len);
-
-        ret = resolve_plugin_metadatas(
-            plugin_definitions, plugin_definitions_len,
-            static_plugin_metadatas, static_plugin_metadatas_len,
-            out_plugin_metadatas, out_plugin_metadatas_len);
-
-        requested_plugins_len = 0;
-
-        ret = resolve_plugin_metadata_dependencies(
-            out_plugin_metadatas, *out_plugin_metadatas_len, resolved_plugin_metadata_offset,
-            requested_plugins, &requested_plugins_len);
-
-        resolved_plugin_metadata_offset = *out_plugin_metadatas_len;
-    }
-
-    return 0;
-}
-
-int32_t plugin_manager_default_bootstrap(
-    PluginManagerContext *context,
-    int argc, char **argv, void *platform_context,
-    const PluginRegistry *plugin_registry,
-    const PluginMetadata **static_plugin_metadatas, size_t static_plugin_metadatas_len,
-    const RequestedPlugin *explicitly_requested_plugins, size_t explicitly_requested_plugins_len)
-{
-    int32_t ret;
-    TODO("Call the environment set_arguments");
-    (void)context, argc, argv, platform_context;
-
-    const PluginMetadata *plugin_metadatas[MAX_REGISTERED_PLUGINS];
-    size_t plugin_metadatas_len = 0;
-
-    TODO("Check if should allow to have the plugin_manager requested")
-    RequestedPlugin requested_plugins[MAX_REGISTERED_PLUGINS] = {0};
-    size_t requested_plugins_len = 0;
-    for (size_t i = 0; i < explicitly_requested_plugins_len; i++)
-    {
-        const RequestedPlugin *requested_plugin = &explicitly_requested_plugins[i];
-        if (strcmp("plugin_manager", requested_plugin->interface_name) == 0)
-        {
-            requested_plugins[0].interface_name = requested_plugin->interface_name;
-            requested_plugins[0].plugin_name = requested_plugin->plugin_name;
-            requested_plugins_len++;
+            registered_plugin_to_add = registered_plugin;
             break;
         }
     }
-    if (requested_plugins_len == 0)
+
+    if (registered_plugin_to_add == NULL)
     {
-        requested_plugins[0].interface_name = "plugin_manager";
-        requested_plugins[0].plugin_name = "";
-        requested_plugins_len++;
+        TODO("Add error log");
+        if (logger != NULL)
+            LOG_ERR("Unable to add plugin '%s' to scope with lifetime '%d' as it is not registered", interface_name_to_add, scope->lifetime);
+        return -1;
     }
 
-    TODO("Somehow make sure that these always get to singleton and that plugin_manager doesnt get its context created")
-    ret = load_requested_plugins(
-        plugin_registry,
-        static_plugin_metadatas, static_plugin_metadatas_len,
-        requested_plugins, requested_plugins_len,
-        plugin_metadatas, &plugin_metadatas_len);
-    
-    TODO("Set the logger and environment in the context")
-
-    requested_plugins_len = 0;
-    for (size_t i = 0; i < explicitly_requested_plugins_len; i++)
+    if (registered_plugin_to_add->lifetime != PLUGIN_LIFETIME_UNKNOWN &&
+        registered_plugin_to_add->lifetime != scope->lifetime)
     {
-        const RequestedPlugin *explicitly_requested_plugin = &explicitly_requested_plugins[i];
-        bool plugin_already_loaded = false;
-        for (size_t j = 0; j < plugin_metadatas_len; j++)
-        {
-            const PluginMetadata *plugin_metadata = plugin_metadatas[j];
-            if (strcmp(explicitly_requested_plugin->interface_name, plugin_metadata->interface_name) == 0)
-            {
-                plugin_already_loaded = true;
-                break;
-            }
-        }
-
-        if (plugin_already_loaded)
-        {
-            continue;
-        }
-
-        requested_plugins[requested_plugins_len].interface_name = explicitly_requested_plugin->interface_name;
-        requested_plugins[requested_plugins_len].plugin_name = explicitly_requested_plugin->plugin_name;
-        requested_plugins_len++;
+        TODO("Add error log - plugin already has a different lifetime, cant add it as this lifetime")
+        if (logger != NULL)
+            LOG_ERR("Unable to add plugin '%s' to scope with lifetime '%d' as its scope lifetime '%d' is incompatible",
+                    interface_name_to_add, scope->lifetime, registered_plugin_to_add->lifetime);
+        return -1;
     }
 
-    ret = load_requested_plugins(
-        plugin_registry,
-        static_plugin_metadatas, static_plugin_metadatas_len,
-        requested_plugins, requested_plugins_len,
-        plugin_metadatas, &plugin_metadatas_len);
+    if (!is_lifetime_supported(registered_plugin_to_add->metadata, scope->lifetime))
+    {
+        if (logger != NULL)
+            LOG_ERR("Unable to add plugin '%s' to scope with lifetime '%d' the plugin does not support scope lifetime",
+                    interface_name_to_add, scope->lifetime);
+        return -1;
+    }
 
-    TODO("Do topological sort and figure out lifetimes. Initialize the singleton dependencies right away")
-    TODO("Make scopes work (create singleton scope)")
+    const PluginProvider *plugin_provider = registered_plugin_to_add->metadata->provider;
+
+    TODO("Call destroy context when the scope gets destroyed");
+    TODO("Figure out what needs to happen to do create_context without malloc, I want the context to live within the scope I think")
+    void *context = plugin_provider->create_context();
+    TODO("Check if should do != NULL instead")
+    if (plugin_provider->init)
+    {
+        ret = plugin_provider->init(context);
+        if (ret < 0)
+        {
+            LOG_ERR("Initializing plugin '%s' failed: %d", registered_plugin_to_add->metadata->interface_name, ret);
+            return ret;
+        }
+    }
+
+    TODO("Handle dependencies")
+    TODO("Check for max")
+    ScopedPlugin *scoped_plugin = &scope->plugins[scope->plugins_len];
+    scoped_plugin->interface_name = interface_name_to_add;
+    scoped_plugin->iface.vtable = plugin_provider->vtable;
+    scoped_plugin->iface.context = context;
+
+    scope->plugins_len++;
+    registered_plugin_to_add->lifetime = scope->lifetime;
+    if (logger != NULL)
+        LOG_DBG("Plugin '%s' added to scope with lifetime '%d'", registered_plugin_to_add->metadata->interface_name, scope->lifetime);
 
     return 0;
 }
 
-int32_t plugin_manager_default_get_singleton(PluginManagerContext *context, const char *interface_name, void **iface)
+int32_t plugin_manager_default_get_singleton(PluginManagerContext *context, const char *interface_name, void **out_iface)
 {
-    assert(iface != NULL);
-    (void)context, interface_name, iface;
-    return 0;
-    // return NOT_IMPLEMENTED(int32_t, context, interface_name, iface);
+    assert(out_iface != NULL);
+    return plugin_manager_default_get_scoped(context, &context->singleton_scope, interface_name, out_iface);
+}
+
+int32_t plugin_manager_default_get_scoped(struct PluginManagerContext *context, struct PluginScope *scope, const char *interface_name, void **out_iface)
+{
+    LoggerInterface *logger = context->logger;
+
+    TODO("Check if already in scope, if yes get it, if no create it")
+    TODO("If scope is SINGLETON, return err if not available")
+    assert(out_iface != NULL);
+
+    for (size_t i = 0; i < scope->plugins_len; i++)
+    {
+        ScopedPlugin *plugin = &scope->plugins[i];
+        if (strcmp(interface_name, plugin->interface_name) == 0)
+        {
+            *out_iface = &plugin->iface;
+            return 0;
+        }
+    }
+    LOG_ERR("Unable to get plugin '%s' from scope with lifetime '%d'", interface_name, scope->lifetime);
+    return -1;
 }

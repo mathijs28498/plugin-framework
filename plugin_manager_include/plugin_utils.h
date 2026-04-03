@@ -1,11 +1,13 @@
 #pragma once
 
+#include <stddef.h>
+
 #define STRINGIZE2(x) #x
 #define STRINGIZE(x) STRINGIZE2(x)
 
 #if defined(_MSC_VER)
 // #define TODO(msg) __pragma(message(__FILE__ "(" STRINGIZE(__LINE__) "): TODO: " msg))
-#define TODO(msg) 
+#define TODO(msg)
 #else // #if defined(_MSC_VER)
 #define TODO(msg) _Pragma("message(\"TODO: " msg "\")")
 #endif // #if defined(_MSC_VER)
@@ -63,3 +65,71 @@
      (return_type)0)
 
 #define BITFIELD_SIZE_32(bits) (((bits) + 31) / 32)
+
+typedef union
+{
+    struct
+    {
+        size_t length;
+        size_t capacity;
+    };
+    long long align_ll_;
+    long double align_ld_;
+    void *align_ptr_;
+} ArrayHeader_;
+
+#define CREATE_ARRAY(type, var_name, cap) \
+    struct                                \
+    {                                     \
+        ArrayHeader_ header;              \
+        type arr[cap];                    \
+    } var_name##_ = {                     \
+        .header = {                       \
+            .length = 0,                  \
+            .capacity = cap,              \
+        },                                \
+        .arr = {0}};                      \
+    type *(var_name) = var_name##_.arr
+
+#define CREATE_ARRAY_WITH_DECL(decl, var_name, cap) \
+    decl struct                                     \
+    {                                               \
+        ArrayHeader_ header;                        \
+        type arr[cap];                              \
+    } var_name##_ = {                               \
+        .header = {                                 \
+            .length = 0,                            \
+            .capacity = cap,                        \
+        },                                          \
+        .arr = {0}};                                \
+    decl type *(var_name) = var_name##_.arr
+
+#define CREATE_INITIALIZED_ARRAY(type, var_name, ...)                 \
+    struct                                                            \
+    {                                                                 \
+        ArrayHeader_ header;                                          \
+        type arr[sizeof((type[]){__VA_ARGS__}) / sizeof(type)];       \
+    } var_name##_ = {                                                 \
+        .header = {                                                   \
+            .length = sizeof((type[]){__VA_ARGS__}) / sizeof(type),   \
+            .capacity = sizeof((type[]){__VA_ARGS__}) / sizeof(type), \
+        },                                                            \
+        .arr = {__VA_ARGS__}};                                        \
+    type *(var_name) = var_name##_.arr
+
+#define CREATE_INITIALIZED_ARRAY_WITH_DECL(decl, type, var_name, ...) \
+    decl struct                                                       \
+    {                                                                 \
+        ArrayHeader_ header;                                          \
+        type arr[sizeof((type[]){__VA_ARGS__}) / sizeof(type)];       \
+    } var_name##_ = {                                                 \
+        .header = {                                                   \
+            .length = sizeof((type[]){__VA_ARGS__}) / sizeof(type),   \
+            .capacity = sizeof((type[]){__VA_ARGS__}) / sizeof(type), \
+        },                                                            \
+        .arr = {__VA_ARGS__}};                                        \
+    decl type *(var_name) = (type *)var_name##_.arr
+
+#define GET_ARRAY_HEADER(arr_ptr) ((ArrayHeader_ *)(arr_ptr) - 1)
+#define GET_ARRAY_CAPACITY(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->capacity)
+#define GET_ARRAY_LENGTH(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->length)

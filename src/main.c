@@ -2,24 +2,48 @@
 // #include <stdbool.h>
 #include <stdint.h>
 #include <plugin_manager_interface.h>
+#include <windows.h>
 
 // #include <plugin_framework.h>
 // #include <input_interface.h>
 // #include <draw_2d_interface.h>
-// #include <logger_interface.h>
-// LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
+#include <logger_interface.h>
+LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
 // #include <input_interface.h>
 // #include <environment_interface.h>
-// #include <window_interface.h>
-// #include <gui_application_interface.h>
+#include <window_interface.h>
+#include <gui_application_interface.h>
+
+typedef struct TestStruct
+{
+    int test_number;
+} TestStruct;
 
 int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager)
 {
-    void *test_iface;
-    plugin_manager->vtable->get_singleton(plugin_manager->context, "test", &test_iface);
-    (void)plugin_manager;
-    int32_t test = 3;
-    (void)test;
+    int ret;
+
+    LoggerInterface *logger;
+    ret = PLUGIN_MANAGER_GET_SINGLETON(plugin_manager, "logger", &logger);
+    if (ret < 0)
+    {
+        return ret;
+    }
+
+    LOG_WRN("This works baby!");
+
+    GuiApplicationInterface *gui_application;
+    ret = PLUGIN_MANAGER_GET_SINGLETON(plugin_manager, "gui_application", &gui_application);
+    if (ret < 0)
+    {
+        return ret;
+    }
+
+    WindowInterfaceCreateWindowOptions create_window_options = {
+        .window_name = "My app",
+    };
+    ret = gui_application_setup(gui_application, &create_window_options);
+    ret = gui_application_run(gui_application);
     return 0;
 }
 // #include <Windows.h>

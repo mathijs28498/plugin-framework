@@ -1,4 +1,4 @@
 [requested_plugins]
 logger = {}
-gui_application = {}
+gui_application = { lifetime = "singleton" }
 # { interface_name = "draw_2d" },

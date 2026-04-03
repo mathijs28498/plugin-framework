@@ -16,6 +16,7 @@ def main():
         plugin_manifest_dict, arguments.manifest_toml
     )
 
+    # TODO: Change names to have header in the naming
     generate_plugin_dependencies(
         arguments.source_plugin_dependencies,
         arguments.generated_plugin_dependencies,

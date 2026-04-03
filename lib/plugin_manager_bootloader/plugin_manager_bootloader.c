@@ -14,13 +14,13 @@
 
 int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager);
 
-int32_t plugin_manager_bootloader_bootstrap(int argc, char *argv[], void *platform_context)
+int32_t plugin_manager_bootloader_bootstrap(int argc, char **argv, void *platform_context)
 {
     int32_t ret;
 
     const PluginRegistry *plugin_registry = get_plugin_registry();
     const BootloaderPluginMetadatas *bootloader_plugin_metadatas = get_bootloader_plugin_metadatas();
-    const BootloaderRequestedPlugins *bootloader_requested_plugins = get_bootloader_requested_plugins();
+    const RequestedPlugin *requested_plugins = get_bootloader_requested_plugins();
 
     const PluginProvider *plugin_manager_provider = bootloader_plugin_metadatas->plugin_manager_metadata->provider;
     struct PluginManagerContext *plugin_manager_context = plugin_manager_provider->create_context();
@@ -38,12 +38,11 @@ int32_t plugin_manager_bootloader_bootstrap(int argc, char *argv[], void *platfo
     };
 
     plugin_manager_pm_bootstrap(&plugin_manager_interface,
+                                bootloader_plugin_metadatas->plugin_manager_metadata,
                                 argc, argv, platform_context,
                                 plugin_registry,
                                 bootloader_plugin_metadatas->plugin_metadatas,
-                                bootloader_plugin_metadatas->plugin_metadatas_len,
-                                bootloader_requested_plugins->requested_plugins,
-                                bootloader_requested_plugins->requested_plugins_len);
+                                requested_plugins);
 
     ret = plugin_manager_bootloader_main(&plugin_manager_interface);
 

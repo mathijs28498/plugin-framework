@@ -53,6 +53,7 @@ class InterfaceDefinition:
 class RequestedPlugin:
     interface_name: str
     plugin_name: Optional[str]
+    lifetime: PluginLifetime
     is_explicit: bool
 
 

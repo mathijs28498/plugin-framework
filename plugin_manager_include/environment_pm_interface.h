@@ -12,6 +12,7 @@ typedef struct EnvironmentPMVtable
 {
     EnvironmentVtable public_vtable;
 
+    TODO("Change this name as it also sets the platform_context")
     int32_t (*set_args)(struct EnvironmentContext *context, int argc, char **argv, void *platform_context);
 } EnvironmentPMVtable;
 

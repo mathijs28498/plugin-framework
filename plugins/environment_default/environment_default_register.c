@@ -6,7 +6,6 @@
 #include "environment_default.h"
 
 static const EnvironmentPMVtable plugin_vtable = {
-
     .public_vtable = {
         .get_args = environment_default_get_args,
         .get_platform_context = environment_default_get_platform_context,

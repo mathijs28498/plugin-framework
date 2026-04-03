@@ -125,8 +125,8 @@ def create_plugin_metadata_replacements(
         for plugin_manifest in plugin_manifests
     )
     plugin_metadatas_text = textwrap.indent(
-        "\n".join(
-            f"&{plugin_manifest.target_name}_plugin_metadata,"
+        ",\n".join(
+            f"&{plugin_manifest.target_name}_plugin_metadata"
             for plugin_manifest in plugin_manifests
         ),
         indent_prefix * 1,
@@ -145,13 +145,13 @@ def create_plugin_metadata_replacements(
             "Metadata containing plugin manager not found, please ensure a plugin manager plugin is available"
         )
 
+
     return [
         (
             "GET_PLUGIN_METADATA_FORWARD_DECLARATIONS",
             get_plugin_metadata_forward_declarations,
         ),
         ("PLUGIN_METADATAS_TEXT", plugin_metadatas_text),
-        ("PLUGIN_METADATAS_LEN", str(plugin_metadatas_len)),
         ("PLUGIN_MANAGER_METADATA_TEXT", plugin_manager_metadata_text),
     ]
 
@@ -280,6 +280,7 @@ def create_requested_plugin_replacements(
                 {{
                     .interface_name = "{requested_plugin.interface_name}",    
                     .plugin_name = "{requested_plugin.plugin_name if requested_plugin.plugin_name else ""}",
+                    .lifetime = PLUGIN_LIFETIME_{requested_plugin.lifetime.name},
                 }},\
                 """
             )
@@ -498,10 +499,40 @@ def generate_plugin_dependencies(
         f"struct {snake_to_pascal_case(dependency_interface_name)}Interface;"
         for dependency_interface_name in plugin_manifest.dependencies.keys()
     )
-    dependency_variables_text = f" \\\n{indent_prefix}".join(
-        f"struct {snake_to_pascal_case(dependency_interface_name)}Interface *{dependency.variable_name};"
-        for dependency_interface_name, dependency in plugin_manifest.dependencies.items()
-    )
+
+    dependency_variables_text = ""
+
+    if plugin_manifest.dependencies:
+        define_start = textwrap.dedent(
+            f""" \
+            \\
+            union {{ \\
+                struct {{ \\
+            """
+        )
+        define_middle = textwrap.indent(
+            f" \\\n{indent_prefix}".join(
+                f"struct {snake_to_pascal_case(dependency_interface_name)}Interface *{dependency.variable_name};"
+                for dependency_interface_name, dependency in plugin_manifest.dependencies.items()
+            ),
+            indent_prefix * 3,
+        )
+        define_end = textwrap.dedent(
+            f""" \
+            \\
+                }}; \\
+                void *interfaces[{str(len(plugin_manifest.dependencies))}]; \\
+            }};
+            """
+        )
+
+        dependency_variables_text = define_start + define_middle + define_end
+
+    # union { \
+    #     struct { \
+    #     };\
+    #     void *interfaces[@DEPENDENCY_VARIABLES_LEN@]; \
+    # };
     replacements = [
         (
             "DEPENDENCY_INTERFACE_FORWARD_DECLARATIONS_TEXT",

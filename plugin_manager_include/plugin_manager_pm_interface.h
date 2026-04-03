@@ -43,11 +43,13 @@ typedef struct PluginRegistry
 } PluginRegistry;
 
 struct PluginMetadata;
+enum PluginLifetime;
 
 typedef struct RequestedPlugin
 {
     const char *interface_name;
     const char *plugin_name;
+    const enum PluginLifetime lifetime;
 } RequestedPlugin;
 
 typedef struct PluginManagerPMVtable
@@ -55,20 +57,22 @@ typedef struct PluginManagerPMVtable
     PluginManagerVtable public_vtable;
 
     int32_t (*bootstrap)(struct PluginManagerContext *context,
+                         const struct PluginMetadata *plugin_manager_metadata,
                          int argc, char *argv[], void *platform_context,
                          const PluginRegistry *plugin_registry,
-                         const struct PluginMetadata **static_plugin_metadatas, size_t static_plugin_metadatas_len,
-                         const RequestedPlugin *explicitly_requested_plugins, size_t explicitly_requested_plugins_len);
+                         const struct PluginMetadata *const *static_plugin_metadatas,
+                         const RequestedPlugin *requested_plugins_explicit);
 } PluginManagerPMVtable;
 
 #pragma pack(pop)
 
 static inline int32_t plugin_manager_pm_bootstrap(
     PluginManagerInterface *iface,
+    const struct PluginMetadata *plugin_manager_metadata,
     int argc, char **argv, void *platform_context,
     const PluginRegistry *plugin_registry,
-    const struct PluginMetadata **static_plugin_metadatas, size_t static_plugin_metadatas_len,
-    const RequestedPlugin *explicitly_requested_plugins, size_t explicitly_requested_plugins_len)
+    const struct PluginMetadata *const *static_plugin_metadatas,
+    const RequestedPlugin *requested_plugins_explicit)
 {
-    return ((PluginManagerPMVtable *)iface->vtable)->bootstrap(iface->context, argc, argv, platform_context, plugin_registry, static_plugin_metadatas, static_plugin_metadatas_len, explicitly_requested_plugins, explicitly_requested_plugins_len);
+    return ((PluginManagerPMVtable *)iface->vtable)->bootstrap(iface->context, plugin_manager_metadata, argc, argv, platform_context, plugin_registry, static_plugin_metadatas, requested_plugins_explicit);
 }

@@ -5,9 +5,13 @@
 #include "plugin_manager_bootloader.h"
 
 TODO("Make sure CoInitialize and Uninitialize are both properly done for both main and wWinMain when necessary")
+TODO("Allow for wWinMain and winMain based on if _UNICODE is defined")
 
 #if WINDOWS_GUI
 #include <Windows.h>
+#include <stdlib.h>
+#include <malloc.h>
+
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                     LPWSTR lpCmdLine, int nCmdShow)
 {
@@ -27,18 +31,26 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     platform_context.hInstance = hInstance;
     platform_context.nCmdShow = nCmdShow;
 
+    char **argv = (char **)_malloca(__argc * sizeof(char *));
+
+    for (int i = 0; i < __argc; i++)
+    {
+        int arg_size = WideCharToMultiByte(CP_UTF8, 0, __wargv[i], -1, NULL, 0, NULL, NULL);
+        argv[i] = (char *)_malloca(arg_size);
+        WideCharToMultiByte(CP_UTF8, 0, __wargv[i], -1, argv[i], arg_size, NULL, NULL);
+    }
+
     // ret = __plugin_manager_init(__argc, __argv, &platform_context, &__setup_context, &__runtime_context);
     // if (ret < 0)
     // {
     //     (void)__plugin_manager_shutdown(__setup_context, __runtime_context, ret);
     //     return ret;
     // }
-    int32_t ret = plugin_manager_bootloader_bootstrap(__argc, __argv, &platform_context);
+    int32_t ret = plugin_manager_bootloader_bootstrap(__argc, argv, &platform_context);
 
     // ret = plugin_manager_main(__runtime_context);
     // (void)__plugin_manager_shutdown(__setup_context, __runtime_context, ret);
     CoUninitialize();
-
 
     // HRESULT hr = {0};
     // hr = CoInitialize(NULL);

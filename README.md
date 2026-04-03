@@ -47,6 +47,7 @@
 - [ ] Fix all todos
 
 ### 2
+- [ ] Rename whole project to something acidy from framework
 - [ ] Change calloc for context to use a static allocator
   - [ ] Also make it work with scopes
 - [ ] Figure out singleton and scoped and transient 
@@ -92,6 +93,15 @@
   - [ ] Maybe even allow for strongly typed inclusions
   - [ ] Add looping
 - [ ] Create go to definition in templating in python somehow
+
+### 5
+- [ ] Create C to C transpiler in framework (for ACID lang)
+
+### 6
+- [ ] ACID (Another C Inspired Design) programming language
+- [ ] BASE (Barely Another Storage Engine) sql database, add ACID syntax with it
+- [ ] BUFFER (...) text editor
+- [ ] ... (...) plugin framework
 
 # other
 interface inline regex creator:

@@ -6,5 +6,5 @@ target_sources(plugin_manager_include
 )
 
 if(WIN32 AND PLUGIN_MANAGER_GUI)
-    target_compile_definitions(plugin_manager_bootloader PRIVATE WINDOWS_GUI=1)
+    target_compile_definitions(plugin_manager_include INTERFACE WINDOWS_GUI=1)
 endif()

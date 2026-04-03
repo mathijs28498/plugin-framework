@@ -5,6 +5,7 @@ target_sources(plugin_manager_default
     PRIVATE
     plugin_manager_default.c
     plugin_manager_default_register.c
+    plugin_manager_default_bootstrap.c
 
     PUBLIC
     FILE_SET HEADERS
