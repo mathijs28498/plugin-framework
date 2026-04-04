@@ -28,8 +28,7 @@ TODO("Improve this iteratively")
 typedef struct PluginScope
 {
     enum PluginLifetime lifetime;
-    ScopedPlugin plugins[MAX_INTERFACE_PER_SCOPE];
-    size_t plugins_len;
+    ARRAY_FIELD(struct ScopedPlugin, plugins, MAX_INTERFACE_PER_SCOPE);
 } PluginScope;
 
 TODO("See if this name is correct")
@@ -43,6 +42,7 @@ typedef struct PluginManagerContext
 {
     TODO("Make sure that the PLUGIN_CONTEXT_DEPENDENCIES file is correctly formatted")
     PLUGIN_CONTEXT_DEPENDENCIES
+    TODO("Maybe DO add the plugin_manager as registered plugin so that other plugins can have it as a dependency for scopes, just look into how to handle shutdown and destroy")
     ARRAY_FIELD(struct RegisteredPlugin, registered_plugins, MAX_REGISTERED_PLUGINS_LEN);
     PluginScope singleton_scope;
 } PluginManagerContext;

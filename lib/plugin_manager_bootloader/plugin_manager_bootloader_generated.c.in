@@ -34,7 +34,7 @@ const PluginRegistry *get_plugin_registry(void)
 // @PLUGIN_METADATAS_TEXT@
 // };
 CREATE_INITIALIZED_ARRAY_WITH_DECL(
-    static const,
+    static,
     const PluginMetadata * const, 
     plugin_metadatas,
 @PLUGIN_METADATAS_TEXT@

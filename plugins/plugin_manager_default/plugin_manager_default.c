@@ -52,6 +52,7 @@ int32_t add_plugins_to_scope(const LoggerInterface *logger,
     return 0;
 }
 
+TODO("Return the added plugins")
 int32_t add_plugin_to_scope(const LoggerInterface *logger,
                             const PluginScope *singleton_scope,
                             RegisteredPlugin *registered_plugins,
@@ -113,13 +114,18 @@ int32_t add_plugin_to_scope(const LoggerInterface *logger,
     }
 
     TODO("Handle dependencies")
-    TODO("Check for max")
-    ScopedPlugin *scoped_plugin = &scope->plugins[scope->plugins_len];
+    if (GET_ARRAY_CAPACITY(scope->plugins) == GET_ARRAY_LENGTH(scope->plugins))
+    {
+        if (logger != NULL)
+            LOG_ERR("Tried to add plugin to scope definition when array is full");
+        return -1;
+    }
+    ScopedPlugin *scoped_plugin = &scope->plugins[GET_ARRAY_LENGTH(scope->plugins)];
     scoped_plugin->interface_name = interface_name_to_add;
     scoped_plugin->iface.vtable = plugin_provider->vtable;
     scoped_plugin->iface.context = context;
+    GET_ARRAY_LENGTH(scope->plugins) += 1;
 
-    scope->plugins_len++;
     registered_plugin_to_add->lifetime = scope->lifetime;
     if (logger != NULL)
         LOG_DBG("Plugin '%s' added to scope with lifetime '%d'", registered_plugin_to_add->metadata->interface_name, scope->lifetime);
@@ -141,7 +147,7 @@ int32_t plugin_manager_default_get_scoped(struct PluginManagerContext *context, 
     TODO("If scope is SINGLETON, return err if not available")
     assert(out_iface != NULL);
 
-    for (size_t i = 0; i < scope->plugins_len; i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(scope->plugins); i++)
     {
         ScopedPlugin *plugin = &scope->plugins[i];
         if (strcmp(interface_name, plugin->interface_name) == 0)
