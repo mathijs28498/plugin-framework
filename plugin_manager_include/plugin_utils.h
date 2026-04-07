@@ -154,3 +154,25 @@ TODO("Create push method that checks capacity with error method call")
 #define GET_ARRAY_HEADER(arr_ptr) ((ArrayHeader_ *)(arr_ptr) - 1)
 #define GET_ARRAY_CAPACITY(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->capacity)
 #define GET_ARRAY_LENGTH(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->length)
+
+#define ARRAY_PUSH_CHECKED(arr_ptr, element, on_err)                  \
+    do                                                                \
+    {                                                                 \
+        if (GET_ARRAY_CAPACITY(arr_ptr) <= GET_ARRAY_LENGTH(arr_ptr)) \
+        {                                                             \
+            on_err                                                    \
+        }                                                             \
+        (arr_ptr)[GET_ARRAY_LENGTH(arr_ptr)] = (element);             \
+        GET_ARRAY_LENGTH(arr_ptr) += 1;                               \
+    } while (0)
+
+#define ARRAY_PUSH_MULTI_CHECKED(arr_ptr, first_element, element_count, on_err)        \
+    do                                                                                 \
+    {                                                                                  \
+        if (GET_ARRAY_CAPACITY(arr_ptr) > GET_ARRAY_LENGTH(arr_ptr) + (element_count)) \
+        {                                                                              \
+            on_err                                                                     \
+        }                                                                              \
+        memcpy((arr_ptr), (first_element), sizeof(arr_ptr) * (element_count));         \
+        GET_ARRAY_LENGTH(arr_ptr) += (element_count);                                  \
+    } while (0)

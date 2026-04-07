@@ -27,8 +27,14 @@ int32_t plugin_init(PluginManagerContext *context)
 
 int32_t plugin_shutdown(PluginManagerContext *context)
 {
-    TODO("Shutdown all plugins, including singletons and scoped ones, in ascending order of topological sort")
-    (void) context;
+    int32_t ret = plugin_manager_default_shutdown_scope(context->registered_plugins, &context->singleton_scope);
+    if (ret < 0)
+    {
+        TODO("Add error log here");
+        return ret;
+    }
+    TODO("Shutdown any scopes that are still open");
+    
     return 0;
 }
 

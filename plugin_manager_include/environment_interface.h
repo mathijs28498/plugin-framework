@@ -27,7 +27,7 @@ typedef struct WindowsPlatformContext
     int nCmdShow;
 } WindowsPlatformContext;
 
-#define ENVIRONMENT_INTERFACE_GET_WINDOWS_CONTEXT(environment_interface, windows_context) environment_interface->get_platform_context(environment_interface->context, (void **)windows_context)
+#define ENVIRONMENT_INTERFACE_GET_WINDOWS_CONTEXT(iface, windows_context) iface->vtable->get_platform_context(iface->context, (void **)windows_context)
 #endif // #if WINDOWS_GUI
 
 #pragma pack(pop)

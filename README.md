@@ -42,6 +42,8 @@
 - [x] dont force "core" in manifests, have a compile time check that at least the logger and environment are added, if not add them as interfaces with the default
 - [x] Look into using extern const PluginMetadata instead of a getter function for static analyzation
 - [x] Figure out if exported declarations can also be supported dynamically where they are using dllexport so the framework can use them dynamically or if theyre purely for plugin_manager
+- [x] Figure out how to handle capacity in dynamic plugin resolution
+- [x] Implement scope shutdown
 
 ### 1
 - [ ] Fix all todos
@@ -61,16 +63,17 @@
   - [ ] if attachment wants to be callable it has to have own interface and needs to embed the attachment interface
   - [ ] Create logger to file and console at same time
   - [ ] Allow for requested toml to specify attachments
+  - [ ] Allow attachments to have same interface as the plugin
 - [ ] Add compile time configurations to plugins via toml
   - [ ] figure out good structure for this
 - [ ] add option for requested plugins to be created at statically
-- [ ] Add sub interfaces for logic and draw
+- [ ] Add attachments for logic and draw
 - [ ] Add loops in my .in template files 
-- [ ] Figure out how to handle capacity in dynamic plugin resolution
 - [ ] Change plugin_name meaning to be the entire plugin_name (eg. renderer_vulkan)
-  - [ ] Think of a new term for the former plugin_name
+  - [ ] Think of a new term for the former plugin_name (variant)
 - [ ] Create different cmake target that houses the pm_interface headers and remove these from the general include
   - [ ] Think if the include target has the correct name
+- [ ] Implement hash function for interface_name
 
 ### 3
 - [ ] Add proper error numbers

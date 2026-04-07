@@ -23,6 +23,7 @@ typedef struct PluginProvider
     PluginDestroyContext_Fn destroy_context;
 } PluginProvider;
 
+TODO("If this every changes from just being a string, check usage of it")
 typedef struct PluginDependency
 {
     const char *interface_name;
@@ -30,10 +31,10 @@ typedef struct PluginDependency
 
 typedef enum PluginLifetime
 {
-    PLUGIN_LIFETIME_UNKNOWN = -1,
-    PLUGIN_LIFETIME_SINGLETON = 0,
-    PLUGIN_LIFETIME_SCOPED = 1,
-    PLUGIN_LIFETIME_TRANSIENT = 2,
+    PLUGIN_LIFETIME_UNKNOWN = 0,
+    PLUGIN_LIFETIME_SINGLETON = 1,
+    PLUGIN_LIFETIME_SCOPED = 2,
+    PLUGIN_LIFETIME_TRANSIENT = 3,
 } PluginLifetime;
 
 TODO("Add optional dependencies")

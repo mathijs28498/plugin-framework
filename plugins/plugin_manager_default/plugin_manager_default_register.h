@@ -24,17 +24,17 @@ typedef struct ScopedPlugin
     ScopedPluginInterface iface;
 } ScopedPlugin;
 
-TODO("Improve this iteratively")
 typedef struct PluginScope
 {
     enum PluginLifetime lifetime;
     ARRAY_FIELD(struct ScopedPlugin, plugins, MAX_INTERFACE_PER_SCOPE);
 } PluginScope;
 
-TODO("See if this name is correct")
 typedef struct RegisteredPlugin
 {
+    // When a lifetime is set it cannot be changed, if a different lifetime is requested while the lifetime is not PLUGIN_LIFETIME_UNKNOWN it is an error
     enum PluginLifetime lifetime;
+    void *platform_handle;
     const struct PluginMetadata *metadata;
 } RegisteredPlugin;
 

@@ -50,7 +50,7 @@ typedef struct RequestedPlugin
 {
     const char *interface_name;
     const char *plugin_name;
-    const enum PluginLifetime lifetime;
+    enum PluginLifetime lifetime;
 } RequestedPlugin;
 
 typedef struct PluginManagerPMVtable
