@@ -62,7 +62,7 @@ int32_t resolve_requested_plugins(
 
         if (plugin_definition_to_add == NULL)
         {
-            LOG_DBG("Plugin '%s' '%s' not found in registry",
+            LOG_DBG(logger, "Plugin '%s' '%s' not found in registry",
                     requested_plugin->interface_name,
                     use_default ? "default plugin" : requested_plugin->plugin_name);
             return -1;
@@ -85,7 +85,7 @@ int32_t resolve_requested_plugins(
             }
             if (!is_statically_loaded)
             {
-                LOG_DBG("Static only plugin '%s' '%s' not statically linked",
+                LOG_DBG(logger, "Static only plugin '%s' '%s' not statically linked",
                         plugin_definition_to_add->interface_name,
                         plugin_definition_to_add->plugin_name);
                 return -1;
@@ -139,7 +139,7 @@ int32_t load_plugin_modules(
         HMODULE handle = LoadLibrary(plugin_definition->module_path);
         if (!handle)
         {
-            LOG_ERR("Failed to load plugin '%s' at '%s'", plugin_definition->target_name, plugin_definition->module_path);
+            LOG_ERR(logger, "Failed to load plugin '%s' at '%s'", plugin_definition->target_name, plugin_definition->module_path);
             return -1;
         }
 
@@ -155,7 +155,7 @@ int32_t load_plugin_modules(
 
             if (!plugin_provider->dependencies[j].set)
             {
-                LOG_ERR("Could not find dependency setter '%s_set_%s'",
+                LOG_ERR(logger, "Could not find dependency setter '%s_set_%s'",
                         plugin_definition->target_name,
                         dependency->interface_name);
                 return -1;
@@ -166,7 +166,7 @@ int32_t load_plugin_modules(
                           plugin_provider->get_interface);
         if (!plugin_provider->get_interface)
         {
-            LOG_ERR("no get interface method found for plugin: '%s'", plugin_definition->target_name);
+            LOG_ERR(logger, "no get interface method found for plugin: '%s'", plugin_definition->target_name);
             return -1;
         }
 
@@ -222,7 +222,7 @@ int32_t calculate_plugin_provider_initialization_order(
         {
             (*indegree)++;
         }
-        LOG_DBG("'%s %s' - indegree: %d", plugin_provider->interface_name, plugin_provider->plugin_name, *indegree);
+        LOG_DBG(logger, "'%s %s' - indegree: %d", plugin_provider->interface_name, plugin_provider->plugin_name, *indegree);
     }
 
     // Seed initial indices
@@ -240,7 +240,7 @@ int32_t calculate_plugin_provider_initialization_order(
         queue_head != queue_tail,
         PLUGIN_MANAGER_MAX_PLUGINS_LEN + 1,
         {
-            LOG_ERR("Plugin initialization topological sort exceeded max iterations");
+            LOG_ERR(logger, "Plugin initialization topological sort exceeded max iterations");
             return -1;
         })
     {
@@ -266,7 +266,7 @@ int32_t calculate_plugin_provider_initialization_order(
                 {
                     if (queue_tail >= plugin_providers_len)
                     {
-                        LOG_ERR("Queue overflow: Logic error in dependency graph.");
+                        LOG_ERR(logger, "Queue overflow: Logic error in dependency graph.");
                         return -1;
                     }
                     sorted_plugin_providers_indices[queue_tail] = i;
@@ -278,7 +278,7 @@ int32_t calculate_plugin_provider_initialization_order(
 
     if (queue_tail != plugin_providers_len)
     {
-        LOG_ERR("Cyclic dependency detected! Initialized %d out of %d plugins.", queue_tail, plugin_providers_len);
+        LOG_ERR(logger, "Cyclic dependency detected! Initialized %d out of %d plugins.", queue_tail, plugin_providers_len);
         return -1;
     }
 
@@ -335,7 +335,7 @@ int32_t resolve_plugin_provider_dependencies(
             {
                 if (logger != NULL)
                 {
-                    LOG_ERR("Failed to resolve dependency '%s' required by '%s' (auto-discovery disabled)",
+                    LOG_ERR(logger, "Failed to resolve dependency '%s' required by '%s' (auto-discovery disabled)",
                             dependency->interface_name,
                             plugin_provider->interface_name);
                 }
@@ -361,11 +361,11 @@ int32_t resolve_plugin_provider_dependencies(
                 continue;
             }
 
-            LOG_DBG("Unable to resolve '%s' required by '%s', adding to requested plugins", dependency->interface_name, plugin_provider->interface_name);
+            LOG_DBG(logger, "Unable to resolve '%s' required by '%s', adding to requested plugins", dependency->interface_name, plugin_provider->interface_name);
             ret = plugin_manager_request_plugin(logger, dependency->interface_name, NULL, false, requested_plugins, requested_plugins_len);
             if (ret < 0)
             {
-                LOG_ERR("Failed to implicitly request dependency interface '%s' required by '%s'", dependency->interface_name, plugin_provider->interface_name);
+                LOG_ERR(logger, "Failed to implicitly request dependency interface '%s' required by '%s'", dependency->interface_name, plugin_provider->interface_name);
                 return ret;
             }
 #endif // #if PLUGIN_BUILD_SHARED
@@ -434,7 +434,7 @@ int32_t initialize_plugins(
         {
             if (logger != NULL)
             {
-                LOG_ERR("Unable to init interface '%s'-'%s': %d",
+                LOG_ERR(logger, "Unable to init interface '%s'-'%s': %d",
                         plugin_provider->interface_name,
                         plugin_provider->plugin_name,
                         init_ret);

@@ -30,20 +30,19 @@ int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager)
         return ret;
     }
 
-    LOG_WRN("This works baby!");
+    LOG_WRN(logger, "This works baby!");
 
     GuiApplicationInterface *gui_application;
-    ret = PLUGIN_MANAGER_GET_SINGLETON(plugin_manager, "gui_application", &gui_application);
-    if (ret < 0)
-    {
-        return ret;
-    }
+    RETURN_IF_ERROR(logger, ret, PLUGIN_MANAGER_GET_SINGLETON(plugin_manager, "gui_application", &gui_application),
+                    "Failed to get plugin_manager plugin: %d", ret);
 
     WindowInterfaceCreateWindowOptions create_window_options = {
         .window_name = "My app",
     };
-    ret = gui_application_setup(gui_application, &create_window_options);
-    ret = gui_application_run(gui_application);
+    RETURN_IF_ERROR(logger, ret, gui_application_setup(gui_application, &create_window_options),
+                    "Failed to setup gui application: %d", ret);
+    RETURN_IF_ERROR(logger, ret, gui_application_run(gui_application),
+                    "Failed to run gui application: %d", ret);
     return 0;
 }
 // #include <Windows.h>
@@ -92,7 +91,7 @@ int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager)
 //     //     return ret;
 //     // }
 
-//     // LOG_WRN("This works yes");
+//     // LOG_WRN(logger, "This works yes");
 
 //     // WindowInterface *window;
 //     // ret = PLUGIN_FRAMEWORK_GET("window", &window);

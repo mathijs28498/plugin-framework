@@ -6,7 +6,10 @@
 #include "window_win32_window_events.h"
 
 static const WindowVtable plugin_vtable = {
+    .get_os_handles = window_win32_get_os_handles,
+
     .create_window = window_win32_create_window,
+    .get_window_size = window_win32_get_window_size,
     .close_window = window_win32_close_window,
 
     .poll_os_events = window_win32_poll_os_events,

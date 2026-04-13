@@ -49,6 +49,24 @@
 - [ ] Fix all todos
 
 ### 2
+- [ ] Link vulkan indirectly for faster performance: https://docs.vulkan.org/guide/latest/loader.html#loader
+- [ ] Add project wide debug level
+- [ ] Add allocator plugin
+  - [ ] Add arena allocator with compile time settings for arenas
+    - [ ] Have compile time settings to allow for x for y size arenas
+    - [ ] Have the plugins using it register, then get back a handle to use
+      - [ ] This registering should say if it needs global/temporary, and the amount and sizes
+    - [ ] When allocating use the handle and receive an arena handle to use for allocation
+    - [ ] Never give the raw data
+    - [ ] When freeing either return the memory, or give back the handle (allow for both)
+    - [ ] If someone that has 1 temporary handle registered asks for a second one it will error
+    - [ ] Add memory allcoation tracker
+  - [ ] Check for other allocation strategies that might be necessary
+- [ ] Figure out valgrind
+- [ ] Put dependencies into own struct called PluginDependencies created by the header and add this to the context struct with a small name
+- [ ] Add a way to get custom text inserted in log statements for error codes in plugin_utils
+- [ ] Add a composite Graphics/GPU interface that does the GPU initialization like vulkan. Then the renderer/ gpu_compute interface plugins can depend on this somehow. They need to depend specifically on the vulkan version however. This way you can specify a renderer and the composite one gets added right away.
+- [ ] Add more robust checks for user facing plugins (like checking if context != NULL)
 - [ ] Make static plugins work again
 - [ ] Rename whole project to something acidy from framework
 - [ ] Determine if logger macro should take the logger argument or not
@@ -112,3 +130,9 @@
 # other
 interface inline regex creator:
 .* ([a-z].*) \(\*(.*)\)\(.* (.*)context \*context(.*);/static inline \1 _\2(\3 *iface \4\n{\n\treturn iface->\2(iface->context\4;\n}\n
+
+calculate lines of code:
+Get-ChildItem -Path . -Recurse -File | Where-Object {
+($_.Extension -in @('.c', '.h', '.txt', '.cmake', '.py')) -and
+($_.FullName -notmatch '\\lib\\' -or $_.FullName -match '\\lib\\plugin_manager_bootloader\\' -or $_.FullName -match '\\lib\\static_alloc\\')
+} | Get-Content | Measure-Object -Line

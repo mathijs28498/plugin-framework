@@ -37,7 +37,7 @@ CREATE_INITIALIZED_ARRAY_WITH_DECL(
     static,
     const PluginMetadata * const, 
     plugin_metadatas,
-@PLUGIN_METADATAS_TEXT@
+{@PLUGIN_METADATAS_TEXT@}
     );
 
 TODO("Check how to do plugin_metadatas initialzied by exposing extern structs rather than get_metadata methods")
@@ -54,7 +54,7 @@ CREATE_INITIALIZED_ARRAY_WITH_DECL(
     static const,
     RequestedPlugin, 
     requested_plugins, 
-@REQUESTED_PLUGINS_TEXT@
+{@REQUESTED_PLUGINS_TEXT@}
     );
 
 const RequestedPlugin *get_bootloader_requested_plugins(void){

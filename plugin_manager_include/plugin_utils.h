@@ -66,6 +66,8 @@
 
 #define BITFIELD_SIZE_32(bits) (((bits) + 31) / 32)
 
+#define CLAMP(value, low, high) ((value) < (low) ? (low) : ((high) < (value) ? (high) : (value)))
+
 typedef union
 {
     struct
@@ -127,33 +129,32 @@ typedef union
     struct                                                            \
     {                                                                 \
         ArrayHeader_ header;                                          \
-        type arr[sizeof((type[]){__VA_ARGS__}) / sizeof(type)];       \
+        type arr[sizeof((type[])__VA_ARGS__) / sizeof(type)];       \
     } var_name##_ = {                                                 \
         .header = {                                                   \
-            .length = sizeof((type[]){__VA_ARGS__}) / sizeof(type),   \
-            .capacity = sizeof((type[]){__VA_ARGS__}) / sizeof(type), \
+            .length = sizeof((type[])__VA_ARGS__) / sizeof(type),   \
+            .capacity = sizeof((type[])__VA_ARGS__) / sizeof(type), \
         },                                                            \
-        .arr = {__VA_ARGS__}};                                        \
+        .arr = __VA_ARGS__};                                        \
     type *(var_name) = var_name##_.arr
 
 #define CREATE_INITIALIZED_ARRAY_WITH_DECL(decl, type, var_name, ...) \
     decl struct                                                       \
     {                                                                 \
         ArrayHeader_ header;                                          \
-        type arr[sizeof((type[]){__VA_ARGS__}) / sizeof(type)];       \
+        type arr[sizeof((type[])__VA_ARGS__) / sizeof(type)];       \
     } var_name##_ = {                                                 \
         .header = {                                                   \
-            .length = sizeof((type[]){__VA_ARGS__}) / sizeof(type),   \
-            .capacity = sizeof((type[]){__VA_ARGS__}) / sizeof(type), \
+            .length = sizeof((type[])__VA_ARGS__) / sizeof(type),   \
+            .capacity = sizeof((type[])__VA_ARGS__) / sizeof(type), \
         },                                                            \
-        .arr = {__VA_ARGS__}};                                        \
+        .arr = __VA_ARGS__};                                        \
     decl type *(var_name) = (type *)var_name##_.arr
-
-TODO("Create push method that checks capacity with error method call")
 
 #define GET_ARRAY_HEADER(arr_ptr) ((ArrayHeader_ *)(arr_ptr) - 1)
 #define GET_ARRAY_CAPACITY(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->capacity)
 #define GET_ARRAY_LENGTH(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->length)
+#define SET_ARRAY_FIELD_CAPACITY(arr) GET_ARRAY_CAPACITY(arr) = ARRAY_SIZE(arr);
 
 #define ARRAY_PUSH_CHECKED(arr_ptr, element, on_err)                  \
     do                                                                \
@@ -166,13 +167,51 @@ TODO("Create push method that checks capacity with error method call")
         GET_ARRAY_LENGTH(arr_ptr) += 1;                               \
     } while (0)
 
-#define ARRAY_PUSH_MULTI_CHECKED(arr_ptr, first_element, element_count, on_err)        \
-    do                                                                                 \
-    {                                                                                  \
-        if (GET_ARRAY_CAPACITY(arr_ptr) > GET_ARRAY_LENGTH(arr_ptr) + (element_count)) \
-        {                                                                              \
-            on_err                                                                     \
-        }                                                                              \
-        memcpy((arr_ptr), (first_element), sizeof(arr_ptr) * (element_count));         \
-        GET_ARRAY_LENGTH(arr_ptr) += (element_count);                                  \
+#define ARRAY_PUSH_MULTI_CHECKED(arr_ptr, first_element, element_count, on_err)                                        \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        if (GET_ARRAY_CAPACITY(arr_ptr) < GET_ARRAY_LENGTH(arr_ptr) + (element_count))                                 \
+        {                                                                                                              \
+            on_err                                                                                                     \
+        }                                                                                                              \
+        memcpy(&(arr_ptr)[GET_ARRAY_LENGTH(required_extensions)], (first_element), sizeof(arr_ptr) * (element_count)); \
+        GET_ARRAY_LENGTH(arr_ptr) += (element_count);                                                                  \
     } while (0)
+
+#define ARRAY_PUSH_ARRAY(arr_ptr, other_arr_ptr, on_err)\
+    ARRAY_PUSH_MULTI_CHECKED(arr_ptr, other_arr_ptr, GET_ARRAY_LENGTH(other_arr_ptr), on_err)
+
+#define RETURN_IF_TRUE(logger, condition, err_ret_val, ...) \
+    do                                                      \
+    {                                                       \
+        if ((condition))                                    \
+        {                                                   \
+            if ((logger) != NULL)                           \
+                LOG_ERR((logger), ##__VA_ARGS__);           \
+            return (err_ret_val);                           \
+        }                                                   \
+    } while (0)
+
+#define RETURN_IF_FALSE(logger, condition, err_ret_val, ...) \
+    RETURN_IF_TRUE(logger, !(condition), err_ret_val, ##__VA_ARGS__)
+
+#define RETURN_IF_ERROR_CONDITION_RET_VALUE(logger, err_var, condition, func_call, err_ret_val, ...) \
+    do                                                                                               \
+    {                                                                                                \
+        (err_var) = (func_call);                                                                     \
+        if ((condition))                                                                             \
+        {                                                                                            \
+            if ((logger) != NULL)                                                                    \
+                LOG_ERR((logger), ##__VA_ARGS__);                                                    \
+            return (err_ret_val);                                                                    \
+        }                                                                                            \
+    } while (0)
+
+#define RETURN_IF_ERROR_CONDITION(logger, err_var, condition, func_call, ...) \
+    RETURN_IF_ERROR_CONDITION_RET_VALUE(logger, err_var, condition, func_call, err_var, ##__VA_ARGS__)
+
+#define RETURN_IF_ERROR_RET_VALUE(logger, err_var, func_call, err_ret_val, ...) \
+    RETURN_IF_ERROR_CONDITION_RET_VALUE(logger, err_var, ((err_var) < 0), func_call, err_ret_val, ##__VA_ARGS__)
+
+#define RETURN_IF_ERROR(logger, err_var, func_call, ...) \
+    RETURN_IF_ERROR_CONDITION(logger, err_var, ((err_var) < 0), func_call, ##__VA_ARGS__)

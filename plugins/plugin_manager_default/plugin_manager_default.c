@@ -136,7 +136,7 @@ int32_t add_plugin_to_scope_unchecked(const LoggerInterface *logger,
         if (!plugin_is_added)
         {
             if (logger != NULL)
-                LOG_ERR("Dependency '%s' not available in scope", dependency_interface_name);
+                LOG_ERR(logger, "Dependency '%s' not available in scope", dependency_interface_name);
             return -1;
         }
 
@@ -150,7 +150,7 @@ int32_t add_plugin_to_scope_unchecked(const LoggerInterface *logger,
         if (ret < 0)
         {
             if (logger != NULL)
-                LOG_ERR("Initializing plugin '%s' failed: %d", plugin->metadata->interface_name, ret);
+                LOG_ERR(logger, "Initializing plugin '%s' failed: %d", plugin->metadata->interface_name, ret);
             return ret;
         }
     }
@@ -162,7 +162,7 @@ int32_t add_plugin_to_scope_unchecked(const LoggerInterface *logger,
     };
     ARRAY_PUSH_CHECKED(scope->plugins, scoped_plugin, {
         if (logger != NULL)
-            LOG_ERR("Tried to add plugin to scope definition when array is full");
+            LOG_ERR(logger, "Tried to add plugin to scope definition when array is full");
         return -1;
     });
 
@@ -173,7 +173,7 @@ int32_t add_plugin_to_scope_unchecked(const LoggerInterface *logger,
 
     plugin->lifetime = scope->lifetime;
     if (logger != NULL)
-        LOG_DBG("Plugin '%s' added to scope with lifetime '%d'", plugin->metadata->interface_name, scope->lifetime);
+        LOG_DBG(logger, "Plugin '%s' added to scope with lifetime '%d'", plugin->metadata->interface_name, scope->lifetime);
 
     return 0;
 }
@@ -229,7 +229,7 @@ int32_t add_plugins_from_bitfield(
         if (registered_plugin->lifetime != PLUGIN_LIFETIME_UNKNOWN && registered_plugin->lifetime != scope->lifetime)
         {
             if (logger != NULL)
-                LOG_ERR("Unable to add plugin '%s' to scope with lifetime '%d' as its scope lifetime '%d' is incompatible",
+                LOG_ERR(logger, "Unable to add plugin '%s' to scope with lifetime '%d' as its scope lifetime '%d' is incompatible",
                         registered_plugin->metadata->interface_name, scope->lifetime, registered_plugin->lifetime);
             return -1;
         }
@@ -237,7 +237,7 @@ int32_t add_plugins_from_bitfield(
         if (!is_lifetime_supported(registered_plugin->metadata, scope->lifetime))
         {
             if (logger != NULL)
-                LOG_ERR("Unable to add plugin '%s' to scope with lifetime '%d' the plugin does not support scope lifetime",
+                LOG_ERR(logger, "Unable to add plugin '%s' to scope with lifetime '%d' the plugin does not support scope lifetime",
                         registered_plugin->metadata->interface_name, scope->lifetime);
             return -1;
         }
@@ -246,7 +246,7 @@ int32_t add_plugins_from_bitfield(
         ret = add_plugin_to_scope_unchecked(logger, singleton_scope, registered_plugin, scope, &added_plugin_interface);
         if (ret < 0)
         {
-            LOG_ERR("Unable to add plugin: %d", ret);
+            LOG_ERR(logger, "Unable to add plugin: %d", ret);
             return -1;
         }
 
@@ -285,7 +285,7 @@ int32_t add_plugins_to_scope(const LoggerInterface *logger,
     ret = add_plugins_from_bitfield(logger, singleton_scope, registered_plugins, scope, plugin_bitfield, NULL);
     if (ret < 0)
     {
-        LOG_ERR("Unable to add plugins from bitfield: %d", ret);
+        LOG_ERR(logger, "Unable to add plugins from bitfield: %d", ret);
         return -1;
     }
 
@@ -315,7 +315,7 @@ int32_t add_plugin_to_scope(const LoggerInterface *logger,
     if (ret < 0)
     {
         if (logger != NULL)
-            LOG_ERR("Unable to add plugins from bitfield: %d", ret);
+            LOG_ERR(logger, "Unable to add plugins from bitfield: %d", ret);
         return -1;
     }
 
@@ -352,7 +352,7 @@ int32_t plugin_manager_default_get_scoped(struct PluginManagerContext *context, 
             return 0;
         }
     }
-    LOG_ERR("Unable to get plugin '%s' from scope with lifetime '%d'", interface_name, scope->lifetime);
+    LOG_ERR(logger, "Unable to get plugin '%s' from scope with lifetime '%d'", interface_name, scope->lifetime);
     return -1;
 }
 

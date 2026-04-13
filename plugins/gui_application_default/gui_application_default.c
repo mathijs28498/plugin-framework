@@ -17,30 +17,35 @@ LOGGER_INTERFACE_REGISTER(gui_application_default, LOG_LEVEL_DEBUG)
 int32_t gui_application_default_setup(GuiApplicationContext *context, WindowInterfaceCreateWindowOptions *create_window_options)
 {
     int32_t ret;
-    ret = window_create_window(context->window, create_window_options);
-    // ret = renderer_init(context->renderer);
+    RETURN_IF_ERROR(context->logger, ret, window_create_window(context->window, create_window_options),
+                    "Failed to create window: %d", ret);
+    RETURN_IF_ERROR(context->logger, ret, draw_start(context->draw),
+                    "Failed to start draw: %d", ret);
 
     return 0;
 }
 
 int32_t gui_application_default_run(GuiApplicationContext *context)
 {
-    LoggerInterface *logger = context->logger;
+    int32_t ret;
 
-    LOG_INF("Starting main loop");
+    LOG_INF(context->logger, "Starting main loop");
 
     bool gui_application_running = true;
     while (gui_application_running)
     {
-        window_poll_os_events(context->window);
+        RETURN_IF_ERROR(context->logger, ret, window_poll_os_events(context->window),
+                        "Failed to poll os events: %d", ret);
         WindowEvent window_event;
 
-        input_prepare_processing(context->input);
+        RETURN_IF_ERROR(context->logger, ret, input_prepare_processing(context->input),
+                        "Failed to prepare input processing: %d", ret);
+
         SAFE_WHILE(
             window_pop_window_event(context->window, &window_event),
             GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME,
             {
-                LOG_WRN("Too many window events in one frame (%d), skipping events till next frame", GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME);
+                LOG_WRN(context->logger, "Too many window events in one frame (%d), skipping events till next frame", GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME);
             })
         {
             switch (window_event.type)
@@ -52,7 +57,8 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
             case WINDOW_EVENT_TYPE_MOUSE_MOVE:
             case WINDOW_EVENT_TYPE_MOUSE_PRESS:
             case WINDOW_EVENT_TYPE_MOUSE_SCROLL:
-                input_process_window_event(context->input, &window_event);
+                RETURN_IF_ERROR(context->logger, ret, input_process_window_event(context->input, &window_event),
+                                "Failed to process window event: %d", ret);
                 break;
             }
         }
@@ -63,17 +69,20 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
 
         if (input_key_pressed(context->input, WINDOW_EVENT_KEY_ESCAPE))
         {
-            LOG_DBG("Closing application");
-            window_close_window(context->window);
+            LOG_DBG(context->logger, "Closing application");
+            RETURN_IF_ERROR(context->logger, ret, window_close_window(context->window),
+                            "Failed to close window: %d", ret);
+            break;
         }
 
         // logic->update(logic->context);
-        // if (gui_applicaiton_do_fixed_update(context))
+        // if (gui_application_do_fixed_update(context))
         // {
         //     logic->fixed_update(logic->context);
         // }
 
-        draw_present(context->draw);
+        RETURN_IF_ERROR(context->logger, ret, draw_present(context->draw),
+                        "Failed to present draw: %d", ret);
     }
 
     return 0;

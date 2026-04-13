@@ -5,6 +5,7 @@
 #include "draw_default.h"
 
 static const DrawVtable plugin_vtable = {
+    .start = draw_default_start,
     .present = draw_default_present,
 };
 

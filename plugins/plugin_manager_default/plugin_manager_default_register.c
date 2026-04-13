@@ -18,10 +18,10 @@ static const PluginManagerPMVtable plugin_vtable = {
 int32_t plugin_init(PluginManagerContext *context)
 {
     TODO("Make this into a macro to set capacity");
-    GET_ARRAY_CAPACITY(context->registered_plugins) = ARRAY_SIZE(context->registered_plugins);
+    SET_ARRAY_FIELD_CAPACITY(context->registered_plugins);
 
     context->singleton_scope.lifetime = PLUGIN_LIFETIME_SINGLETON;
-    GET_ARRAY_CAPACITY(context->singleton_scope.plugins) = ARRAY_SIZE(context->singleton_scope.plugins);
+    SET_ARRAY_FIELD_CAPACITY(context->singleton_scope.plugins)
     return 0;
 }
 

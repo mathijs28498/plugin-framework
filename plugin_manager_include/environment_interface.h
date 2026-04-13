@@ -26,8 +26,6 @@ typedef struct WindowsPlatformContext
     struct HINSTANCE__ *hInstance;
     int nCmdShow;
 } WindowsPlatformContext;
-
-#define ENVIRONMENT_INTERFACE_GET_WINDOWS_CONTEXT(iface, windows_context) iface->vtable->get_platform_context(iface->context, (void **)windows_context)
 #endif // #if WINDOWS_GUI
 
 #pragma pack(pop)

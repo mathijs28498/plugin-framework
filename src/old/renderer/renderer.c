@@ -5,7 +5,7 @@
 
 #include "renderer.h"
 
-int32_t renderer_init()
+int32_t renderer_start()
 {
     return vk_init();
 }

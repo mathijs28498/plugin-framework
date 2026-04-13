@@ -22,7 +22,8 @@ typedef struct RendererWindowConfig
 typedef struct RendererVtable
 {
     // int32_t (*create_swapchain)(struct RendererContext *context, RendererWindowConfig *window_config);
-    int32_t (*init)(struct RendererContext *context);
+    int32_t (*start)(struct RendererContext *context);
+    int32_t (*render)(struct RendererContext *context);
 } RendererVtable;
 
 typedef struct RendererInterface
@@ -31,9 +32,14 @@ typedef struct RendererInterface
     RendererVtable *vtable;
 } RendererInterface;
 
-static inline int32_t renderer_init(RendererInterface *iface)
+static inline int32_t renderer_start(RendererInterface *iface)
 {
-    return iface->vtable->init(iface->context);
+    return iface->vtable->start(iface->context);
+}
+
+static inline int32_t renderer_render(RendererInterface *iface)
+{
+    return iface->vtable->render(iface->context);
 }
 
 #pragma pack(pop)

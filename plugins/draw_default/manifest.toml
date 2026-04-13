@@ -6,3 +6,4 @@ supported_lifetimes = ["singleton"]
 
 [dependencies]
 logger = {}
+renderer = {}

@@ -10,7 +10,8 @@ TODO("Make sure this is done in a separate file for platform specific shit")
 #include <string.h>
 
 #include <logger_interface.h>
-LOGGER_INTERFACE_REGISTER(plugin_manager_default_bootstrap, LOG_LEVEL_DEBUG)
+// LOGGER_INTERFACE_REGISTER(plugin_manager_default_bootstrap, LOG_LEVEL_DEBUG)
+LOGGER_INTERFACE_REGISTER(plugin_manager_default_bootstrap, LOG_LEVEL_WARNING)
 #include <plugin_manager_pm_interface.h>
 #include <plugin_sdk_types.h>
 #include <environment_pm_interface.h>
@@ -57,11 +58,11 @@ int32_t resolve_requested_plugins(const LoggerInterface *logger,
 
                 ARRAY_PUSH_CHECKED(out_plugin_definitions, plugin_definition, {
                     if (logger != NULL)
-                        LOG_ERR("Tried to add plugin definition when array is full");
+                        LOG_ERR(logger, "Tried to add plugin definition when array is full");
                     return -1;
                 });
                 if (logger != NULL)
-                    LOG_DBG("Added requested plugin '%s' - '%s'", requested_plugin->interface_name, requested_plugin->plugin_name);
+                    LOG_DBG(logger, "Added requested plugin '%s' - '%s'", requested_plugin->interface_name, requested_plugin->plugin_name);
                 definition_found = true;
                 break;
             }
@@ -75,7 +76,7 @@ int32_t resolve_requested_plugins(const LoggerInterface *logger,
         if (!definition_found)
         {
             if (logger != NULL)
-                LOG_ERR("Requested plugin '%s' - '%s' not found in plugin registry",
+                LOG_ERR(logger, "Requested plugin '%s' - '%s' not found in plugin registry",
                         requested_plugin->interface_name, requested_plugin->plugin_name);
             return -1;
         }
@@ -95,7 +96,7 @@ int32_t resolve_get_metadata_fn_dynamic(const LoggerInterface *logger,
     if (!handle)
     {
         if (logger != NULL)
-            LOG_ERR("Dynamic plugin '%s' not found at '%s'", target_name, module_path);
+            LOG_ERR(logger, "Dynamic plugin '%s' not found at '%s'", target_name, module_path);
         return -1;
     }
 
@@ -107,7 +108,7 @@ int32_t resolve_get_metadata_fn_dynamic(const LoggerInterface *logger,
     if (!proc_address)
     {
         if (logger != NULL)
-            LOG_ERR("Dynamic plugin symbol '%s' not found for plugin '%s'", target_name, function_name);
+            LOG_ERR(logger, "Dynamic plugin symbol '%s' not found for plugin '%s'", target_name, function_name);
         FreeLibrary(handle);
         return -2;
     }
@@ -136,7 +137,7 @@ int32_t get_metadata_from_plugin_definition(const LoggerInterface *logger,
         {
             *out_plugin_metadata = static_plugin_metadata;
             if (logger != NULL)
-                LOG_DBG("Static plugin metadata for plugin '%s' added", plugin_definition->target_name);
+                LOG_DBG(logger, "Static plugin metadata for plugin '%s' added", plugin_definition->target_name);
             return 0;
         }
     }
@@ -147,7 +148,7 @@ int32_t get_metadata_from_plugin_definition(const LoggerInterface *logger,
     if (ret < 0)
     {
         if (logger != NULL)
-            LOG_ERR("Unable to resolve metadata for dynamic plugin '%s': %d", plugin_definition->target_name, ret);
+            LOG_ERR(logger, "Unable to resolve metadata for dynamic plugin '%s': %d", plugin_definition->target_name, ret);
         return ret;
     }
 
@@ -155,12 +156,12 @@ int32_t get_metadata_from_plugin_definition(const LoggerInterface *logger,
     if (*out_plugin_metadata == NULL)
     {
         if (logger != NULL)
-            LOG_ERR("Dynamic plugin metadata for '%s' is NULL", plugin_definition->target_name);
+            LOG_ERR(logger, "Dynamic plugin metadata for '%s' is NULL", plugin_definition->target_name);
         return -1;
     }
 
     if (logger != NULL)
-        LOG_DBG("Dynamic plugin metadata for plugin '%s' added", plugin_definition->target_name);
+        LOG_DBG(logger, "Dynamic plugin metadata for plugin '%s' added", plugin_definition->target_name);
     return 0;
 }
 
@@ -183,7 +184,7 @@ int32_t resolve_plugin_metadatas(const LoggerInterface *logger,
         if (ret < 0)
         {
             if (logger != NULL)
-                LOG_ERR("Unable to get metadata from plugin definition for '%s'", plugin_definition->target_name);
+                LOG_ERR(logger, "Unable to get metadata from plugin definition for '%s'", plugin_definition->target_name);
             return ret;
         }
 
@@ -194,12 +195,12 @@ int32_t resolve_plugin_metadatas(const LoggerInterface *logger,
 
         ARRAY_PUSH_CHECKED(out_registered_plugins, new_registered_plugin, {
             if (logger != NULL)
-                LOG_ERR("Tried to add registered plugin when array is full");
+                LOG_ERR(logger, "Tried to add registered plugin when array is full");
             return -1;
         });
 
         if (logger != NULL)
-            LOG_DBG("Added registered plugin '%s'", plugin_definition->target_name);
+            LOG_DBG(logger, "Added registered plugin '%s'", plugin_definition->target_name);
     }
 
     return 0;
@@ -234,7 +235,7 @@ int32_t resolve_plugin_metadata_dependencies(const LoggerInterface *logger,
             if (dependency_already_present)
             {
                 if (logger != NULL)
-                    LOG_DBG("Don't request dependency '%s' as it has already been added", plugin_dependency->interface_name);
+                    LOG_DBG(logger, "Don't request dependency '%s' as it has already been added", plugin_dependency->interface_name);
                 continue;
             }
 
@@ -251,7 +252,7 @@ int32_t resolve_plugin_metadata_dependencies(const LoggerInterface *logger,
             if (dependency_already_present)
             {
                 if (logger != NULL)
-                    LOG_DBG("Don't request dependency '%s' as it has already been requested", plugin_dependency->interface_name);
+                    LOG_DBG(logger, "Don't request dependency '%s' as it has already been requested", plugin_dependency->interface_name);
                 continue;
             }
 
@@ -264,12 +265,12 @@ int32_t resolve_plugin_metadata_dependencies(const LoggerInterface *logger,
 
             ARRAY_PUSH_CHECKED(out_requested_plugins, new_requested_plugin, {
                 if (logger != NULL)
-                    LOG_ERR("Tried to add requested plugin when array is full");
+                    LOG_ERR(logger, "Tried to add requested plugin when array is full");
                 return -1;
             });
 
             if (logger != NULL)
-                LOG_DBG("Requesting dependency '%s'", plugin_dependency->interface_name);
+                LOG_DBG(logger, "Requesting dependency '%s'", plugin_dependency->interface_name);
         }
     }
     return 0;
@@ -294,7 +295,7 @@ int32_t load_requested_plugins(const LoggerInterface *logger,
         PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH,
         {
             if (logger != NULL)
-                LOG_ERR("Hit maximum dependency solver depth: %d", PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH);
+                LOG_ERR(logger, "Hit maximum dependency solver depth: %d", PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH);
             return -1;
         })
     {
@@ -377,7 +378,7 @@ int32_t topologically_sort_registered_plugins(
     size_t tail = 0;
     SAFE_WHILE(tail < GET_ARRAY_LENGTH(sorted_indices), MAX_REGISTERED_PLUGINS_LEN + 1, {
         if (logger != NULL)
-            LOG_ERR("fatal framework error: Kahn topological sort exceeded max iterations (%d)",
+            LOG_ERR(logger, "fatal framework error: Kahn topological sort exceeded max iterations (%d)",
                     MAX_REGISTERED_PLUGINS_LEN + 1);
         return -1;
     })
@@ -407,14 +408,14 @@ int32_t topologically_sort_registered_plugins(
     {
         if (logger != NULL)
         {
-            LOG_ERR("cyclic or missing dependency detected: sorted %zu out of %zu plugins",
+            LOG_ERR(logger, "cyclic or missing dependency detected: sorted %zu out of %zu plugins",
                     (size_t)GET_ARRAY_LENGTH(sorted_indices), registered_plugins_len);
 
             for (size_t i = 0; i < registered_plugins_len; i++)
             {
                 if (ndegrees[i] > 0)
                 {
-                    LOG_ERR("plugin '%s' (interface: '%s') could not be resolved. It is either missing a dependency or stuck in a cycle.",
+                    LOG_ERR(logger, "plugin '%s' (interface: '%s') could not be resolved. It is either missing a dependency or stuck in a cycle.",
                             registered_plugins[i].metadata->plugin_name,
                             registered_plugins[i].metadata->interface_name);
                 }
@@ -451,10 +452,10 @@ int32_t initialize_plugin_manager_dependencies(
     // We "abuse" the resolve dependencies acting like plugin manager registered plugin is a plugin array with length 1
     // so that we can load in the dependencies without loading in plugin_manager itself
     CREATE_INITIALIZED_ARRAY(RegisteredPlugin, plugin_manager_registered_plugin_list,
-                             {
+                             {{
                                  .lifetime = PLUGIN_LIFETIME_SINGLETON,
                                  .metadata = plugin_manager_metadata,
-                             });
+                             }});
     resolve_plugin_metadata_dependencies(NULL, plugin_manager_registered_plugin_list, 0, requested_plugins);
 
     // Save the dependencies the plugin manager requires to initialize them before step 2
@@ -495,7 +496,7 @@ int32_t initialize_plugin_manager_dependencies(
         {
             TODO("Add error log here");
             // if (context->logger != NULL)
-            //     LOG_ERR("Unable to add plugin '%s' to scope '%d': %d", interface_name_to_add, scope->lifetime, ret);
+            //     LOG_ERR(logger, "Unable to add plugin '%s' to scope '%d': %d", interface_name_to_add, scope->lifetime, ret);
             return ret;
         }
     }
@@ -541,7 +542,7 @@ int32_t seed_explicitly_requested_plugins(
         };
         ARRAY_PUSH_CHECKED(requested_plugins, requested_plugin, {
             if (logger != NULL)
-                LOG_ERR("Tried to add requested plugin when array is full");
+                LOG_ERR(logger, "Tried to add requested plugin when array is full");
             return -1;
         });
     }
@@ -561,7 +562,7 @@ int32_t registered_plugin_set_preferred_lifetime(const LoggerInterface *logger, 
         {
             if (!is_lifetime_supported(registered_plugin->metadata, supported_lifetime))
             {
-                LOG_ERR("plugin '%s' - '%s' does not support preferred lifetime '%d'",
+                LOG_ERR(logger, "plugin '%s' - '%s' does not support preferred lifetime '%d'",
                         registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, supported_lifetime);
                 return -1;
             }
@@ -607,14 +608,14 @@ int32_t resolve_initial_lifetimes(
             // The lifetime is explicitly requested
             if (lifetime_already_resolved && registered_plugin->lifetime != requested_lifetime)
             {
-                LOG_ERR("plugin '%s' - '%s' has a resolved lifetime '%d' which is different from the explictly requested lifetime '%d'",
+                LOG_ERR(logger, "plugin '%s' - '%s' has a resolved lifetime '%d' which is different from the explictly requested lifetime '%d'",
                         registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, registered_plugin->lifetime, requested_lifetime);
                 return -1;
             }
 
             if (!is_lifetime_supported(registered_plugin->metadata, requested_lifetime))
             {
-                LOG_ERR("plugin '%s' - '%s' does not support requested lifetime '%d'",
+                LOG_ERR(logger, "plugin '%s' - '%s' does not support requested lifetime '%d'",
                         registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, requested_lifetime);
                 return -1;
             }
@@ -634,7 +635,7 @@ int32_t resolve_initial_lifetimes(
             ret = registered_plugin_set_preferred_lifetime(logger, registered_plugin);
             if (ret < 0)
             {
-                LOG_ERR("error setting preferred lifetime of plugin '%s' - '%s': %d",
+                LOG_ERR(logger, "error setting preferred lifetime of plugin '%s' - '%s': %d",
                         registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, ret);
                 return ret;
             }
@@ -685,7 +686,7 @@ int32_t plugin_manager_default_bootstrap(
     ret = seed_explicitly_requested_plugins(context, requested_plugins_explicit, requested_plugins);
     if (ret < 0)
     {
-        LOG_ERR("Unable to seed requested plugins: %d", ret);
+        LOG_ERR(logger, "Unable to seed requested plugins: %d", ret);
         return ret;
     }
 
@@ -732,7 +733,7 @@ int32_t plugin_manager_default_bootstrap(
         if (registered_plugin->lifetime == PLUGIN_LIFETIME_SINGLETON)
         {
             ARRAY_PUSH_CHECKED(singleton_interfaces_to_add, registered_plugin->metadata->interface_name, {
-                LOG_ERR("Tried to add plugin interface when array is full");
+                LOG_ERR(logger, "Tried to add plugin interface when array is full");
                 return -1;
             });
         }

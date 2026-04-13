@@ -1,35 +1,20 @@
 #include "renderer_vulkan.h"
 
-#include <stdint.h>
-#include <vulkan/vulkan.h>
+#include <assert.h>
 
 #include <logger_interface.h>
-LOGGER_INTERFACE_REGISTER(renderer_vulkan, LOG_LEVEL_DEBUG)
+LOGGER_INTERFACE_REGISTER(renderer_vulkan, LOG_LEVEL_DEBUG);
 
 #include "renderer_vulkan_register.h"
+#include "renderer_vulkan_bootstrap.h"
+#include "renderer_vulkan_utils.h"
+#include "renderer_vulkan_start.h"
 
-int32_t renderer_vulkan_init(RendererContext *context)
+int32_t renderer_vulkan_cleanup(RendererContext *context)
 {
-    LoggerInterface *logger = context->logger;
-
-    VkApplicationInfo appInfo = {0};
-    appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    appInfo.pApplicationName = "Hello Triangle";
-    appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.pEngineName = "No Engine";
-    appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
-    appInfo.apiVersion = VK_API_VERSION_1_0;
-
-    VkInstanceCreateInfo createInfo = {0};
-    createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    createInfo.pApplicationInfo = &appInfo;
-
-    VkInstance instance;
-
-    VkResult result = vkCreateInstance(&createInfo, NULL, &instance);
-    (void)result;
-
-    LOG_DBG("Created vk instance");
+    (void) renderer_vulkan_start_cleanup(context);
+    TODO("Figure out what to do with the error code if something goes wrong");
+    (void)renderer_vulkan_bootstrap_cleanup(context);
 
     return 0;
 }

@@ -5,11 +5,21 @@ add_library(renderer_vulkan)
 target_sources(renderer_vulkan
     PRIVATE
     renderer_vulkan_register.c
+    renderer_vulkan_bootstrap.c
+    renderer_vulkan_utils.c
+    renderer_vulkan_start.c
+    renderer_vulkan_render.c
     renderer_vulkan.c
 
     PUBLIC
     FILE_SET HEADERS
 )
+
+message("TODO: Add other targets")
+
+if(WIN32)
+    target_sources(renderer_vulkan PRIVATE renderer_vulkan_platform_win32.c)
+endif()
 
 target_link_libraries(renderer_vulkan
     PRIVATE

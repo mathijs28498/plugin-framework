@@ -36,7 +36,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
         setup_context->requested_plugins_len > 0,
         PLUGIN_MANAGER_RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH,
         {
-            LOG_ERR("Plugin manager dependency solver exceeded max interations");
+            LOG_ERR(logger, "Plugin manager dependency solver exceeded max interations");
             return -1;
         })
     {
@@ -57,7 +57,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
             if (ret < 0)
             {
-                LOG_ERR("Error in resolve_requested_plugins: %d", ret);
+                LOG_ERR(logger, "Error in resolve_requested_plugins: %d", ret);
                 return ret;
             }
 
@@ -70,7 +70,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
             if (ret < 0)
             {
-                LOG_ERR("Error in load_plugin_modules: %d", ret);
+                LOG_ERR(logger, "Error in load_plugin_modules: %d", ret);
                 return ret;
             }
         }
@@ -88,12 +88,12 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
 
         if (ret < 0)
         {
-            LOG_ERR("Error in resolve_plugin_provider_dependencies: %d", ret);
+            LOG_ERR(logger, "Error in resolve_plugin_provider_dependencies: %d", ret);
             return ret;
         }
     }
 
-    LOG_DBG("plugin_providers_len %d", setup_context->plugin_providers_len);
+    LOG_DBG(logger, "plugin_providers_len %d", setup_context->plugin_providers_len);
 
     ret = calculate_plugin_provider_initialization_order(
         logger,
@@ -102,7 +102,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
         setup_context->sorted_plugin_providers_indices);
     if (ret < 0)
     {
-        LOG_ERR("Error in calculate_plugin_provider_initialization_order: %d", ret);
+        LOG_ERR(logger, "Error in calculate_plugin_provider_initialization_order: %d", ret);
         return ret;
     }
 
@@ -115,7 +115,7 @@ int32_t plugin_manager_load(PluginManagerSetupContext *setup_context, PluginMana
         &runtime_context->interface_instances_len);
     if (ret < 0)
     {
-        LOG_ERR("Error in initialize_plugins: %d", ret);
+        LOG_ERR(logger, "Error in initialize_plugins: %d", ret);
         return ret;
     }
 
@@ -132,13 +132,13 @@ int32_t plugin_manager_request_plugin(
 {
     if (interface_name == NULL)
     {
-        LOG_ERR("Interface name is NULL");
+        LOG_ERR(logger, "Interface name is NULL");
         return -1;
     }
 
     if (*requested_plugins_len >= PLUGIN_MANAGER_MAX_PLUGINS_LEN)
     {
-        LOG_ERR("Cannot add plugin as max plugin_definitions is reached. Max plugin count '%d'", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
+        LOG_ERR(logger, "Cannot add plugin as max plugin_definitions is reached. Max plugin count '%d'", PLUGIN_MANAGER_MAX_PLUGINS_LEN);
         return -1;
     }
 
@@ -176,7 +176,7 @@ int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, Plu
         if (*setup_context != NULL && (*setup_context)->logger)
         {
             logger = (*setup_context)->logger;
-            LOG_ERR("Error getting setup context: %d", ret);
+            LOG_ERR(logger, "Error getting setup context: %d", ret);
         }
         return ret;
     }
@@ -189,7 +189,7 @@ int32_t __plugin_manager_init(int argc, char **argv, void *platform_context, Plu
     ret = plugin_manager_load(*setup_context, *runtime_context);
     if (ret < 0)
     {
-        LOG_ERR("Error loading plugins: %d", ret);
+        LOG_ERR(logger, "Error loading plugins: %d", ret);
         return ret;
     }
 #endif // #if PLUGIN_BUILD_SHARED
@@ -207,7 +207,7 @@ int32_t __plugin_manager_get(PluginManagerRuntimeContext *runtime_context, const
         {
             if (!interface_instance->is_explicit)
             {
-                LOG_ERR("Interface '%s' found but is not added explicitly. Consider adding it explicitly", interface_name);
+                LOG_ERR(logger, "Interface '%s' found but is not added explicitly. Consider adding it explicitly", interface_name);
                 *iface = NULL;
                 return -1;
             }
@@ -217,7 +217,7 @@ int32_t __plugin_manager_get(PluginManagerRuntimeContext *runtime_context, const
     }
 
     *iface = NULL;
-    LOG_ERR("Failed to get interface '%s'", interface_name);
+    LOG_ERR(logger, "Failed to get interface '%s'", interface_name);
 
     return -1;
 }
@@ -231,12 +231,12 @@ int32_t __plugin_manager_shutdown(PluginManagerSetupContext *setup_context, Plug
         PluginProvider *plugin_provider = &setup_context->plugin_providers[current_idx];
         if (!plugin_provider->is_initialized)
         {
-            LOG_DBG("Skipping shutdown '%s' interface as interface is not initialized", plugin_provider->interface_name);
+            LOG_DBG(logger, "Skipping shutdown '%s' interface as interface is not initialized", plugin_provider->interface_name);
             continue;
         }
 
         InterfaceInstance *interface_instance = &runtime_context->interface_instances[i];
-        LOG_DBG("Shutting down '%s' interface", plugin_provider->interface_name);
+        LOG_DBG(logger, "Shutting down '%s' interface", plugin_provider->interface_name);
 
         if (plugin_provider->shutdown)
         {

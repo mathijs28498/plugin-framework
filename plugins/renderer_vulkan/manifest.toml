@@ -3,6 +3,9 @@ plugin_name = "vulkan"
 # TODO: Fix paths
 module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/notepad-c/build/bin/Debug/renderer_vulkan.dll"
 supported_lifetimes = ["singleton"]
+init = true
+shutdown = true
 
 [dependencies]  
 logger = {}
+window = {}

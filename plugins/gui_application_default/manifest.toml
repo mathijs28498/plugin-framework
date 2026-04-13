@@ -12,4 +12,4 @@ draw = {}
 input = {}
 
 # TODO: Add this to draw in stead
-# renderer = {}
+renderer = {}

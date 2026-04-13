@@ -13,15 +13,33 @@ LOGGER_INTERFACE_REGISTER(window_win32, LOG_LEVEL_DEBUG);
 #include "window_win32_window_events.h"
 #include "window_win32_key_converter.h"
 
+TODO("Add support for multiple screens")
+
 #define WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME 256
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
+WindowInterfaceOSHandles window_win32_get_os_handles(WindowContext *context)
+{
+    assert(context != NULL);
+    WindowsPlatformContext *platform_context;
+
+    environment_get_platform_context(context->environment, &platform_context);
+
+    return (WindowInterfaceOSHandles){
+        .window_handle = context->hwnd,
+        .platform_context_handle = platform_context->hInstance,
+    };
+}
+
 int32_t window_win32_create_window(WindowContext *context, WindowInterfaceCreateWindowOptions *options)
 {
+    assert(context != NULL);
+    assert(options != NULL);
+
     TODO("Fix this function")
     WindowsPlatformContext *windows_context;
-    ENVIRONMENT_INTERFACE_GET_WINDOWS_CONTEXT(context->environment, &windows_context);
+    environment_get_platform_context(context->environment, &windows_context);
 
     const wchar_t CLASS_NAME[] = L"MainWindowClass";
 
@@ -59,23 +77,43 @@ int32_t window_win32_create_window(WindowContext *context, WindowInterfaceCreate
     return 0;
 }
 
-int32_t window_win32_close_window(struct WindowContext *context)
+int32_t window_win32_get_window_size(WindowContext *context, uint32_t *width, uint32_t *height)
 {
+    assert(context != NULL);
+    assert(width != NULL);
+    assert(height != NULL);
+
+    RECT rect;
+
+    RETURN_IF_FALSE(context->logger, GetWindowRect(context->hwnd, &rect),
+                    -1, "Failed to get window rect");
+
+    *width = (uint32_t)(rect.right - rect.left);
+    *height = (uint32_t)(rect.bottom - rect.top);
+
+    return 0;
+}
+
+int32_t window_win32_close_window(WindowContext *context)
+{
+    assert(context != NULL);
     DestroyWindow(context->hwnd);
     return 0;
 }
 
 int32_t window_win32_poll_os_events(WindowContext *context)
 {
-    MSG msg;  
+    assert(context != NULL);
+
+    MSG msg;
     LoggerInterface *logger = context->logger;
     SAFE_WHILE(
-            PeekMessage(&msg, NULL, 0, 0, PM_REMOVE),
-            WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME,
-            {
-                LOG_WRN("Too many os events in one frame (%d), skipping events till next frame", WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME);
-            })
+        PeekMessage(&msg, NULL, 0, 0, PM_REMOVE),
+        WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME,
         {
+            LOG_WRN(logger, "Too many os events in one frame (%d), skipping events till next frame", WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME);
+        })
+    {
         if (msg.message == WM_QUIT)
         {
             WindowEvent window_event = {

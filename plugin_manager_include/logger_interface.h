@@ -56,7 +56,7 @@ static inline void logger_set_colors(LoggerInterface *iface, const char *colors[
         }                                                                                                                              \
     } while (0)
 
-#define LOG_ERR(...) LOG(logger, LOG_LEVEL_ERROR, __VA_ARGS__)
-#define LOG_WRN(...) LOG(logger, LOG_LEVEL_WARNING, __VA_ARGS__)
-#define LOG_INF(...) LOG(logger, LOG_LEVEL_INFO, __VA_ARGS__)
-#define LOG_DBG(...) LOG(logger, LOG_LEVEL_DEBUG, __VA_ARGS__)
+#define LOG_ERR(logger, ...) LOG(logger, LOG_LEVEL_ERROR, __VA_ARGS__)
+#define LOG_WRN(logger, ...) LOG(logger, LOG_LEVEL_WARNING, __VA_ARGS__)
+#define LOG_INF(logger, ...) LOG(logger, LOG_LEVEL_INFO, __VA_ARGS__)
+#define LOG_DBG(logger, ...) LOG(logger, LOG_LEVEL_DEBUG, __VA_ARGS__)

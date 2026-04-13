@@ -63,7 +63,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR pCmdLine
         return 1;
     }
 
-    renderer_init();
+    renderer_start();
 
     ShowWindow(hwnd, nCmdShow);
 
