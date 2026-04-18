@@ -1,5 +1,7 @@
 add_library(window_win32)
 
+target_compile_options(window_win32 PRIVATE ${MY_STRICT_WARNINGS})
+
 target_sources(window_win32
     PRIVATE
     window_win32.c

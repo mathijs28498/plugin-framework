@@ -1,5 +1,7 @@
 add_library(logger_console)
 
+target_compile_options(logger_console PRIVATE ${MY_STRICT_WARNINGS})
+
 target_sources(logger_console
     PRIVATE
     logger_console.c

@@ -1,5 +1,7 @@
 add_library(gui_application_default)
 
+target_compile_options(gui_application_default PRIVATE ${MY_STRICT_WARNINGS})
+
 target_sources(gui_application_default
     PRIVATE
         gui_application_default_register.c

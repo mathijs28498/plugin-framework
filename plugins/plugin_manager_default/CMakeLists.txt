@@ -1,6 +1,8 @@
 message("TODO: Make this not hardcoded to be STATIC")
 add_library(plugin_manager_default STATIC)
 
+target_compile_options(plugin_manager_default PRIVATE ${MY_STRICT_WARNINGS})
+
 target_sources(plugin_manager_default
     PRIVATE
     plugin_manager_default.c

@@ -1,5 +1,7 @@
 add_library(draw_2d_default)
 
+target_compile_options(draw_2d_default PRIVATE ${MY_STRICT_WARNINGS})
+
 target_sources(draw_2d_default
     PRIVATE
     draw_2d_default_register.c

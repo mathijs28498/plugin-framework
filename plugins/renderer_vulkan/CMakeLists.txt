@@ -2,6 +2,8 @@ find_package(Vulkan REQUIRED)
 
 add_library(renderer_vulkan)
 
+target_compile_options(renderer_vulkan PRIVATE ${MY_STRICT_WARNINGS})
+
 target_sources(renderer_vulkan
     PRIVATE
     renderer_vulkan_register.c
@@ -17,7 +19,6 @@ target_sources(renderer_vulkan
 )
 
 message("TODO: Add other targets")
-
 if(WIN32)
     target_sources(renderer_vulkan PRIVATE renderer_vulkan_platform_win32.c)
 endif()
@@ -39,4 +40,3 @@ plugin_generate_register_inc(renderer_vulkan
     TOML_DIR_PATH "${CMAKE_CURRENT_LIST_DIR}"
 )
 
-target_compile_options(renderer_vulkan PRIVATE ${MY_STRICT_WARNINGS})

@@ -1,5 +1,7 @@
 add_library(draw_default)
 
+target_compile_options(draw_default PRIVATE ${MY_STRICT_WARNINGS})
+
 target_sources(draw_default
     PRIVATE
         draw_default.c

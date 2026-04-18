@@ -1,5 +1,7 @@
 add_library(environment_default)
 
+target_compile_options(environment_default PRIVATE ${MY_STRICT_WARNINGS})
+
 target_sources(environment_default
     PRIVATE
         environment_default.c

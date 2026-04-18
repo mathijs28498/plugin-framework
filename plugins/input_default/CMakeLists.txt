@@ -1,5 +1,7 @@
 add_library(input_default)
 
+target_compile_options(input_default PRIVATE ${MY_STRICT_WARNINGS})
+
 target_sources(input_default
     PRIVATE
         input_default_register.c
