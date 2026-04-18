@@ -26,12 +26,11 @@ option(PLUGIN_MANAGER_GUI "Build plugin manager as a GUI" OFF)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
-# list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/plugin_manager_bootloader")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/sdk/cmake")
-# list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/plugin_manager_bootloader/cmake")
 
 add_subdirectory(lib)
 add_subdirectory(plugins)
 add_subdirectory(src)
+add_subdirectory(sdk)
 add_subdirectory(plugin_manager_include)
 add_subdirectory(plugin_manager_bootloader)

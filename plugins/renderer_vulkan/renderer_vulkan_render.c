@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <math.h>
 
-#include <logger_interface.h>
+#include <plugin_sdk/logger_interface.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_render, LOG_LEVEL_DEBUG)
 
 #include "renderer_vulkan_utils.h"
@@ -16,7 +16,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_render, LOG_LEVEL_DEBUG)
 
 #define SECOND_IN_NS 1000000000
 
-VkExtent2D extend_2d(RV_VkExtent2D *rv_extent)
+VkExtent2D extent_2d(RV_VkExtent2D *rv_extent)
 {
     return (VkExtent2D){
         .width = rv_extent->width,
@@ -154,7 +154,7 @@ int32_t renderer_vulkan_render(RendererContext *context)
     rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
     rv_transition_image(cmd, swapchain_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-    rv_copy_image_to_image(cmd, context->draw_image.image, swapchain_image, extend_2d(&context->draw_extent), extend_2d(&context->swapchain_extent));
+    rv_copy_image_to_image(cmd, context->draw_image.image, swapchain_image, extent_2d(&context->draw_extent), extent_2d(&context->swapchain_extent));
 
     rv_transition_image(cmd, swapchain_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 

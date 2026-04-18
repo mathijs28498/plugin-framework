@@ -1,6 +1,6 @@
 #include "renderer_vulkan_bootstrap.h"
 
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -10,10 +10,10 @@
 #include <string.h>
 #include <assert.h>
 
-#include <logger_interface.h>
+#include <plugin_sdk/logger_interface.h>
 // LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_DEBUG)
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_WARNING)
-#include <window_interface.h>
+#include <plugin_sdk/window_interface.h>
 
 #include "renderer_vulkan_register.h"
 #include "renderer_vulkan_utils.h"

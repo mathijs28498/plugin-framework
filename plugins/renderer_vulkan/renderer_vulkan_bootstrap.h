@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
 TODO("Use an arena allocator of 4MB for the startup")
 #define MAX_EXTENSIONS_LEN 512

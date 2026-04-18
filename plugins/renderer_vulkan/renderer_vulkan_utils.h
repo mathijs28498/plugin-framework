@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
 #define CREATE_VK_HANDLE_DEFINITION(object) \
     struct object##_T;                      \

@@ -26,9 +26,9 @@ endif()
 
 target_link_libraries(renderer_vulkan
     PRIVATE
-    plugin_manager_include
     Vulkan::Vulkan
     vma
+    plugin_sdk
 )
 
 include("PluginSDK")

@@ -2,7 +2,7 @@
 
 #include <stdbool.h>
 
-#include <plugin_utils.h>
+#include <plugin_sdk/plugin_utils.h>
 
 #include "plugin_dependencies.h"
 #include "renderer_vulkan_utils.h"
