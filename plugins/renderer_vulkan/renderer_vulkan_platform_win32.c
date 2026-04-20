@@ -20,14 +20,14 @@ int32_t renderer_vulkan_platform_create_surface(RendererContext *context, VkSurf
 
     VkResult result;
 
-    WindowInterfaceOSHandles os_handles = window_get_os_handles(context->window);
+    WindowInterfaceOSHandles os_handles = window_get_os_handles(context->deps.window);
 
     VkWin32SurfaceCreateInfoKHR surface_create_info = {0};
     surface_create_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     surface_create_info.hinstance = (HINSTANCE)os_handles.platform_context_handle;
     surface_create_info.hwnd = (HWND)os_handles.window_handle;
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkCreateWin32SurfaceKHR(context->instance, &surface_create_info, NULL, surface),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateWin32SurfaceKHR(context->instance, &surface_create_info, NULL, surface),
                        -1, "Failed to create win32 surface: %d", result);
 
     return 0;

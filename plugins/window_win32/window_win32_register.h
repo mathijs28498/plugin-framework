@@ -15,7 +15,7 @@ typedef struct HWND__ *HWND;
 
 typedef struct WindowContext
 {
-    PLUGIN_CONTEXT_DEPENDENCIES
+    PluginDependencies deps;
 
     struct WindowEvent window_events[WINDOW_WIN32_WINDOW_EVENTS_SIZE];
     uint32_t window_events_head;

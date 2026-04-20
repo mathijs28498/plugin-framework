@@ -24,7 +24,7 @@ WindowInterfaceOSHandles window_win32_get_os_handles(WindowContext *context)
     assert(context != NULL);
     WindowsPlatformContext *platform_context;
 
-    environment_get_platform_context(context->environment, &platform_context);
+    environment_get_platform_context(context->deps.environment, &platform_context);
 
     return (WindowInterfaceOSHandles){
         .window_handle = context->hwnd,
@@ -39,7 +39,7 @@ int32_t window_win32_create_window(WindowContext *context, WindowInterfaceCreate
 
     TODO("Fix this function")
     WindowsPlatformContext *windows_context;
-    environment_get_platform_context(context->environment, &windows_context);
+    environment_get_platform_context(context->deps.environment, &windows_context);
 
     const wchar_t CLASS_NAME[] = L"MainWindowClass";
 
@@ -85,7 +85,7 @@ int32_t window_win32_get_window_size(WindowContext *context, uint32_t *width, ui
 
     RECT rect;
 
-    RETURN_IF_FALSE(context->logger, GetWindowRect(context->hwnd, &rect),
+    RETURN_IF_FALSE(context->deps.logger, GetWindowRect(context->hwnd, &rect),
                     -1, "Failed to get window rect");
 
     *width = (uint32_t)(rect.right - rect.left);
@@ -106,7 +106,7 @@ int32_t window_win32_poll_os_events(WindowContext *context)
     assert(context != NULL);
 
     MSG msg;
-    LoggerInterface *logger = context->logger;
+    LoggerInterface *logger = context->deps.logger;
     SAFE_WHILE(
         PeekMessage(&msg, NULL, 0, 0, PM_REMOVE),
         WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME,

@@ -32,7 +32,7 @@ int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDe
             .descriptorCount = max_sets,
         };
 
-        ARRAY_PUSH_CHECKED_DEFAULT_RETURN(context->logger, descriptor_pool_sizes, pool_size);
+        ARRAY_PUSH_CHECKED_DEFAULT_RETURN(context->deps.logger, descriptor_pool_sizes, pool_size);
     }
 
     VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
@@ -43,7 +43,7 @@ int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDe
         .poolSizeCount = (uint32_t)GET_ARRAY_LENGTH(descriptor_pool_sizes),
     };
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkCreateDescriptorPool(context->device, &descriptor_pool_create_info, NULL, out_descriptor_pool),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateDescriptorPool(context->device, &descriptor_pool_create_info, NULL, out_descriptor_pool),
                        -1, "Failed to allocate descriptor pool: %d", result);
 
     return 0;
@@ -64,7 +64,7 @@ int32_t allocate_descriptor_set(RendererContext *context, VkDescriptorSetLayout 
         .descriptorSetCount = 1,
     };
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkAllocateDescriptorSets(context->device, &descriptor_set_alloc_info, out_descriptor_set),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkAllocateDescriptorSets(context->device, &descriptor_set_alloc_info, out_descriptor_set),
                        -1, "Failed to allocate descriptor sets: %d", result);
 
     return 0;
@@ -88,7 +88,7 @@ int32_t create_descriptor_sets(RendererContext *context)
     CREATE_INITIALIZED_ARRAY(VkDescriptorType, descriptor_pool_sizes,
                              {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE});
 
-    RETURN_IF_ERROR(context->logger, ret, create_descriptor_pool(context, 10, descriptor_pool_sizes, &context->global_descriptor_pool),
+    RETURN_IF_ERROR(context->deps.logger, ret, create_descriptor_pool(context, 10, descriptor_pool_sizes, &context->global_descriptor_pool),
                     "Failed to create global descriptor pool: %d", ret);
 
     TODO("Use arena and dynamic allocation here")
@@ -108,11 +108,11 @@ int32_t create_descriptor_sets(RendererContext *context)
         .flags = 0,
     };
 
-    VK_RETURN_IF_ERROR(context->logger, result,
+    VK_RETURN_IF_ERROR(context->deps.logger, result,
                        vkCreateDescriptorSetLayout(context->device, &descriptor_set_layout_create_info, NULL, &context->draw_image_descriptor_set_layout),
                        -1, "Unable to create descriptor set layout: %d", result);
 
-    RETURN_IF_ERROR(context->logger, ret, allocate_descriptor_set(context, context->draw_image_descriptor_set_layout, &context->draw_image_descriptor_set),
+    RETURN_IF_ERROR(context->deps.logger, ret, allocate_descriptor_set(context, context->draw_image_descriptor_set_layout, &context->draw_image_descriptor_set),
                     "Failed to allocate descriptor set: %d", ret);
 
     VkDescriptorImageInfo draw_image_descriptor_info = {
@@ -131,8 +131,8 @@ int32_t create_descriptor_sets(RendererContext *context)
 
     vkUpdateDescriptorSets(context->device, 1, &draw_image_write_descriptor_set, 0, NULL);
 
-    RETURN_IF_ERROR(context->logger, ret,
-                    RV_CALL_QUEUE_PUSH_1(context->logger, &context->main_destroy_queue, destroy_descriptor_sets, context),
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_1(context->deps.logger, &context->main_destroy_queue, destroy_descriptor_sets, context),
                     "Failed to push destroy descriptor sets to destroy queue: %d", ret);
 
     return 0;

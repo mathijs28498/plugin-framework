@@ -6,7 +6,7 @@
 
 typedef struct Draw2dContext
 {
-    PLUGIN_CONTEXT_DEPENDENCIES
+    PluginDependencies deps;
 } Draw2dContext;
 
 #pragma pack(pop)

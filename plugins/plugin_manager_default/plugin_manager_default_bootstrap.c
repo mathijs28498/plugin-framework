@@ -458,20 +458,20 @@ int32_t initialize_plugin_manager_dependencies(
     {
         TODO("Get the added plugin here and put it in a list, this list can then be set as the context->interfaces")
         const char *interface_name_to_add = plugin_manager_dependency_interfaces[i];
-        ret = add_plugin_to_scope(context->logger,
+        ret = add_plugin_to_scope(context->deps.logger,
                                   &context->singleton_scope, context->registered_plugins,
                                   interface_name_to_add, &context->singleton_scope,
-                                  &context->interfaces[i]);
+                                  &context->deps.interfaces[i]);
         if (ret < 0)
         {
             TODO("Add error log here");
-            // if (context->logger != NULL)
+            // if (context->deps.logger != NULL)
             //     LOG_ERR(logger, "Unable to add plugin '%s' to scope '%d': %d", interface_name_to_add, scope->lifetime, ret);
             return ret;
         }
     }
 
-    environment_pm_set_args(context->environment, argc, argv, platform_context);
+    environment_pm_set_args(context->deps.environment, argc, argv, platform_context);
     return 0;
 }
 
@@ -484,7 +484,7 @@ int32_t seed_explicitly_requested_plugins(
     assert(requested_plugins_explicit != NULL);
     assert(requested_plugins != NULL);
 
-    LoggerInterface *logger = context->logger;
+    LoggerInterface *logger = context->deps.logger;
     for (size_t i = 0; i < GET_ARRAY_LENGTH(requested_plugins_explicit); i++)
     {
         const RequestedPlugin *requested_plugin_explicit = &requested_plugins_explicit[i];
@@ -653,39 +653,39 @@ int32_t plugin_manager_default_bootstrap(
     ret = seed_explicitly_requested_plugins(context, requested_plugins_explicit, requested_plugins);
     if (ret < 0)
     {
-        LOG_ERR(context->logger, "Unable to seed requested plugins: %d", ret);
+        LOG_ERR(context->deps.logger, "Unable to seed requested plugins: %d", ret);
         return ret;
     }
 
     ret = load_requested_plugins(
-        context->logger,
+        context->deps.logger,
         plugin_registry,
         static_plugin_metadatas,
         requested_plugins,
         context->registered_plugins);
     if (ret < 0)
     {
-        LOG_ERR(context->logger, "Unable to load plugins phase 2: %d", ret);
+        LOG_ERR(context->deps.logger, "Unable to load plugins phase 2: %d", ret);
         return ret;
     }
 
     ret = topologically_sort_registered_plugins(
-        context->logger,
+        context->deps.logger,
         context->registered_plugins,
         initial_registered_plugins_len);
     if (ret < 0)
     {
-        LOG_ERR(context->logger, "Unable to sort registered plugins: %d", ret);
+        LOG_ERR(context->deps.logger, "Unable to sort registered plugins: %d", ret);
         return ret;
     }
 
     ret = resolve_initial_lifetimes(
-        context->logger,
+        context->deps.logger,
         requested_plugins_explicit,
         context->registered_plugins);
     if (ret < 0)
     {
-        LOG_ERR(context->logger, "Failed to resolve initial lifetimes: %d", ret);
+        LOG_ERR(context->deps.logger, "Failed to resolve initial lifetimes: %d", ret);
         return ret;
     }
 
@@ -700,12 +700,12 @@ int32_t plugin_manager_default_bootstrap(
         if (registered_plugin->lifetime == PLUGIN_LIFETIME_SINGLETON)
         {
             ARRAY_PUSH_CHECKED(singleton_interfaces_to_add, registered_plugin->metadata->interface_name, {
-                LOG_ERR(context->logger, "Tried to add plugin interface when array is full");
+                LOG_ERR(context->deps.logger, "Tried to add plugin interface when array is full");
                 return -1;
             });
         }
     }
 
-    add_plugins_to_scope(context->logger, &context->singleton_scope, context->registered_plugins, singleton_interfaces_to_add, &context->singleton_scope);
+    add_plugins_to_scope(context->deps.logger, &context->singleton_scope, context->registered_plugins, singleton_interfaces_to_add, &context->singleton_scope);
     return 0;
 }

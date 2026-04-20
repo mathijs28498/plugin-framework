@@ -40,8 +40,8 @@ typedef struct RegisteredPlugin
 
 typedef struct PluginManagerContext
 {
-    TODO("Make sure that the PLUGIN_CONTEXT_DEPENDENCIES file is correctly formatted")
-    PLUGIN_CONTEXT_DEPENDENCIES
+    TODO("Make sure that the PluginDependencies deps; file is correctly formatted")
+    PluginDependencies deps;
     TODO("Maybe DO add the plugin_manager as registered plugin so that other plugins can have it as a dependency for scopes, just look into how to handle shutdown and destroy")
     ARRAY_FIELD(struct RegisteredPlugin, registered_plugins, MAX_REGISTERED_PLUGINS_LEN);
     PluginScope singleton_scope;

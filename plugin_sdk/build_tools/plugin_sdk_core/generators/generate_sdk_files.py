@@ -34,7 +34,7 @@ def generate_register_inc(
                     f"""\
                     if (strcmp("{dependency_interface_name}", interface_name) == 0)
                     {{
-                        context->{dependency.variable_name} = iface;
+                        context->deps.{dependency.variable_name} = iface;
                         return 0; 
                     }}\
                     """
@@ -146,13 +146,12 @@ def generate_plugin_dependencies(
     if plugin_manifest.dependencies:
         define_start = textwrap.dedent(
             f""" \
-            \\
-            union {{ \\
-                struct {{ \\
+            typedef union PluginDependencies {{ 
+                struct {{ 
             """
         )
         define_middle = textwrap.indent(
-            f" \\\n{indent_prefix}".join(
+            f" \n{indent_prefix}".join(
                 f"struct {snake_to_pascal_case(dependency_interface_name)}Interface *{dependency.variable_name};"
                 for dependency_interface_name, dependency in plugin_manifest.dependencies.items()
             ),
@@ -160,10 +159,10 @@ def generate_plugin_dependencies(
         )
         define_end = textwrap.dedent(
             f""" \
-            \\
-                }}; \\
-                struct ScopedPluginInterface *interfaces[{str(len(plugin_manifest.dependencies))}]; \\
-            }};
+
+                }}; 
+                struct ScopedPluginInterface *interfaces[{str(len(plugin_manifest.dependencies))}]; 
+            }} PluginDependencies;
             """
         )
 

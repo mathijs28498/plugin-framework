@@ -8,7 +8,7 @@ struct LoggerInterface;
 
 typedef struct @INTERFACE_CONTEXT_TYPE_NAME@
 {
-    PLUGIN_CONTEXT_DEPENDENCIES
+    PluginDependencies deps;
 } @INTERFACE_CONTEXT_TYPE_NAME@;
 
 #pragma pack(pop)

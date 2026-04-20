@@ -6,7 +6,7 @@
 
 typedef struct GuiApplicationContext
 {
-    PLUGIN_CONTEXT_DEPENDENCIES
+    PluginDependencies deps;
 } GuiApplicationContext;
 
 #pragma pack(pop)

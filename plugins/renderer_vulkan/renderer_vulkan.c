@@ -18,7 +18,7 @@ int32_t renderer_vulkan_cleanup(RendererContext *context)
     if (context->device != VK_NULL_HANDLE)
     {
         VkResult result;
-        VK_RETURN_IF_ERROR(context->logger, result, vkDeviceWaitIdle(context->device),
+        VK_RETURN_IF_ERROR(context->deps.logger, result, vkDeviceWaitIdle(context->device),
                            -1, "Failed to wait for device to idle: %d", result);
     }
 

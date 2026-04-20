@@ -57,17 +57,17 @@ int32_t begin_frame(RendererContext *context, RendererFrameData **out_frame, uin
 
     RendererFrameData *frame = &context->frames[context->frame_number % ARRAY_SIZE(context->frames)];
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkWaitForFences(context->device, 1, &frame->render_fence, VK_TRUE, SECOND_IN_NS),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkWaitForFences(context->device, 1, &frame->render_fence, VK_TRUE, SECOND_IN_NS),
                        -1, "Failed to wait for render fence: %d", result);
 
     rv_call_queue_flush(&frame->destroy_queue);
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkResetFences(context->device, 1, &frame->render_fence),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkResetFences(context->device, 1, &frame->render_fence),
                        -1, "Failed to reset render fence: %d", result);
 
     uint32_t swapchain_image_index;
     VK_RETURN_IF_ERROR_CONDITION(
-        context->logger, result, result < 0 && result != VK_ERROR_OUT_OF_DATE_KHR,
+        context->deps.logger, result, result < 0 && result != VK_ERROR_OUT_OF_DATE_KHR,
         vkAcquireNextImageKHR(context->device, context->swapchain, SECOND_IN_NS, frame->swapchain_semaphore, VK_NULL_HANDLE, &swapchain_image_index),
         -1, "Failed to acquire next image: %d", result);
     assert(swapchain_image_index < GET_ARRAY_LENGTH(context->swapchain_images));
@@ -76,7 +76,7 @@ int32_t begin_frame(RendererContext *context, RendererFrameData **out_frame, uin
     {
         renderer_vulkan_start_recreate_swapchain(context);
         TODO("Add proper enum values");
-        LOG_WRN(context->logger, "Swapchain is out of date or suboptimal, aborting frame");
+        LOG_WRN(context->deps.logger, "Swapchain is out of date or suboptimal, aborting frame");
         return 2;
     }
 
@@ -104,7 +104,7 @@ int32_t end_frame(RendererContext *context, RendererFrameData *frame, uint32_t s
         .pImageIndices = &swapchain_index,
     };
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkQueuePresentKHR(context->present_queue, &present_info),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkQueuePresentKHR(context->present_queue, &present_info),
                        -1, "Failed to present queue: %d", result);
 
     context->frame_number++;
@@ -121,7 +121,7 @@ int32_t renderer_vulkan_render(RendererContext *context)
     RendererFrameData *frame;
     uint32_t swapchain_index;
 
-    RETURN_IF_ERROR(context->logger, ret, begin_frame(context, &frame, &swapchain_index),
+    RETURN_IF_ERROR(context->deps.logger, ret, begin_frame(context, &frame, &swapchain_index),
                     "Failed to begin frame: %d", ret);
 
     if (ret == 1 || ret == 2)
@@ -133,7 +133,7 @@ int32_t renderer_vulkan_render(RendererContext *context)
 
     VkCommandBuffer cmd = frame->main_command_buffer;
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkResetCommandBuffer(cmd, 0),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkResetCommandBuffer(cmd, 0),
                        -1, "Failed to reset command buffer: %d", result);
 
     VkCommandBufferBeginInfo cmd_begin_info = {
@@ -144,7 +144,7 @@ int32_t renderer_vulkan_render(RendererContext *context)
     context->draw_extent.width = context->draw_image.image_extent.width;
     context->draw_extent.height = context->draw_image.image_extent.height;
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkBeginCommandBuffer(cmd, &cmd_begin_info),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkBeginCommandBuffer(cmd, &cmd_begin_info),
                        -1, "Failed to begin command buffer: %d", result);
 
     rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
@@ -158,7 +158,7 @@ int32_t renderer_vulkan_render(RendererContext *context)
 
     rv_transition_image(cmd, swapchain_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkEndCommandBuffer(cmd),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkEndCommandBuffer(cmd),
                        -1, "Failed to end buffer: %d", result);
 
     VkCommandBufferSubmitInfo cmd_info = rv_create_command_buffer_submit_info(cmd);
@@ -168,10 +168,10 @@ int32_t renderer_vulkan_render(RendererContext *context)
 
     VkSubmitInfo2 submit = rv_create_submit_info(&cmd_info, &signal_info, &wait_info);
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkQueueSubmit2(context->graphics_queue, 1, &submit, frame->render_fence),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkQueueSubmit2(context->graphics_queue, 1, &submit, frame->render_fence),
                        -1, "Failed to submit cmd to queue: %d", result);
 
-    VK_RETURN_IF_ERROR(context->logger, result, end_frame(context, frame, swapchain_index),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, end_frame(context, frame, swapchain_index),
                        -1, "Failed to end frame: %d", result);
 
     return 0;

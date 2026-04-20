@@ -17,7 +17,7 @@ int32_t draw_default_start(DrawContext *context)
     assert(context != NULL);
     int32_t ret;
 
-    RETURN_IF_ERROR(context->logger, ret, renderer_start(context->renderer),
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_start(context->deps.renderer),
                     "Error initializing renderer: %d", ret);
 
     return 0;
@@ -28,7 +28,7 @@ int32_t draw_default_present(DrawContext *context)
     assert(context != NULL);
     int32_t ret;
 
-    RETURN_IF_ERROR(context->logger, ret, renderer_render(context->renderer),
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_render(context->deps.renderer),
                     "Error rendering renderer: %d", ret);
     return 0;
 }
@@ -37,5 +37,5 @@ void draw_default_on_window_resize(DrawContext *context, uint32_t width, uint32_
 {
     assert(context != NULL);
 
-    renderer_on_window_resize(context->renderer, width, height);
+    renderer_on_window_resize(context->deps.renderer, width, height);
 }

@@ -104,7 +104,7 @@ TODO("Maybe split up the struct into smaller structs, like a queue/logical devic
 TODO("The smaller struct could also be one for the bootstrap and one for runtime")
 typedef struct RendererContext
 {
-    PLUGIN_CONTEXT_DEPENDENCIES
+    PluginDependencies deps;
 
     VkInstance instance;
     VkDebugUtilsMessengerEXT debug_messenger;

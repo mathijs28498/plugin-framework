@@ -130,16 +130,16 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
     switch (message_severity)
     {
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-        LOG_DBG(context->logger, "validation layer: %s", callback_data->pMessage);
+        LOG_DBG(context->deps.logger, "validation layer: %s", callback_data->pMessage);
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-        LOG_INF(context->logger, "validation layer: %s", callback_data->pMessage);
+        LOG_INF(context->deps.logger, "validation layer: %s", callback_data->pMessage);
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-        LOG_WRN(context->logger, "validation layer: %s", callback_data->pMessage);
+        LOG_WRN(context->deps.logger, "validation layer: %s", callback_data->pMessage);
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-        LOG_ERR(context->logger, "validation layer: %s", callback_data->pMessage);
+        LOG_ERR(context->deps.logger, "validation layer: %s", callback_data->pMessage);
         break;
     }
 
@@ -175,22 +175,22 @@ int32_t setup_debug_messenger(RendererContext *context)
 
     PFN_vkCreateDebugUtilsMessengerEXT create_func;
     RETURN_IF_ERROR(
-        context->logger, ret,
-        vk_get_instance_proc(context->logger, context->instance, "vkCreateDebugUtilsMessengerEXT", (vk_func_void_void *)&create_func),
+        context->deps.logger, ret,
+        vk_get_instance_proc(context->deps.logger, context->instance, "vkCreateDebugUtilsMessengerEXT", (vk_func_void_void *)&create_func),
         "Could not get instance proc: %d", ret);
 
     create_func(context->instance, &debug_messenger_create_info, NULL, &context->debug_messenger);
 
     PFN_vkDestroyDebugUtilsMessengerEXT destroy_func;
-    ret = vk_get_instance_proc(context->logger, context->instance, "vkDestroyDebugUtilsMessengerEXT", (vk_func_void_void *)&destroy_func);
+    ret = vk_get_instance_proc(context->deps.logger, context->instance, "vkDestroyDebugUtilsMessengerEXT", (vk_func_void_void *)&destroy_func);
     if (ret < 0)
     {
-        LOG_ERR(context->logger, "Could not get instance proc: %d", ret);
+        LOG_ERR(context->deps.logger, "Could not get instance proc: %d", ret);
         return ret;
     }
 
-    RETURN_IF_ERROR(context->logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->logger, &context->main_destroy_queue, destroy_func, context->instance, context->debug_messenger, NULL),
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, &context->main_destroy_queue, destroy_func, context->instance, context->debug_messenger, NULL),
                     "Failed to push instance destroy data to destroy queue: %d", ret);
 
     return 0;
@@ -218,7 +218,7 @@ int32_t create_instance(RendererContext *context)
     CREATE_ARRAY(const char *, required_extensions, MAX_EXTENSIONS_LEN);
     ARRAY_PUSH_ARRAY(required_extensions, plugin_required_extensions,
                      {
-                         LOG_ERR(context->logger, "Unable to add required extension, reached max capacity");
+                         LOG_ERR(context->deps.logger, "Unable to add required extension, reached max capacity");
                          return -1;
                      });
 
@@ -230,7 +230,7 @@ int32_t create_instance(RendererContext *context)
     ARRAY_PUSH_MULTI_CHECKED(
         required_extensions, platform_required_extensions, GET_ARRAY_LENGTH(platform_required_extensions),
         {
-            LOG_ERR(context->logger, "Unable to add platform extensions to required extensions, reached max capacity");
+            LOG_ERR(context->deps.logger, "Unable to add platform extensions to required extensions, reached max capacity");
             return -1;
         });
 
@@ -243,7 +243,7 @@ int32_t create_instance(RendererContext *context)
 
     // Validation layers
 #if IS_DEBUG
-    RETURN_IF_FALSE(context->logger,
+    RETURN_IF_FALSE(context->deps.logger,
                     check_validation_layer_support(plugin_required_validation_layers),
                     -1, "Validation layers not supported");
 
@@ -261,11 +261,11 @@ int32_t create_instance(RendererContext *context)
     VkResult result;
     int32_t ret;
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkCreateInstance(&instance_create_info, NULL, &context->instance),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateInstance(&instance_create_info, NULL, &context->instance),
                        -1, "Failed to create vulkan instance!");
 
-    RETURN_IF_ERROR(context->logger, ret,
-                    RV_CALL_QUEUE_PUSH_2(context->logger, &context->main_destroy_queue, vkDestroyInstance, context->instance, NULL),
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_2(context->deps.logger, &context->main_destroy_queue, vkDestroyInstance, context->instance, NULL),
                     "Failed to push instance destroy data to destroy queue: %d", ret);
 
     return 0;
@@ -275,11 +275,11 @@ int32_t create_surface(RendererContext *context)
 {
     assert(context != NULL);
     int32_t ret;
-    RETURN_IF_ERROR(context->logger, ret, renderer_vulkan_platform_create_surface(context, &context->surface),
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_platform_create_surface(context, &context->surface),
                     "Failed to create platform surface: %d", ret);
 
-    RETURN_IF_ERROR(context->logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->logger, &context->main_destroy_queue, vkDestroySurfaceKHR, context->instance, context->surface, NULL),
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, &context->main_destroy_queue, vkDestroySurfaceKHR, context->instance, context->surface, NULL),
                     "Failed to push surface destroy data to destroy queue: %d", ret);
     return 0;
 }
@@ -296,7 +296,7 @@ int32_t find_queue_families(RendererContext *context, VkPhysicalDevice physical_
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_families_len, NULL);
 
     assert(queue_families_len > 0);
-    RETURN_IF_FALSE(context->logger, queue_families_len > 0, -1, "No queue families found for physical device");
+    RETURN_IF_FALSE(context->deps.logger, queue_families_len > 0, -1, "No queue families found for physical device");
 
     CREATE_ARRAY_WITH_LEN(VkQueueFamilyProperties, queue_families, MAX_QUEUE_FAMILIES_LEN, queue_families_len);
     vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_families_len, queue_families);
@@ -311,7 +311,7 @@ int32_t find_queue_families(RendererContext *context, VkPhysicalDevice physical_
         }
 
         VkBool32 present_support;
-        VK_RETURN_IF_ERROR(context->logger, result, vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, i, context->surface, &present_support),
+        VK_RETURN_IF_ERROR(context->deps.logger, result, vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, i, context->surface, &present_support),
                            -1, "Unable to get physical device surface support: %d", result);
 
         if (present_support)
@@ -343,14 +343,14 @@ int32_t physical_device_extensions_are_supported(RendererContext *context, VkPhy
     TODO("Find a location for this")
 
     TODO("Create an arena allocator for the bootstrapping");
-    VK_RETURN_IF_ERROR(context->logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_len, NULL),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_len, NULL),
                        -1, "Failed to enumerate physical device extensions", result);
     assert(extensions_len > 0);
 
     assert(MAX_PHYSICAL_DEVICE_EXTENSIONS_LEN >= extensions_len);
     CREATE_ARRAY_WITH_LEN(VkExtensionProperties, extensions, MAX_PHYSICAL_DEVICE_EXTENSIONS_LEN, extensions_len);
     uint32_t extensions_cap = (uint32_t)GET_ARRAY_CAPACITY(extensions);
-    VK_RETURN_IF_ERROR(context->logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_cap, extensions),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_cap, extensions),
                        -1, "Failed to enumerate physical device extensions: %d", result);
 
     for (size_t i = 0; i < GET_ARRAY_LENGTH(required_physical_device_extensions); i++)
@@ -387,31 +387,31 @@ int32_t query_swapchain_support_details(RendererContext *context, VkPhysicalDevi
 
     VkResult result;
 
-    VK_RETURN_IF_ERROR(context->logger, result,
+    VK_RETURN_IF_ERROR(context->deps.logger, result,
                        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, context->surface, &out_swapchain_support_details->capabilities),
                        -1, "Failed to get device surface capabilities: %d", result);
 
     uint32_t format_len;
-    VK_RETURN_IF_ERROR(context->logger, result, vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, context->surface, &format_len, NULL),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, context->surface, &format_len, NULL),
                        -1, "Failed to get physical device formats: %d", result);
     assert(format_len > 0);
 
     assert(format_len <= GET_ARRAY_CAPACITY(out_swapchain_support_details->surface_formats));
     GET_ARRAY_LENGTH(out_swapchain_support_details->surface_formats) = (size_t)format_len;
 
-    VK_RETURN_IF_ERROR(context->logger, result,
+    VK_RETURN_IF_ERROR(context->deps.logger, result,
                        vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, context->surface, &format_len, out_swapchain_support_details->surface_formats),
                        -1, "Failed to get physical device formats: %d", result);
 
     uint32_t present_mode_len;
-    VK_RETURN_IF_ERROR(context->logger, result, vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, context->surface, &present_mode_len, NULL),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, context->surface, &present_mode_len, NULL),
                        -1, "Failed to get physical device present modes: %d", result);
     assert(present_mode_len > 0);
 
     assert(present_mode_len <= GET_ARRAY_CAPACITY(out_swapchain_support_details->present_modes));
     GET_ARRAY_LENGTH(out_swapchain_support_details->present_modes) = (size_t)present_mode_len;
 
-    VK_RETURN_IF_ERROR(context->logger, result,
+    VK_RETURN_IF_ERROR(context->deps.logger, result,
                        vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, context->surface, &present_mode_len, out_swapchain_support_details->present_modes),
                        -1, "Failed to get physical device present modes: %d", result);
     return 0;
@@ -489,18 +489,18 @@ bool is_device_suitable(RendererContext *context, VkPhysicalDevice physical_devi
     int32_t ret;
 
     QueueFamilyIndices queue_family_indices = {0};
-    RETURN_IF_ERROR_RET_VALUE(context->logger, ret, find_queue_families(context, physical_device, &queue_family_indices),
+    RETURN_IF_ERROR_RET_VALUE(context->deps.logger, ret, find_queue_families(context, physical_device, &queue_family_indices),
                               false, "Failed to find queue family indices: %d", ret);
 
     bool extensions_are_supported;
-    RETURN_IF_ERROR_RET_VALUE(context->logger, ret, physical_device_extensions_are_supported(context, physical_device, &extensions_are_supported),
+    RETURN_IF_ERROR_RET_VALUE(context->deps.logger, ret, physical_device_extensions_are_supported(context, physical_device, &extensions_are_supported),
                               false, "Failed to check physical device extensions: %d", ret);
 
     SwapchainSupportDetails swapchain_support_details;
     SET_ARRAY_FIELD_CAPACITY(swapchain_support_details.surface_formats);
     SET_ARRAY_FIELD_CAPACITY(swapchain_support_details.present_modes);
 
-    RETURN_IF_ERROR_RET_VALUE(context->logger, ret, query_swapchain_support_details(context, physical_device, &swapchain_support_details),
+    RETURN_IF_ERROR_RET_VALUE(context->deps.logger, ret, query_swapchain_support_details(context, physical_device, &swapchain_support_details),
                               false, "Failed to query swapchain support details: %d", ret);
 
     return queue_family_indices_is_complete(&queue_family_indices) &&
@@ -529,7 +529,7 @@ int32_t rate_physical_device_suitability(RendererContext *context, VkPhysicalDev
         uint32_t minor = VK_API_VERSION_MINOR(device_properties.apiVersion);
 
         TODO("Add better logging");
-        LOG_WRN(context->logger, "Device '%s' supports up to Vulkan %u.%u, Required 1.3", device_properties.deviceName, major, minor);
+        LOG_WRN(context->deps.logger, "Device '%s' supports up to Vulkan %u.%u, Required 1.3", device_properties.deviceName, major, minor);
         return -1;
     }
 
@@ -550,16 +550,16 @@ int32_t pick_physical_device(RendererContext *context)
 
     uint32_t physical_devices_len = 0;
     VkResult result;
-    VK_RETURN_IF_ERROR(context->logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, NULL),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, NULL),
                        -1, "Unable to get physical device count");
 
     assert(physical_devices_len != 0);
-    RETURN_IF_TRUE(context->logger, physical_devices_len == 0,
+    RETURN_IF_TRUE(context->deps.logger, physical_devices_len == 0,
                    -1, "Cannot find a GPU with vulkan support");
 
     assert(MAX_PHYSICAL_DEVICES_LEN >= physical_devices_len);
     CREATE_ARRAY_WITH_LEN(VkPhysicalDevice, physical_devices, MAX_PHYSICAL_DEVICES_LEN, physical_devices_len);
-    VK_RETURN_IF_ERROR(context->logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, physical_devices),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, physical_devices),
                        -1, "Unable to get physical devices");
 
     size_t chosen_physical_device_index = 0;
@@ -575,7 +575,7 @@ int32_t pick_physical_device(RendererContext *context)
         }
     }
 
-    RETURN_IF_TRUE(context->logger, max_physical_device_score < 0, -1, "No suitable GPU found");
+    RETURN_IF_TRUE(context->deps.logger, max_physical_device_score < 0, -1, "No suitable GPU found");
 
     context->physical_device = physical_devices[chosen_physical_device_index];
 
@@ -628,7 +628,7 @@ int32_t push_queue_family_indices_to_create_info_arr(
         };
 
         ARRAY_PUSH_CHECKED(queue_create_info_arr, queue_create_info, {
-            LOG_ERR(context->logger, "Reached max capacity when adding queue create info");
+            LOG_ERR(context->deps.logger, "Reached max capacity when adding queue create info");
             return -1;
         });
     }
@@ -644,15 +644,15 @@ int32_t create_logical_device(RendererContext *context)
     VkResult result;
 
     QueueFamilyIndices queue_family_indices = {0};
-    RETURN_IF_ERROR(context->logger, ret, find_queue_families(context, context->physical_device, &queue_family_indices),
+    RETURN_IF_ERROR(context->deps.logger, ret, find_queue_families(context, context->physical_device, &queue_family_indices),
                     "Error finding queue family indices: %d", ret);
     assert(queue_family_indices_is_complete(&queue_family_indices));
-    RETURN_IF_FALSE(context->logger, queue_family_indices_is_complete(&queue_family_indices),
+    RETURN_IF_FALSE(context->deps.logger, queue_family_indices_is_complete(&queue_family_indices),
                     -1, "Chosen physical device does not all necessary queue families");
 
     CREATE_ARRAY(VkDeviceQueueCreateInfo, queue_create_info_arr, MAX_QUEUE_CREATE_INFO_ARR_LEN);
 
-    RETURN_IF_ERROR(context->logger, ret, push_queue_family_indices_to_create_info_arr(context, &queue_family_indices, queue_create_info_arr),
+    RETURN_IF_ERROR(context->deps.logger, ret, push_queue_family_indices_to_create_info_arr(context, &queue_family_indices, queue_create_info_arr),
                     "Failed to push family indices to create_info_arr: %d", ret);
 
     VkPhysicalDeviceFeatures physical_device_features = {0};
@@ -671,11 +671,11 @@ int32_t create_logical_device(RendererContext *context)
         .enabledLayerCount = 0,
     };
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkCreateDevice(context->physical_device, &device_create_info, NULL, &context->device),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateDevice(context->physical_device, &device_create_info, NULL, &context->device),
                        -1, "Failed to create device: %d", result);
 
-    RETURN_IF_ERROR(context->logger, ret,
-                    RV_CALL_QUEUE_PUSH_2(context->logger, &context->main_destroy_queue, vkDestroyDevice, context->device, NULL),
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_2(context->deps.logger, &context->main_destroy_queue, vkDestroyDevice, context->device, NULL),
                     "Failed to push device destroy data to destroy queue: %d", ret);
 
     vkGetDeviceQueue(context->device, queue_family_indices.graphics_family, 0, &context->graphics_queue);
@@ -774,14 +774,14 @@ int32_t create_swapchain(RendererContext *context)
     SET_ARRAY_FIELD_CAPACITY(swapchain_support_details.surface_formats);
     SET_ARRAY_FIELD_CAPACITY(swapchain_support_details.present_modes);
 
-    RETURN_IF_ERROR_RET_VALUE(context->logger, ret, query_swapchain_support_details(context, context->physical_device, &swapchain_support_details),
+    RETURN_IF_ERROR_RET_VALUE(context->deps.logger, ret, query_swapchain_support_details(context, context->physical_device, &swapchain_support_details),
                               false, "Failed to query swapchain support details: %d", ret);
 
     VkSurfaceFormatKHR surface_format = choose_swap_surface_format(swapchain_support_details.surface_formats);
     VkPresentModeKHR present_mode = choose_swap_present_mode(swapchain_support_details.present_modes);
     VkExtent2D surface_extent;
-    RETURN_IF_ERROR(context->logger, ret,
-                    choose_swap_extent(context->logger, context->window, &swapchain_support_details.capabilities, &surface_extent),
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    choose_swap_extent(context->deps.logger, context->deps.window, &swapchain_support_details.capabilities, &surface_extent),
                     "Failed to get surface extent: %d", ret);
 
     assert(surface_extent.width > 0);
@@ -812,7 +812,7 @@ int32_t create_swapchain(RendererContext *context)
     };
 
     QueueFamilyIndices queue_family_indices = {0};
-    RETURN_IF_ERROR_RET_VALUE(context->logger, ret, find_queue_families(context, context->physical_device, &queue_family_indices),
+    RETURN_IF_ERROR_RET_VALUE(context->deps.logger, ret, find_queue_families(context, context->physical_device, &queue_family_indices),
                               false, "Failed to find queue family indices: %d", ret);
 
     uint32_t indices[2];
@@ -838,13 +838,13 @@ int32_t create_swapchain(RendererContext *context)
     swapchain_create_info.presentMode = present_mode;
     swapchain_create_info.clipped = VK_TRUE;
 
-    VK_RETURN_IF_ERROR(context->logger, result, vkCreateSwapchainKHR(context->device, &swapchain_create_info, NULL, &context->swapchain),
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateSwapchainKHR(context->device, &swapchain_create_info, NULL, &context->swapchain),
                        -1, "Failed to create swapchain: %d", ret);
 
     if (context->old_swapchain == VK_NULL_HANDLE)
     {
-        RETURN_IF_ERROR(context->logger, ret,
-                        RV_CALL_QUEUE_PUSH_1(context->logger, &context->main_destroy_queue, destroy_main_swapchain, context),
+        RETURN_IF_ERROR(context->deps.logger, ret,
+                        RV_CALL_QUEUE_PUSH_1(context->deps.logger, &context->main_destroy_queue, destroy_main_swapchain, context),
                         "Failed to push swapchain destroy data to destroy queue: %d", ret);
     }
     else
@@ -897,11 +897,11 @@ int32_t create_image_views(RendererContext *context)
     {
         image_view_create_info.image = context->swapchain_images[i];
 
-        VK_RETURN_IF_ERROR(context->logger, result, vkCreateImageView(context->device, &image_view_create_info, NULL, &context->swapchain_image_views[i]),
+        VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateImageView(context->device, &image_view_create_info, NULL, &context->swapchain_image_views[i]),
                            -1, "Failed to create image view %d: %d", i, result);
 
-        RETURN_IF_ERROR(context->logger, ret,
-                        RV_CALL_QUEUE_PUSH_3(context->logger, &context->swapchain_destroy_queue, vkDestroyImageView, context->device, context->swapchain_image_views[i], NULL),
+        RETURN_IF_ERROR(context->deps.logger, ret,
+                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, &context->swapchain_destroy_queue, vkDestroyImageView, context->device, context->swapchain_image_views[i], NULL),
                         "Failed to push image view destroy data to destroy queue: %d", ret);
     }
 
@@ -918,23 +918,23 @@ int32_t renderer_vulkan_bootstrap(RendererContext *context)
     }
 
     int32_t ret;
-    VK_TRY_INIT(context->logger, ret, create_instance(context), &context->main_destroy_queue,
+    VK_TRY_INIT(context->deps.logger, ret, create_instance(context), &context->main_destroy_queue,
                 "Failed to create instance: %d", ret);
 
 #if IS_DEBUG
-    VK_TRY_INIT(context->logger, ret, setup_debug_messenger(context), &context->main_destroy_queue,
+    VK_TRY_INIT(context->deps.logger, ret, setup_debug_messenger(context), &context->main_destroy_queue,
                 "Failed to setup debug messenger: %d", ret);
 #endif // #if IS_DEBUG
 
-    VK_TRY_INIT(context->logger, ret, create_surface(context), &context->main_destroy_queue,
+    VK_TRY_INIT(context->deps.logger, ret, create_surface(context), &context->main_destroy_queue,
                 "Failed to create surface: %d", ret);
-    VK_TRY_INIT(context->logger, ret, pick_physical_device(context), &context->main_destroy_queue,
+    VK_TRY_INIT(context->deps.logger, ret, pick_physical_device(context), &context->main_destroy_queue,
                 "failed to pick physical device: %d", ret);
-    VK_TRY_INIT(context->logger, ret, create_logical_device(context), &context->main_destroy_queue,
+    VK_TRY_INIT(context->deps.logger, ret, create_logical_device(context), &context->main_destroy_queue,
                 "Failed to create logical device: %d", ret);
-    VK_TRY_INIT(context->logger, ret, create_swapchain(context), &context->main_destroy_queue,
+    VK_TRY_INIT(context->deps.logger, ret, create_swapchain(context), &context->main_destroy_queue,
                 "failed to create swapchain, %d", ret);
-    VK_TRY_INIT(context->logger, ret, create_image_views(context), &context->main_destroy_queue,
+    VK_TRY_INIT(context->deps.logger, ret, create_image_views(context), &context->main_destroy_queue,
                 "Failed to create image views: %d", ret);
 
     return 0;
@@ -946,9 +946,9 @@ int32_t renderer_vulkan_bootstrap_recreate_swapchain(RendererContext *context)
     assert(context != NULL);
     int32_t ret;
 
-    VK_TRY_INIT(context->logger, ret, create_swapchain(context), &context->main_destroy_queue,
+    VK_TRY_INIT(context->deps.logger, ret, create_swapchain(context), &context->main_destroy_queue,
                 "failed to recreate swapchain, %d", ret);
-    VK_TRY_INIT(context->logger, ret, create_image_views(context), &context->main_destroy_queue,
+    VK_TRY_INIT(context->deps.logger, ret, create_image_views(context), &context->main_destroy_queue,
                 "Failed to recreate image views: %d", ret);
 
     return 0;

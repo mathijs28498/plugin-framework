@@ -338,7 +338,7 @@ int32_t plugin_manager_default_get_scoped(struct PluginManagerContext *context, 
     assert(interface_name != NULL);
     assert(out_iface != NULL);
 
-    LoggerInterface *logger = context->logger;
+    LoggerInterface *logger = context->deps.logger;
 
     TODO("Check if already in scope, if yes get it, if no create it")
     TODO("If scope is SINGLETON, return err if not available")

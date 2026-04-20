@@ -10,8 +10,6 @@
 
 typedef struct InputContext
 {
-    PLUGIN_CONTEXT_DEPENDENCIES
-
     uint32_t key_state_previous[BITFIELD_SIZE_32(WINDOW_EVENT_KEY_MAX)];
     uint32_t key_state_current[BITFIELD_SIZE_32(WINDOW_EVENT_KEY_MAX)];
 } InputContext;
