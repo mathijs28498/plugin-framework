@@ -2,8 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-@DEFINE_BUILD_SHARED_TEXT@
-
 #include <plugin_sdk/plugin_sdk_types.h>
 
 @INJECT_DEPENDENCY_FN_DEFINITION_TEXT@

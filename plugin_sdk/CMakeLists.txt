@@ -28,3 +28,7 @@ target_sources(plugin_sdk
 if(WIN32 AND PLUGIN_MANAGER_GUI)
     target_compile_definitions(plugin_sdk INTERFACE WINDOWS_GUI=1)
 endif()
+
+if(BUILD_SHARED_LIBS)
+    target_compile_definitions(plugin_sdk INTERFACE PLUGIN_BUILD_SHARED)
+endif()

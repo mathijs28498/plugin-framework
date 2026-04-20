@@ -4,7 +4,8 @@ from collections import Counter
 from typing import Any
 import sys
 
-from plugin_sdk_core.datatypes import *
+from plugin_sdk_core.datatypes import PluginManifest, PluginDependency, PluginLifetime
+from internal_core.datatypes import PluginRegistryInterface
 
 # TODO: Check if this properly works for older versions
 if sys.version_info >= (3, 11):
@@ -27,7 +28,14 @@ else:
 import re
 from pathlib import Path
 
-from internal_core.datatypes import *
+from internal_core.datatypes import (
+    PluginRegistry,
+    AppConfig,
+    RequestedPlugin,
+    PluginProvider,
+    PluginProviderDependency,
+)
+from typing import Optional
 
 
 # TODO: Add error handling
@@ -183,33 +191,47 @@ def parse_app_dict(
     return AppConfig(requested_plugins=requested_plugins)
 
 
-def parse_statically_resolved_plugins(
-    statically_resolved_plugins_dict: list[dict[str, Any]],
-) -> Iterator[PluginProvider]:
-    for plugin_provider_dict in statically_resolved_plugins_dict:
-        plugin_manifest_dict = plugin_provider_dict["plugin_manifest"]
-        plugin_manifest_dict["source_path"] = Path(plugin_manifest_dict["source_path"])
-        if plugin_manifest_dict.get("module_path"):
-            plugin_manifest_dict["module_path"] = Path(
-                plugin_manifest_dict["module_path"]
-            )
+def parse_lifetime(val: str) -> PluginLifetime:
+    if val.startswith("PluginLifetime."):
+        return PluginLifetime[val.split(".")[1]]
+    return PluginLifetime(val)
 
-        plugin_manifest_dict["dependencies"] = [
-            PluginDependency(**dependency)
-            for dependency in plugin_manifest_dict["dependencies"]
+
+def parse_statically_resolved_plugin_manifests(
+    plugin_manifest_dicts: list[dict[str, Any]],
+) -> Iterator[PluginManifest]:
+    for plugin_manifest_dict in plugin_manifest_dicts:
+        supported_lifetimes = [
+            parse_lifetime(lifetime)
+            for lifetime in plugin_manifest_dict["supported_lifetimes"]
         ]
 
-        plugin_manifest = PluginManifest(**plugin_manifest_dict)
+        dependencies = {
+            dependency_interface_name: PluginDependency(**dependency)
+            for dependency_interface_name, dependency in plugin_manifest_dict[
+                "dependencies"
+            ].items()
+        }
 
-        plugin_provider_dependencies = [
-            PluginProviderDependency(**dependency)
-            for dependency in plugin_provider_dict["dependencies"]
-        ]
+        manifest_path = Path(plugin_manifest_dict["manifest_path"])
+        source_path = Path(plugin_manifest_dict["source_path"])
+        module_path = Path(plugin_manifest_dict["module_path"])
 
-        plugin_provider_dict["plugin_manifest"] = plugin_manifest
-        plugin_provider_dict["dependencies"] = plugin_provider_dependencies
-
-        yield PluginProvider(**plugin_provider_dict)
+        yield PluginManifest(
+            target_name=plugin_manifest_dict["target_name"],
+            interface_name=plugin_manifest_dict["interface_name"],
+            plugin_name=plugin_manifest_dict["plugin_name"],
+            supported_lifetimes=supported_lifetimes,
+            preferred_lifetime=parse_lifetime(
+                plugin_manifest_dict["preferred_lifetime"]
+            ),
+            has_init=plugin_manifest_dict["has_init"],
+            has_shutdown=plugin_manifest_dict["has_shutdown"],
+            dependencies=dependencies,
+            manifest_path=manifest_path,
+            source_path=source_path,
+            module_path=module_path,
+        )
 
 
 def read_json(source_path: Path):

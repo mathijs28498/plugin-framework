@@ -1,7 +1,13 @@
+
 from internal_core.generators.generate_compile_files import generate_plugin_manager_bootloader_generated_src, generate_plugin_manager_depfile
-from internal_core.parsers.plugin_manager_parse import *
-from plugin_manager_plugin_resolver import *
+from internal_core.parsers.plugin_manager_parse import parse_app_dict, parse_plugin_registry, parse_statically_resolved_plugin_manifests
+from internal_core.plugin_resolver import create_interface_definitions
+
+from plugin_sdk_core.utils import read_json, read_toml
+
 import argparse
+from pathlib import Path
+from dataclasses import dataclass
 
 
 @dataclass
@@ -12,7 +18,7 @@ class GenerateCCodeArguments:
 
     plugin_registry_toml: Path
     app_toml: Path
-    statically_resolved_plugins_json: Path
+    statically_resolved_plugin_manifests_json: Path
 
     source_plugin_manager_bootloader_generated_src: Path
     generated_plugin_manager_bootloader_generated_src: Path
@@ -28,7 +34,7 @@ class GenerateCCodeArguments:
             #
             plugin_registry_toml=args.plugin_registry_toml_path,
             app_toml=args.app_toml_path,
-            statically_resolved_plugins_json=args.statically_resolved_plugins_json_path,
+            statically_resolved_plugin_manifests_json=args.statically_resolved_plugin_manifests_json_path,
             #
             source_plugin_manager_bootloader_generated_src=args.source_plugin_manager_bootloader_generated_src_path,
             generated_plugin_manager_bootloader_generated_src=args.generated_plugin_manager_bootloader_generated_src_path,
@@ -63,7 +69,7 @@ def parce_c_code_arguments() -> GenerateCCodeArguments:
         type=Path,
     )
     parser.add_argument(
-        "--statically-resolved-plugins-json-path",
+        "--statically-resolved-plugin-manifests-json-path",
         required=True,
         type=Path,
     )
@@ -98,8 +104,8 @@ def main():
 
     plugin_registry_dict = read_toml(arguments.plugin_registry_toml)
     app_dict = read_toml(arguments.app_toml)
-    statically_resolved_plugins_dict = read_json(
-        arguments.statically_resolved_plugins_json
+    statically_resolved_plugin_manifests_dict = read_json(
+        arguments.statically_resolved_plugin_manifests_json
     )
 
     plugin_registry = parse_plugin_registry(
@@ -109,25 +115,25 @@ def main():
     # TODO: Make a class for app_config that has all app configurations rather than just a list of requested plugins
     app_config = parse_app_dict(app_dict)
 
-    plugin_providers = list(
-        parse_statically_resolved_plugins(statically_resolved_plugins_dict)
+    plugin_manifests = list(
+        parse_statically_resolved_plugin_manifests(statically_resolved_plugin_manifests_dict)
     )
 
     interface_definitions = create_interface_definitions(plugin_registry)
-    plugin_providers = sort_plugin_providers(plugin_providers)
+    # plugin_providers = sort_plugin_providers(plugin_providers)
 
     # TODO: Make sure this gets a proper name and gets filled appropiately
-    plugin_manifests_for_metadata = [
-        plugin_manifest
-        for plugin_manifest in plugin_registry.plugin_manifests
-        if plugin_manifest.interface_name == "plugin_manager"
-    ]
+    # plugin_manifests_for_metadata = [
+    #     plugin_manifest
+    #     for plugin_manifest in plugin_registry.plugin_manifests
+    #     if plugin_manifest.interface_name == "plugin_manager"
+    # ]
 
     generate_plugin_manager_bootloader_generated_src(
         arguments.source_plugin_manager_bootloader_generated_src,
         arguments.generated_plugin_manager_bootloader_generated_src,
         interface_definitions,
-        plugin_manifests_for_metadata,
+        plugin_manifests,
         app_config.requested_plugins,
     )
 

@@ -15,7 +15,7 @@ static const PluginManagerPMVtable plugin_vtable = {
     .bootstrap = plugin_manager_default_bootstrap,
 };
 
-int32_t plugin_init(PluginManagerContext *context)
+static int32_t plugin_init(PluginManagerContext *context)
 {
     TODO("Make this into a macro to set capacity");
     SET_ARRAY_FIELD_CAPACITY(context->registered_plugins);
@@ -25,7 +25,7 @@ int32_t plugin_init(PluginManagerContext *context)
     return 0;
 }
 
-int32_t plugin_shutdown(PluginManagerContext *context)
+static int32_t plugin_shutdown(PluginManagerContext *context)
 {
     int32_t ret = plugin_manager_default_shutdown_scope(context->registered_plugins, &context->singleton_scope);
     if (ret < 0)

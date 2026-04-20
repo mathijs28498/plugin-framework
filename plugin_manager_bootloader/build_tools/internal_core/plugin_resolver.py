@@ -1,5 +1,5 @@
 from plugin_sdk_core.datatypes import PluginManifest, PluginLifetime
-from internal_core.datatypes import AppConfig, PluginRegistry, RequestedPlugin
+from internal_core.datatypes import AppConfig, PluginRegistry, RequestedPlugin, InterfaceDefinition
 from typing import Optional
 from collections import deque
 
@@ -70,7 +70,7 @@ def resolve_plugin_dependencies(
             if dependency_already_requested(
                 plugin_manifests, requested_plugins, dependency_interface_name
             ):
-                break
+                continue
 
             requested_plugins.append(
                 RequestedPlugin(
@@ -90,6 +90,19 @@ def resolve_compile_time_plugins(
     plugin_manifests: list[PluginManifest] = []
     plugin_manifests_offset: int = 0
     requested_plugins = list(app_config.requested_plugins)
+    if not any(
+        requested_plugin.interface_name == "plugin_manager"
+        for requested_plugin in requested_plugins
+    ):
+        requested_plugins.append(
+            RequestedPlugin(
+                interface_name="plugin_manager",
+                plugin_name=None,
+                lifetime=PluginLifetime.UNKNOWN,
+                is_explicit=False,
+            )
+        )
+
     for _ in range(RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH):
         if not requested_plugins:
             break
@@ -101,7 +114,7 @@ def resolve_compile_time_plugins(
         requested_plugins = resolve_plugin_dependencies(
             plugin_manifests, plugin_manifests_offset
         )
-        plugin_manifests_offset = len(plugin_manifests) - 1
+        plugin_manifests_offset = len(plugin_manifests)
 
     else:
         raise RuntimeError(
@@ -120,7 +133,7 @@ def plugin_manifest_depends_on(
     )
 
 
-def sort_plugin_providers(
+def sort_plugin_manifests(
     plugin_manifests: list[PluginManifest],
 ) -> list[PluginManifest]:
     indegrees = [
@@ -144,12 +157,12 @@ def sort_plugin_providers(
         sorted_plugin_manifests.append(current_plugin_manifest)
         processed_count += 1
 
-        for i, dependent_plugin_provider in enumerate(plugin_manifests):
+        for i, dependent_plugin_manifest in enumerate(plugin_manifests):
             if indegrees[i] == 0:
                 continue
 
             if plugin_manifest_depends_on(
-                dependent_plugin_provider,
+                dependent_plugin_manifest,
                 current_plugin_manifest.interface_name,
             ):
                 indegrees[i] -= 1
@@ -162,6 +175,37 @@ def sort_plugin_providers(
         )
 
     if processed_count != len(plugin_manifests):
-        raise ValueError(f"Cyclic dependency detected!")
+        raise ValueError(
+            f"Cyclic dependency detected! {processed_count} times processed, should be {len(plugin_manifests)}"
+        )
 
     return sorted_plugin_manifests
+
+
+def create_interface_definitions(
+    plugin_registry: PluginRegistry,
+) -> list[InterfaceDefinition]:
+    interface_definitions: list[InterfaceDefinition] = []
+    for interface in plugin_registry.interfaces:
+        default_plugin_manifest: Optional[PluginManifest] = None
+        plugin_manifests: list[PluginManifest] = []
+        for plugin_manifest in plugin_registry.plugin_manifests:
+            if interface.interface_name != plugin_manifest.interface_name:
+                continue
+            plugin_manifests.append(plugin_manifest)
+            if plugin_manifest.plugin_name == interface.default_plugin_name:
+                default_plugin_manifest = plugin_manifest
+
+        if default_plugin_manifest is None:
+            raise ValueError(
+                f"Error in interface '{interface.interface_name}': default plugin '{interface.default_plugin_name}' not found"
+            )
+        interface_definitions.append(
+            InterfaceDefinition(
+                interface_name=interface.interface_name,
+                default_plugin_manifest=default_plugin_manifest,
+                plugin_manifests=plugin_manifests,
+            )
+        )
+
+    return interface_definitions

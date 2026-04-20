@@ -3,16 +3,16 @@ from dataclasses import asdict
 import json
 import textwrap
 
-from internal_core.datatypes import PluginProvider
 from plugin_sdk_core.utils import create_and_write_to_file, configure_file, indent_prefix
+from plugin_sdk_core.datatypes import PluginManifest
 
 
-def generate_statically_resolved_plugin_providers_json(
+def generate_statically_resolved_plugin_manifests_json(
     destination_path: Path,
-    plugin_providers: list[PluginProvider],
+    plugin_manifests: list[PluginManifest],
 ):
     plugin_providers_dict = [
-        asdict(plugin_provider) for plugin_provider in plugin_providers
+        asdict(plugin_manifest) for plugin_manifest in plugin_manifests
     ]
 
     content = json.dumps(plugin_providers_dict, indent=4, default=str)
@@ -25,23 +25,23 @@ def generate_plugin_manager_cmake(
     target_name: str,
     include_paths: list[Path],
     source_paths: list[Path],
-    plugin_providers: list[PluginProvider],
+    plugin_manifests: list[PluginManifest],
 ):
     # TODO: Add loops in the template
     add_subdirectory_text = "\n\n".join(
         textwrap.dedent(
             f"""\
             add_subdirectory(
-                "{plugin_provider.plugin_manifest.source_path.as_posix()}"
-                "${{CMAKE_CURRENT_BINARY_DIR}}/generated_plugins/{plugin_provider.plugin_manifest.target_name}"
+                "{plugin_manifest.source_path.as_posix()}"
+                "${{CMAKE_CURRENT_BINARY_DIR}}/generated_plugins/{plugin_manifest.target_name}"
             )"""
         )
-        for plugin_provider in plugin_providers
+        for plugin_manifest in plugin_manifests
     )
 
     plugin_target_cmake_list = f"\n{indent_prefix * 1}".join(
-        plugin_provider.plugin_manifest.target_name
-        for plugin_provider in plugin_providers
+        plugin_manifest.target_name
+        for plugin_manifest in plugin_manifests
     )
 
     generated_include_directories_text = f"\n{indent_prefix * 1}".join(

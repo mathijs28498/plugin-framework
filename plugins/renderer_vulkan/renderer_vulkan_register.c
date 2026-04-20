@@ -13,13 +13,13 @@ static const RendererVtable plugin_vtable = {
     .on_window_resize = renderer_vulkan_on_window_resize,
 };
 
-int32_t plugin_init(RendererContext *context)
+static int32_t plugin_init(RendererContext *context)
 {
     (void)context;
     return 0;
 }
 
-int32_t plugin_shutdown(RendererContext *context)
+static int32_t plugin_shutdown(RendererContext *context)
 {
     renderer_vulkan_cleanup(context);
 

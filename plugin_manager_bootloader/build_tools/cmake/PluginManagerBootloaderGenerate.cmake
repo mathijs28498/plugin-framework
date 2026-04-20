@@ -36,7 +36,7 @@ function(plugin_manager_bootloader_setup TARGET_NAME)
 
     set(PLUGIN_REGISTRY_TOML_PATH "${arg_TOML_DIR_PATH}/plugin_registry.toml")
     set(APP_TOML_PATH "${arg_TOML_DIR_PATH}/app.toml")
-    set(GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH "${GENERATED_JSON_DIR_PATH}/statically_resolved_plugins.json")
+    set(GENERATED_STATICALLY_RESOLVED_PLUGIN_MANIFACTS_JSON_PATH "${GENERATED_JSON_DIR_PATH}/statically_resolved_plugin_manifests.json")
 
     set(SOURCE_PLUGIN_MANAGER_BOOTLOADER_GENERATED_SRC_PATH "${CMAKE_CURRENT_LIST_DIR}/plugin_manager_bootloader_generated.c.in")
 
@@ -79,7 +79,7 @@ function(plugin_manager_bootloader_setup TARGET_NAME)
 
         --generated-plugin-manager-bootloader-generated-src-path "${GENERATED_PLUGIN_MANAGER_BOOTLOADER_GENERATED_SRC_PATH}"
         --generated-cmake-path "${GENERATED_CMAKE_PATH}"
-        --generated-statically-resolved-plugins-json-path "${GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH}"
+        --generated-statically-resolved-plugin-manifests-json-path "${GENERATED_STATICALLY_RESOLVED_PLUGIN_MANIFACTS_JSON_PATH}"
 
         COMMAND_ERROR_IS_FATAL ANY
     )
@@ -101,7 +101,7 @@ function(plugin_manager_bootloader_setup TARGET_NAME)
 
         --plugin-registry-toml-path "${PLUGIN_REGISTRY_TOML_PATH}"
         --app-toml-path "${APP_TOML_PATH}"
-        --statically-resolved-plugins-json-path "${GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH}"
+        --statically-resolved-plugin-manifests-json-path "${GENERATED_STATICALLY_RESOLVED_PLUGIN_MANIFACTS_JSON_PATH}"
 
         --source-plugin-manager-bootloader-generated-src-path "${SOURCE_PLUGIN_MANAGER_BOOTLOADER_GENERATED_SRC_PATH}"
 
@@ -113,10 +113,11 @@ function(plugin_manager_bootloader_setup TARGET_NAME)
         "${PLUGIN_MANAGER_GENERATE_C_CODE_SCRIPT_PATH}"
         "${PLUGIN_REGISTRY_TOML_PATH}"
         "${APP_TOML_PATH}"
-        "${GENERATED_STATICALLY_RESOLVED_PLUGINS_JSON_PATH}"
+        "${GENERATED_STATICALLY_RESOLVED_PLUGIN_MANIFACTS_JSON_PATH}"
 
         "${SOURCE_PLUGIN_MANAGER_BOOTLOADER_GENERATED_SRC_PATH}"
 
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/compile_time_plugin_resolver.py"
         # "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_generate_templates.py"
         # "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_parse.py"
         # "${arg_PYTHON_SCRIPTS_PATH}/plugin_manager_types.py"

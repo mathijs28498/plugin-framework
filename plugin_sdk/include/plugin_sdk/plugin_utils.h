@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdbool.h>
 
 #define STRINGIZE2(x) #x
 #define STRINGIZE(x) STRINGIZE2(x)
@@ -13,6 +14,13 @@
 #endif // #if defined(_MSC_VER)
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
+
+#if PLUGIN_BUILD_SHARED
+static const bool IS_PLUGIN_BUILD_SHARED = true;
+#else // #if PLUGIN_BUILD_SHARED
+static const bool IS_PLUGIN_BUILD_SHARED = false;
+#endif // #if PLUGIN_BUILD_SHARED
+
 
 #if defined(_DEBUG) || !defined(NDEBUG)
 #define IS_DEBUG 1

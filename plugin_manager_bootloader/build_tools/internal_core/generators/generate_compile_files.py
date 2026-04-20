@@ -1,10 +1,11 @@
 from pathlib import Path
-from internal_core.datatypes import *
+from internal_core.datatypes import InterfaceDefinition, PluginRegistry, RequestedPlugin
 from plugin_sdk_core.utils import (
     indent_prefix,
     create_and_write_to_file,
     configure_file,
 )
+from plugin_sdk_core.datatypes import PluginManifest
 import textwrap
 
 
@@ -94,9 +95,7 @@ def create_plugin_metadata_replacements(
         None,
     )
     if plugin_manager_metadata_text == None:
-        raise ValueError(
-            "Metadata containing plugin manager not found, please ensure a plugin manager plugin is available"
-        )
+        plugin_manager_metadata_text = "NULL"
 
     return [
         (

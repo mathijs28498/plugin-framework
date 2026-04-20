@@ -19,6 +19,9 @@ LOGGER_INTERFACE_REGISTER(plugin_manager_default_bootstrap, LOG_LEVEL_WARNING)
 #include "plugin_manager_default_register.h"
 #include "plugin_manager_default.h"
 
+TODO("Use the RETURN_IF_ERROR in places")
+TODO("Check where can add if (IS_PLUGIN_BUILD_SHARED) in order to not do double stuff, create registered plugins right away I guess, maybe even in generated?")
+
 TODO("Create a hash for interface name for quicker comparisons")
 
 int32_t resolve_requested_plugins(const LoggerInterface *logger,
@@ -85,6 +88,7 @@ int32_t resolve_requested_plugins(const LoggerInterface *logger,
     return 0;
 }
 
+TODO("MAKE SURE THIS DOESNT HAPPEN IN STATIC!!! GET THE STATICALLY LOADED ONE")
 int32_t resolve_get_metadata_fn_dynamic(const LoggerInterface *logger,
                                         const char *module_path, const char *target_name, PluginGetMetadata_Fn *out_get_metadata_fn)
 {
@@ -680,45 +684,43 @@ int32_t plugin_manager_default_bootstrap(
 
     size_t initial_registered_plugins_len = GET_ARRAY_LENGTH(context->registered_plugins);
 
-    const LoggerInterface *logger = context->logger;
-
     CREATE_ARRAY(RequestedPlugin, requested_plugins, MAX_REGISTERED_PLUGINS_LEN);
     ret = seed_explicitly_requested_plugins(context, requested_plugins_explicit, requested_plugins);
     if (ret < 0)
     {
-        LOG_ERR(logger, "Unable to seed requested plugins: %d", ret);
+        LOG_ERR(context->logger, "Unable to seed requested plugins: %d", ret);
         return ret;
     }
 
     ret = load_requested_plugins(
-        logger,
+        context->logger,
         plugin_registry,
         static_plugin_metadatas,
         requested_plugins,
         context->registered_plugins);
     if (ret < 0)
     {
-        TODO("Add error log here");
+        LOG_ERR(context->logger, "Unable to load plugins phase 2: %d", ret);
         return ret;
     }
 
     ret = topologically_sort_registered_plugins(
-        logger,
+        context->logger,
         context->registered_plugins,
         initial_registered_plugins_len);
     if (ret < 0)
     {
-        TODO("Add error log here");
+        LOG_ERR(context->logger, "Unable to sort registered plugins: %d", ret);
         return ret;
     }
 
     ret = resolve_initial_lifetimes(
-        logger,
+        context->logger,
         requested_plugins_explicit,
         context->registered_plugins);
     if (ret < 0)
     {
-        TODO("Add error log here");
+        LOG_ERR(context->logger, "Failed to resolve initial lifetimes: %d", ret);
         return ret;
     }
 
@@ -733,12 +735,12 @@ int32_t plugin_manager_default_bootstrap(
         if (registered_plugin->lifetime == PLUGIN_LIFETIME_SINGLETON)
         {
             ARRAY_PUSH_CHECKED(singleton_interfaces_to_add, registered_plugin->metadata->interface_name, {
-                LOG_ERR(logger, "Tried to add plugin interface when array is full");
+                LOG_ERR(context->logger, "Tried to add plugin interface when array is full");
                 return -1;
             });
         }
     }
 
-    add_plugins_to_scope(logger, &context->singleton_scope, context->registered_plugins, singleton_interfaces_to_add, &context->singleton_scope);
+    add_plugins_to_scope(context->logger, &context->singleton_scope, context->registered_plugins, singleton_interfaces_to_add, &context->singleton_scope);
     return 0;
 }

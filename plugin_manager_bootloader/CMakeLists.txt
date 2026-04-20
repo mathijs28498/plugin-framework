@@ -1,5 +1,7 @@
 add_library(plugin_manager_bootloader STATIC)
 
+target_compile_options(plugin_manager_bootloader PRIVATE ${MY_STRICT_WARNINGS})
+
 if(WIN32 AND PLUGIN_MANAGER_GUI)
     target_compile_definitions(plugin_manager_bootloader PRIVATE UNICODE _UNICODE COBJMACROS)
 endif()
@@ -36,11 +38,9 @@ target_sources(plugin_manager_bootloader
     # plugin_registry.c
 )
 
-message("TODO: make sure the plugin_manager_default is not added here, but by generate configure py script")
 target_link_libraries(plugin_manager_bootloader
     PRIVATE
     plugin_sdk
-    plugin_manager_default
 )
 
 message("TODO: Check if this has to go inside the plugin_manager_setup")

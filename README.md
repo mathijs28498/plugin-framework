@@ -54,7 +54,7 @@
   - [ ] configure needs to add the cmake
     - [ ] 2 stage configure where the first stage creates the cmake file dependencies for the second stage
 - [ ] Create depfile for python dependencies dynamically
-- [ ] 
+- [ ] Make get in app fail if it is not explicitly requested plugin
 - [ ] Make dependencies a struct created called PluginDependencies and add it like "PluginDependencies dep;"
 - [ ] Change to glsl
 - [ ] Link vulkan indirectly for faster performance: https://docs.vulkan.org/guide/latest/loader.html#loader

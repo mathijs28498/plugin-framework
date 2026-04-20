@@ -1,10 +1,21 @@
 from internal_core.generators.generate_configure_files import (
-    generate_statically_resolved_plugin_providers_json,
+    generate_statically_resolved_plugin_manifests_json,
     generate_plugin_manager_cmake,
 )
-from internal_core.datatypes import *
-from internal_core.parsers.plugin_manager_parse import *
-from internal_core.compile_time_plugin_resolver import resolve_compile_time_plugins, sort_plugin_providers
+from internal_core.parsers.plugin_manager_parse import (
+    parse_plugin_registry,
+    parse_app_dict,
+)
+from internal_core.plugin_resolver import (
+    resolve_compile_time_plugins,
+    sort_plugin_manifests,
+)
+
+from plugin_sdk_core.utils import read_toml
+from plugin_sdk_core.datatypes import PluginManifest
+
+from pathlib import Path
+from dataclasses import dataclass
 
 # from plugin_manager_plugin_resolver import (
 #     resolve_requested_plugin_providers,
@@ -29,7 +40,7 @@ class GenerateCmakeArguments:
     generated_include_dir: Path
     generated_plugin_manager_bootloader_generated_src: Path
     generated_cmake: Path
-    generated_statically_resolved_plugins_json: Path
+    generated_statically_resolved_plugin_manifests_json: Path
 
     @classmethod
     def from_args(cls, args: argparse.Namespace) -> "GenerateCmakeArguments":
@@ -46,7 +57,7 @@ class GenerateCmakeArguments:
             generated_include_dir=args.generated_include_dir_path,
             generated_plugin_manager_bootloader_generated_src=args.generated_plugin_manager_bootloader_generated_src_path,
             generated_cmake=args.generated_cmake_path,
-            generated_statically_resolved_plugins_json=args.generated_statically_resolved_plugins_json_path,
+            generated_statically_resolved_plugin_manifests_json=args.generated_statically_resolved_plugin_manifests_json_path,
         )
 
 
@@ -99,7 +110,7 @@ def parse_cmake_arguments() -> GenerateCmakeArguments:
         type=Path,
     )
     parser.add_argument(
-        "--generated-statically-resolved-plugins-json-path",
+        "--generated-statically-resolved-plugin-manifests-json-path",
         required=True,
         type=Path,
     )
@@ -107,9 +118,6 @@ def parse_cmake_arguments() -> GenerateCmakeArguments:
     args = parser.parse_args()
 
     return GenerateCmakeArguments.from_args(args)
-
-
-
 
 
 # TODO: Look into static and dynamic loaded at same time
@@ -122,9 +130,7 @@ def main():
         plugin_registry_dict, arguments.build_platform
     )
 
-    # plugin_providers = create_static_plugin_providers(
-    #     plugin_registry, arguments.build_dynamic_plugins
-    # )
+    plugin_manifests: list[PluginManifest] = []
 
     if not arguments.build_dynamic_plugins:
         app_dict = read_toml(arguments.app_toml)
@@ -133,44 +139,13 @@ def main():
         plugin_manifests = resolve_compile_time_plugins(app_config, plugin_registry)
         print([pm.interface_name for pm in plugin_manifests])
 
-        plugin_manifests = sort_plugin_providers(plugin_manifests)
-        print([pm.interface_name for pm in plugin_manifests])
+    plugin_manifests = sort_plugin_manifests(plugin_manifests)
+    print([pm.interface_name for pm in plugin_manifests])
 
-
-
-       
-
-    #     # Make sure the same plugin is not requested more than once as this is not supported
-
-    #     requested_plugin_providers: list[PluginProvider] = []
-    #     for _ in range(RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH):
-    #         if not requested_plugins:
-    #             break
-    #         new_requested_plugin_providers = resolve_requested_plugin_providers(
-    #             plugin_providers, requested_plugins
-    #         )
-
-    #         requested_plugins = check_resolved_requested_plugin_providers(
-    #             new_requested_plugin_providers,
-    #             requested_plugin_providers,
-    #             requested_plugins,
-    #         )
-
-    #         requested_plugin_providers.extend(new_requested_plugin_providers)
-    #     else:
-    #         print(
-    #             f"Hit maximum recursive dependency solver depth, maximum ({RECURSIVE_DEPENDENCY_SOLVER_MAX_DEPTH})"
-    #         )
-    #         return -1
-
-    #     plugin_providers = requested_plugin_providers
-    plugin_providers = []
-
-    generate_statically_resolved_plugin_providers_json(
-        arguments.generated_statically_resolved_plugins_json, plugin_providers
+    generate_statically_resolved_plugin_manifests_json(
+        arguments.generated_statically_resolved_plugin_manifests_json, plugin_manifests
     )
 
-    print(f"providers: {plugin_providers}")
     generate_plugin_manager_cmake(
         arguments.source_cmake,
         arguments.generated_cmake,
@@ -181,7 +156,7 @@ def main():
         [
             arguments.generated_plugin_manager_bootloader_generated_src,
         ],
-        plugin_providers,
+        plugin_manifests,
     )
 
 

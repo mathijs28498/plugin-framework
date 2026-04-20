@@ -1,6 +1,6 @@
 [requested_plugins]
-plugin_manager = {plugin_name = "default"}
+# plugin_manager = {plugin_name = "default"}
 # logger = {}
-# gui_application = { lifetime = "singleton" }
+gui_application = { lifetime = "singleton" }
 
 # { interface_name = "draw_2d" },

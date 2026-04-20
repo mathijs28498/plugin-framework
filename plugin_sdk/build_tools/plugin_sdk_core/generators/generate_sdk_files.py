@@ -11,9 +11,6 @@ def generate_register_inc(
     build_dynamic: bool,
     plugin_manifest: PluginManifest,
 ):
-
-    define_build_shared_text = "#define PLUGIN_BUILD_SHARED" if build_dynamic else ""
-
     interface_name_pascal_case = snake_to_pascal_case(plugin_manifest.interface_name)
 
     inject_dependency_fn_text = (
@@ -108,7 +105,6 @@ def generate_register_inc(
     target_name = plugin_manifest.target_name
 
     replacements = [
-        ("DEFINE_BUILD_SHARED_TEXT", define_build_shared_text),
         ("INTERFACE_NAME_PASCAL_CASE", interface_name_pascal_case),
         ("INJECT_DEPENDENCY_FN_DEFINITION_TEXT", inject_dependency_fn_definition_text),
         ("INJECT_DEPENDENCY_FN_TEXT", inject_dependency_fn_text),
