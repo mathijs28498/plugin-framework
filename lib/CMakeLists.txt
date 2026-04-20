@@ -1,2 +1,3 @@
 add_subdirectory(cglm)
 add_subdirectory(vma)
+add_subdirectory(dynamic_metadata_resolver)

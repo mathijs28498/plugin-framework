@@ -3,70 +3,19 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-TODO("Make sure this is in a separate file")
-#include <Windows.h>
 #include <assert.h>
-#include <stdio.h>
+#include <string.h>
 
 #include <plugin_sdk/plugin_sdk_types.h>
 #include <plugin_sdk/plugin_manager_interface.h>
 #include <plugin_sdk/plugin_manager_pm_interface.h>
+#include <dynamic_metadata_resolver.h>
 
 #include "plugin_manager_bootloader_generated.h"
 
-#define PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN 256
-
 int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager);
 
-int32_t plugin_manager_bootloader_resolve_get_metadata_fn_dynamic(const char *module_path, const char *target_name, PluginGetMetadata_Fn *out_get_metadata_fn)
-{
-    assert(module_path != NULL);
-    assert(target_name != NULL);
-    assert(out_get_metadata_fn != NULL);
-
-    int32_t ret;
-
-    WCHAR wide_path[MAX_PATH];
-
-    ret = (int32_t)MultiByteToWideChar(
-        CP_UTF8,     // Assume the input is UTF-8 (use CP_ACP for ANSI)
-        0,           // No special flags
-        module_path, // The source string
-        -1,          // -1 means the string is null-terminated
-        wide_path,   // The destination buffer
-        MAX_PATH     // The size of the destination buffer
-    );
-
-    if (ret == 0)
-    {
-        // DWORD err = GetLastError();
-        return ret;
-    }
-
-    HMODULE handle = LoadLibrary(wide_path);
-    if (!handle)
-    {
-        TODO("Add error log")
-        return -1;
-    }
-
-    char function_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
-    snprintf(function_name, sizeof(function_name), "%s_get_plugin_metadata", target_name);
-
-    FARPROC proc_address = GetProcAddress(handle, function_name);
-
-    if (!proc_address)
-    {
-        TODO("Add error log");
-        FreeLibrary(handle);
-        return -2;
-    }
-
-    *out_get_metadata_fn = (PluginGetMetadata_Fn)proc_address;
-
-    return 0;
-}
-
+#if PLUGIN_BUILD_SHARED
 #define PLUGIN_MANAGER_INTERFACE_NAME "plugin_manager"
 
 int32_t get_plugin_manager_definition(const PluginRegistry *plugin_registry, const PluginDefinition **out_plugin_definition)
@@ -97,6 +46,42 @@ int32_t get_plugin_manager_definition(const PluginRegistry *plugin_registry, con
     return -1;
 }
 
+int32_t get_bootloader_plugin_metadatas(
+    const PluginRegistry *plugin_registry,
+    const PluginMetadata *const **out_plugin_metadatas,
+    const PluginMetadata **out_plugin_manager_metadata)
+{
+    assert(plugin_registry != NULL);
+    assert(out_plugin_metadatas != NULL);
+    assert(out_plugin_manager_metadata != NULL);
+
+    int32_t ret;
+    const PluginDefinition *plugin_manager_plugin_definition;
+   ret = get_plugin_manager_definition(plugin_registry, &plugin_manager_plugin_definition);
+    if (ret < 0)
+    {
+        TODO("Add error log");
+        return -1;
+    }
+
+    PluginGetMetadata_Fn get_metadata_fn = NULL;
+    ret = resolve_get_metadata_fn_dynamic(
+        plugin_manager_plugin_definition->module_path,
+        plugin_manager_plugin_definition->target_name,
+        &get_metadata_fn);
+    if (ret < 0)
+    {
+        TODO("Add error log");
+        return ret;
+    }
+
+    *out_plugin_metadatas = NULL;
+    *out_plugin_manager_metadata = get_metadata_fn();
+    
+    return 0;
+}
+#endif // #if PLUGIN_BUILD_SHARED
+
 int32_t plugin_manager_bootloader_bootstrap(int argc, char **argv, void *platform_context)
 {
     int32_t ret;
@@ -106,29 +91,13 @@ int32_t plugin_manager_bootloader_bootstrap(int argc, char **argv, void *platfor
     const PluginMetadata *plugin_manager_metadata;
     const struct PluginMetadata *const *static_plugin_metadatas;
 
-#if PLUGIN_BUILD_SHARED
-    const PluginDefinition *plugin_manager_plugin_definition;
-    ret = get_plugin_manager_definition(plugin_registry, &plugin_manager_plugin_definition);
-    if (ret < 0)
-    {
-        TODO("Add error log");
-        return -1;
-    }
+    ret = get_bootloader_plugin_metadatas(plugin_registry, &static_plugin_metadatas, &plugin_manager_metadata);
 
-    PluginGetMetadata_Fn get_metadata_fn = NULL;
-    ret = plugin_manager_bootloader_resolve_get_metadata_fn_dynamic(
-        plugin_manager_plugin_definition->module_path, plugin_manager_plugin_definition->target_name, &get_metadata_fn);
     if (ret < 0)
     {
         TODO("Add error log");
         return ret;
     }
-
-    plugin_manager_metadata = get_metadata_fn();
-    static_plugin_metadatas = NULL;
-#else  // #if !PLUGIN_BUILD_SHARED
-    get_bootloader_plugin_metadatas(&static_plugin_metadatas, &plugin_manager_metadata);
-#endif // #if !PLUGIN_BUILD_SHARED
 
     if (plugin_manager_metadata == NULL)
     {

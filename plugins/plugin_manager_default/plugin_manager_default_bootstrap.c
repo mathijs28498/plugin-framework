@@ -3,12 +3,11 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-TODO("Make sure this is done in a separate file for platform specific shit")
-#include <Windows.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
+#include <dynamic_metadata_resolver.h>
 #include <plugin_sdk/logger_interface.h>
 // LOGGER_INTERFACE_REGISTER(plugin_manager_default_bootstrap, LOG_LEVEL_DEBUG)
 LOGGER_INTERFACE_REGISTER(plugin_manager_default_bootstrap, LOG_LEVEL_WARNING)
@@ -88,40 +87,6 @@ int32_t resolve_requested_plugins(const LoggerInterface *logger,
     return 0;
 }
 
-TODO("MAKE SURE THIS DOESNT HAPPEN IN STATIC!!! GET THE STATICALLY LOADED ONE")
-int32_t resolve_get_metadata_fn_dynamic(const LoggerInterface *logger,
-                                        const char *module_path, const char *target_name, PluginGetMetadata_Fn *out_get_metadata_fn)
-{
-    assert(module_path != NULL);
-    assert(target_name != NULL);
-    assert(out_get_metadata_fn != NULL);
-
-    HMODULE handle = LoadLibrary(module_path);
-    if (!handle)
-    {
-        if (logger != NULL)
-            LOG_ERR(logger, "Dynamic plugin '%s' not found at '%s'", target_name, module_path);
-        return -1;
-    }
-
-    char function_name[PLUGIN_REGISTRY_MAX_PLUGIN_INTERFACE_NAME_LEN];
-    snprintf(function_name, sizeof(function_name), "%s_get_plugin_metadata", target_name);
-
-    FARPROC proc_address = GetProcAddress(handle, function_name);
-
-    if (!proc_address)
-    {
-        if (logger != NULL)
-            LOG_ERR(logger, "Dynamic plugin symbol '%s' not found for plugin '%s'", target_name, function_name);
-        FreeLibrary(handle);
-        return -2;
-    }
-
-    *out_get_metadata_fn = (PluginGetMetadata_Fn)proc_address;
-
-    return 0;
-}
-
 int32_t get_metadata_from_plugin_definition(const LoggerInterface *logger,
                                             const PluginDefinition *plugin_definition,
                                             const PluginMetadata *const *static_plugin_metadatas,
@@ -152,7 +117,7 @@ int32_t get_metadata_from_plugin_definition(const LoggerInterface *logger,
     // Plugin does not have static plugin metadata, load it in dynamically
     TODO("Save the module and shut it down when not needed anymore")
     PluginGetMetadata_Fn get_metadata_fn = NULL;
-    ret = resolve_get_metadata_fn_dynamic(logger, plugin_definition->module_path, plugin_definition->target_name, &get_metadata_fn);
+    ret = resolve_get_metadata_fn_dynamic(plugin_definition->module_path, plugin_definition->target_name, &get_metadata_fn);
     if (ret < 0)
     {
         if (logger != NULL)

@@ -38,12 +38,17 @@ CREATE_INITIALIZED_ARRAY_WITH_DECL(
 {@PLUGIN_METADATAS_TEXT@}
     );
 
-void get_bootloader_plugin_metadatas(
+int32_t get_bootloader_plugin_metadatas(
+    const PluginRegistry* unused_plugin_registry,
     const PluginMetadata *const **out_plugin_metadatas,
     const PluginMetadata ** out_plugin_manager_metadata)
 {
+    (void) unused_plugin_registry;
+    
     *out_plugin_metadatas = plugin_metadatas_.arr;
     *out_plugin_manager_metadata = @PLUGIN_MANAGER_METADATA_TEXT@;
+
+    return 0;
 }
 
 #endif // #if !PLUGIN_BUILD_SHARED

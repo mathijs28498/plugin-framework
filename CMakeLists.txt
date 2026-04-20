@@ -13,7 +13,6 @@ set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-message("TODO: Add strict warnings to each target")
 if(MSVC)
     # Don't use add_compile_options() globally if using 3rd party libs
     # Apply these to a custom variable or target instead

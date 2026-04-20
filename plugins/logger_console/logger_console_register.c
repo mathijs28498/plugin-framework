@@ -4,8 +4,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-TODO("Remove this windows include")
-#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
@@ -14,6 +12,11 @@ TODO("Remove this windows include")
 LOGGER_INTERFACE_REGISTER(logger_console, LOG_LEVEL_DEBUG);
 
 #include "logger_console.h"
+
+
+#if IS_DEBUG && WINDOWS_GUI
+#include <windows.h>
+#endif // #if IS_DEBUG && WINDOWS_GUI
 
 STATIC_ASSERT(LOG_LEVEL_MAX == LOGGER_CONSOLE_LOG_LEVEL_MAX, "log_level max_mismatch!");
 
