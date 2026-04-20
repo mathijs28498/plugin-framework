@@ -1,13 +1,13 @@
 plugin_manifests = [
-    "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/plugin_manager_default",
-    "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/environment_default",
-    "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/logger_console",
-    "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/gui_application_default",
-    "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/window_win32",
-    "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/input_default",
-    "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/draw_default",
-    "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/draw_2d_default",
-    "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/plugins/renderer_vulkan",
+    "${plugin_registry}/plugins/plugin_manager_default",
+    "${plugin_registry}/plugins/environment_default",
+    "${plugin_registry}/plugins/logger_console",
+    "${plugin_registry}/plugins/gui_application_default",
+    "${plugin_registry}/plugins/window_win32",
+    "${plugin_registry}/plugins/input_default",
+    "${plugin_registry}/plugins/draw_default",
+    "${plugin_registry}/plugins/draw_2d_default",
+    "${plugin_registry}/plugins/renderer_vulkan",
 ]
 
 interfaces = [

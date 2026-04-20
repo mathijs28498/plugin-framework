@@ -1,8 +1,7 @@
 interface_name = "draw"
 interface_version = "1"
 plugin_name = "default"
-# TODO: Fix paths
-module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/draw_default.dll"
+module_path = "${build_dir}/draw_default.dll"
 supported_lifetimes = ["singleton"]
 
 [dependencies]

@@ -4,4 +4,4 @@ plugin_name = "console"
 init = true
 shutdown = true
 supported_lifetimes = ["singleton"]
-module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/logger_console.dll"
+module_path = "${build_dir}/logger_console.dll"

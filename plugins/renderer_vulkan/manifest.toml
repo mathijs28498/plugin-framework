@@ -1,8 +1,7 @@
 interface_name = "renderer"
 interface_version = "1"
 plugin_name = "vulkan"
-# TODO: Fix paths
-module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/renderer_vulkan.dll"
+module_path = "${build_dir}/renderer_vulkan.dll"
 supported_lifetimes = ["singleton"]
 init = true
 shutdown = true

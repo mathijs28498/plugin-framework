@@ -2,6 +2,14 @@ from plugin_sdk_core.datatypes import PluginManifest, PluginLifetime, PluginDepe
 from typing import Any, Optional
 from pathlib import Path
 
+# TODO: Fix this better
+build_path = "../../build/bin/Debug"
+
+def replace_variables_in_path_plugin_manifest(path: str) -> Path:
+    return Path(
+        path.replace("${build_dir}", build_path)
+    ).resolve()
+
 def parse_plugin_manifest(
     manifest_dict: dict[str, Any], manifest_dir_path: Path
 ) -> PluginManifest:
@@ -15,7 +23,8 @@ def parse_plugin_manifest(
         module_path_str: Optional[str] = manifest_dict.get("module_path")
 
         supported_lifetimes = [
-            PluginLifetime(lifetime) for lifetime in manifest_dict["supported_lifetimes"]
+            PluginLifetime(lifetime)
+            for lifetime in manifest_dict["supported_lifetimes"]
         ]
         preferred_lifetime: PluginLifetime = manifest_dict.get(
             "preferred_lifetime", PluginLifetime.UNKNOWN
@@ -43,13 +52,17 @@ def parse_plugin_manifest(
                 is_deferred=dependency_is_deferred,
             )
 
-        source_path: Path = Path(source_path_str) if source_path_str else manifest_dir_path
+        source_path: Path = (
+            Path(source_path_str) if source_path_str else manifest_dir_path
+        )
         # TODO: Add default module path maybe
         module_path: Path = (
-            Path(module_path_str) if module_path_str else Path("Add default here")
+            Path(replace_variables_in_path_plugin_manifest(module_path_str)) if module_path_str else Path("Add default here")
         )
     except TypeError:
-        raise TypeError(f"Something went wrong parsing plugin manifest at: {manifest_dir_path}")
+        raise TypeError(
+            f"Something went wrong parsing plugin manifest at: {manifest_dir_path}"
+        )
 
     return PluginManifest(
         target_name=target_name,

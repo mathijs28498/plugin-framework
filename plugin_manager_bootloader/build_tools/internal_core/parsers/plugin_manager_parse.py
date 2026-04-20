@@ -38,10 +38,22 @@ from internal_core.datatypes import (
 from typing import Optional
 
 
+def replace_variables_in_path_plugin_registry(path: str, plugin_registry_dir_path: Path) -> Path:
+    return Path(
+        path.replace("${plugin_registry}", plugin_registry_dir_path.as_posix())
+    )
+
+
 # TODO: Add error handling
 def parse_plugin_registry(
-    plugin_registry_dict: dict[str, Any], build_platform: str
+    plugin_registry_dict: dict[str, Any],
+    plugin_registry_dir_path: Path,
+    build_platform: str,
 ) -> PluginRegistry:
+    plugin_registry_dict["plugin_manifests"] = [
+        replace_variables_in_path_plugin_registry(manifest_dir_path, plugin_registry_dir_path)
+        for manifest_dir_path in plugin_registry_dict["plugin_manifests"]
+    ]
 
     plugin_manifests = [
         parse_plugin_manifest(
@@ -155,7 +167,6 @@ def parse_statically_resolved_plugin_manifests(
             manifest_path = Path(plugin_manifest_dict["manifest_path"])
             source_path = Path(plugin_manifest_dict["source_path"])
             module_path = Path(plugin_manifest_dict["module_path"])
-            
 
             plugin_manifest = PluginManifest(
                 target_name=plugin_manifest_dict["target_name"],
@@ -173,7 +184,8 @@ def parse_statically_resolved_plugin_manifests(
                 source_path=source_path,
                 module_path=module_path,
             )
-        except KeyError: 
-            raise KeyError(f"Something went wrong parsing plugin manifest at: {plugin_manifest_dict}")
+        except KeyError:
+            raise KeyError(
+                f"Something went wrong parsing plugin manifest at: {plugin_manifest_dict}"
+            )
         yield plugin_manifest
-

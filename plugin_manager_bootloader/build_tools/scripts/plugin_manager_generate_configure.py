@@ -120,7 +120,9 @@ def main():
     plugin_registry_dict = read_toml(arguments.plugin_registry_toml)
 
     plugin_registry = parse_plugin_registry(
-        plugin_registry_dict, arguments.build_platform
+        plugin_registry_dict,
+        arguments.plugin_registry_toml.parent,
+        arguments.build_platform,
     )
 
     plugin_manifests: list[PluginManifest] = []

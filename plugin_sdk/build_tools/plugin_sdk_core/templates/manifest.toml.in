@@ -1,8 +1,8 @@
 interface_name = "@INTERFACE_NAME@"
+interface_version = "1"
 plugin_name = "@PLUGIN_NAME@"
-# TODO: Fix paths
-module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/@TARGET_NAME@.dll"
+module_path = "${build_dir}/@TARGET_NAME@.dll"
+supported_lifetimes = ["singleton"]
 
-dependencies = [
-    { interface_name = "logger" },
-]
+[dependencies]
+logger = {}

@@ -1,6 +1,6 @@
 interface_name = "environment"
 interface_version = "1"
 plugin_name = "default"
-module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/environment_default.dll"
+module_path = "${build_dir}/environment_default.dll"
 supported_lifetimes = ["singleton"]
 

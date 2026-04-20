@@ -113,6 +113,7 @@ def main():
 
     plugin_registry = parse_plugin_registry(
         plugin_registry_dict,
+        arguments.plugin_registry_toml.parent,
         arguments.build_platform,
     )
 

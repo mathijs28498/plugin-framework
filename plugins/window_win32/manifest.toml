@@ -1,8 +1,7 @@
 interface_name = "window"
 interface_version = "1"
 plugin_name = "win32"
-# TODO: Fix paths
-module_path = "C:/Users/Blue-WaveMathijsFran/Documents/GitHub/plugin-framework/build/bin/Debug/window_win32.dll"
+module_path = "${build_dir}/window_win32.dll"
 supported_lifetimes = ["singleton"]
 
 [dependencies] 
