@@ -9,6 +9,7 @@ plugin_manifests = [
     "${plugin_registry}/plugins/draw_2d_default",
     "${plugin_registry}/plugins/renderer_vulkan",
     "${plugin_registry}/plugins/time_win32",
+    "${plugin_registry}/plugins/arena_allocator_default",
 ]
 
 interfaces = [
@@ -26,6 +27,7 @@ interfaces = [
     { interface_name = "input", default = "default" },
     { interface_name = "draw_2d", default = "default" },
     { interface_name = "renderer", default = "vulkan" },
+    { interface_name = "arena_allocator", default="default"}
 ]
 
 # TODO: Make this work like this

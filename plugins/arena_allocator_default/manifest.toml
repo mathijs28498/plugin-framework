@@ -1,0 +1,8 @@
+interface_name = "arena_allocator"
+interface_version = "1"
+plugin_name = "default"
+module_path = "${build_dir}/arena_allocator_default.dll"
+supported_lifetimes = ["singleton"]
+
+[dependencies]
+logger = {}

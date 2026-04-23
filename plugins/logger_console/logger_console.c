@@ -29,7 +29,6 @@ static const char *get_short_filename(const char *file_path)
 
 void log_internal(const LoggerContext *context, LoggerInterfaceLogLevel log_level, LoggerInterfaceLogLevel urgent_log_level, const char *tag, const char *file_path, uint32_t line_number, const char *message, va_list args)
 {
-
     if (log_level > context->log_level || log_level <= LOG_LEVEL_NONE || log_level >= LOG_LEVEL_MAX)
     {
         return;

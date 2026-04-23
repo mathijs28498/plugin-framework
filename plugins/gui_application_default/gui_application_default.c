@@ -30,7 +30,7 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
 {
     int32_t ret;
 
-    LOG_INF_TRACE(context->deps.logger, "Starting main loop");
+    LOG_INF(context->deps.logger, "Starting main loop");
 
     bool gui_application_running = true;
     while (gui_application_running)

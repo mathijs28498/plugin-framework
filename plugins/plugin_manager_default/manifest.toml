@@ -9,4 +9,4 @@ shutdown = true
 [dependencies]
 logger = { deferred = true }
 environment = { deferred = true }
-
+arena_allocator = { deferred = true }

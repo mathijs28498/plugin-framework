@@ -15,6 +15,7 @@ LOGGER_INTERFACE_REGISTER(plugin_manager_default_bootstrap, LOG_LEVEL_WARNING)
 #include <plugin_sdk/plugin_manager/v1/plugin_manager_pm_interface.h>
 #include <plugin_sdk/plugin_sdk_types/v1/plugin_sdk_types.h>
 #include <plugin_sdk/environment/v1/environment_pm_interface.h>
+#include <plugin_sdk/arena_allocator/v1/arena_allocator_pm_interface.h>
 
 #include "plugin_manager_default_register.h"
 #include "plugin_manager_default.h"
@@ -80,7 +81,7 @@ int32_t resolve_requested_plugins(const LoggerInterface *logger,
         {
             if (logger != NULL)
                 LOG_ERR_TRACE(logger, "Requested plugin '%s' - '%s' not found in plugin registry",
-                        requested_plugin->interface_name, requested_plugin->plugin_name);
+                              requested_plugin->interface_name, requested_plugin->plugin_name);
             return -1;
         }
     }
@@ -351,7 +352,7 @@ int32_t topologically_sort_registered_plugins(
     SAFE_WHILE(tail < GET_ARRAY_LENGTH(sorted_indices), MAX_REGISTERED_PLUGINS_LEN + 1, {
         if (logger != NULL)
             LOG_ERR_TRACE(logger, "fatal framework error: Kahn topological sort exceeded max iterations (%d)",
-                    MAX_REGISTERED_PLUGINS_LEN + 1);
+                          MAX_REGISTERED_PLUGINS_LEN + 1);
         return -1;
     })
     {
@@ -381,15 +382,15 @@ int32_t topologically_sort_registered_plugins(
         if (logger != NULL)
         {
             LOG_ERR_TRACE(logger, "cyclic or missing dependency detected: sorted %zu out of %zu plugins",
-                    (size_t)GET_ARRAY_LENGTH(sorted_indices), registered_plugins_len);
+                          (size_t)GET_ARRAY_LENGTH(sorted_indices), registered_plugins_len);
 
             for (size_t i = 0; i < registered_plugins_len; i++)
             {
                 if (ndegrees[i] > 0)
                 {
                     LOG_ERR_TRACE(logger, "plugin '%s' (interface: '%s') could not be resolved. It is either missing a dependency or stuck in a cycle.",
-                            registered_plugins[i].metadata->plugin_name,
-                            registered_plugins[i].metadata->interface_name);
+                                  registered_plugins[i].metadata->plugin_name,
+                                  registered_plugins[i].metadata->interface_name);
                 }
             }
         }
@@ -410,6 +411,7 @@ int32_t initialize_plugin_manager_dependencies(
     PluginManagerContext *context,
     const PluginMetadata *plugin_manager_metadata,
     int argc, char **argv, void *platform_context,
+    PluginMemoryPool *plugin_memory_pool,
     const PluginRegistry *plugin_registry,
     const PluginMetadata *const *static_plugin_metadatas)
 {
@@ -479,6 +481,7 @@ int32_t initialize_plugin_manager_dependencies(
     }
 
     environment_pm_set_args(context->deps.environment, argc, argv, platform_context);
+    arena_allocator_pm_set_memory_pool(context->deps.arena_allocator, plugin_memory_pool->pool, plugin_memory_pool->pool_size);
     return 0;
 }
 
@@ -540,7 +543,7 @@ int32_t registered_plugin_set_preferred_lifetime(const LoggerInterface *logger, 
             if (!is_lifetime_supported(registered_plugin->metadata, supported_lifetime))
             {
                 LOG_ERR_TRACE(logger, "plugin '%s' - '%s' does not support preferred lifetime '%d'",
-                        registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, supported_lifetime);
+                              registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, supported_lifetime);
                 return -1;
             }
             registered_plugin->lifetime = supported_lifetime;
@@ -586,14 +589,14 @@ int32_t resolve_initial_lifetimes(
             if (lifetime_already_resolved && registered_plugin->lifetime != requested_lifetime)
             {
                 LOG_ERR_TRACE(logger, "plugin '%s' - '%s' has a resolved lifetime '%d' which is different from the explictly requested lifetime '%d'",
-                        registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, registered_plugin->lifetime, requested_lifetime);
+                              registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, registered_plugin->lifetime, requested_lifetime);
                 return -1;
             }
 
             if (!is_lifetime_supported(registered_plugin->metadata, requested_lifetime))
             {
                 LOG_ERR_TRACE(logger, "plugin '%s' - '%s' does not support requested lifetime '%d'",
-                        registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, requested_lifetime);
+                              registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, requested_lifetime);
                 return -1;
             }
 
@@ -613,7 +616,7 @@ int32_t resolve_initial_lifetimes(
             if (ret < 0)
             {
                 LOG_ERR_TRACE(logger, "error setting preferred lifetime of plugin '%s' - '%s': %d",
-                        registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, ret);
+                              registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, ret);
                 return ret;
             }
             continue;
@@ -651,6 +654,7 @@ int32_t plugin_manager_default_bootstrap(
     ret = initialize_plugin_manager_dependencies(
         context, plugin_manager_metadata,
         argc, argv, platform_context,
+        &plugin_framework_memory->memory_pool,
         plugin_registry, static_plugin_metadatas);
     if (ret < 0)
     {

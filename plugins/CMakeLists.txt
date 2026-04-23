@@ -8,6 +8,6 @@ if(BUILD_SHARED_LIBS)
     add_subdirectory(logger_console)
     add_subdirectory(environment_default)
     add_subdirectory(time_win32)
-    #TODO: Figure out how to include this non statically too
+    add_subdirectory(arena_allocator_default)
     add_subdirectory(plugin_manager_default)
 endif()
