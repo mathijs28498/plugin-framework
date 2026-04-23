@@ -1,33 +1,13 @@
-import json
 from collections.abc import Iterator
 from collections import Counter
 from typing import Any
-import sys
 
 from plugin_sdk_core.datatypes import PluginManifest, PluginDependency, PluginLifetime
 from plugin_sdk_core.utils import read_toml
 from plugin_sdk_core.parsers.manifest_parse import parse_plugin_manifest
 from internal_core.datatypes import PluginRegistryInterface
+from internal_core.memory_pool_size import evaluate_math_expression_string, MAX_INT32
 
-# TODO: Check if this properly works for older versions
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import importlib.util
-
-    if importlib.util.find_spec("tomli") is None:
-        print(
-            "Error: Your Python version is older than 3.11.\n"
-            "To parse plugin manifests, you must either:\n"
-            "  1. Upgrade to Python 3.11 or newer (Recommended)\n"
-            "  2. Install the fallback library by running: pip install tomli",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
-    import tomli as tomllib
-
-import re
 from pathlib import Path
 
 from internal_core.datatypes import (
@@ -35,13 +15,12 @@ from internal_core.datatypes import (
     AppConfig,
     RequestedPlugin,
 )
-from typing import Optional
 
 
-def replace_variables_in_path_plugin_registry(path: str, plugin_registry_dir_path: Path) -> Path:
-    return Path(
-        path.replace("${plugin_registry}", plugin_registry_dir_path.as_posix())
-    )
+def replace_variables_in_path_plugin_registry(
+    path: str, plugin_registry_dir_path: Path
+) -> Path:
+    return Path(path.replace("${plugin_registry}", plugin_registry_dir_path.as_posix()))
 
 
 # TODO: Add error handling
@@ -51,7 +30,9 @@ def parse_plugin_registry(
     build_platform: str,
 ) -> PluginRegistry:
     plugin_registry_dict["plugin_manifests"] = [
-        replace_variables_in_path_plugin_registry(manifest_dir_path, plugin_registry_dir_path)
+        replace_variables_in_path_plugin_registry(
+            manifest_dir_path, plugin_registry_dir_path
+        )
         for manifest_dir_path in plugin_registry_dict["plugin_manifests"]
     ]
 
@@ -113,7 +94,7 @@ def parse_plugin_registry(
 
 
 def parse_app_dict(
-    requested_plugins_dict: dict[str, Any],
+    app_dict: dict[str, Any],
 ) -> AppConfig:
     # TODO: Add error handling
     requested_plugins = [
@@ -123,7 +104,7 @@ def parse_app_dict(
             lifetime=PluginLifetime(requested_plugin.get("lifetime", "unknown")),
             is_explicit=True,
         )
-        for requested_plugin_interface_name, requested_plugin in requested_plugins_dict.get(
+        for requested_plugin_interface_name, requested_plugin in app_dict.get(
             "requested_plugins", {}
         ).items()
     ]
@@ -137,7 +118,37 @@ def parse_app_dict(
             "Each interface can only be requested once."
         )
 
-    return AppConfig(requested_plugins=requested_plugins)
+    max_plugin_amount = app_dict["max_plugin_amount"]
+
+    if max_plugin_amount > 64:
+        raise ValueError(
+            f"max_plugin_amount is set to {max_plugin_amount}, but the current "
+            "framework only supports a maximum of 64 plugins (uint64_t bitmap constraint)."
+        )
+    if max_plugin_amount <= 0:
+        raise ValueError(
+            f"max_plugin_amount must be at least 1. It is '{max_plugin_amount}'"
+        )
+
+    memory_arena_size = evaluate_math_expression_string(
+        app_dict.get("memory_arena_size", "0")
+    )
+
+    if memory_arena_size < 0:
+        raise ValueError(
+            f"memory_arena_size can't be lower than 0. It is '{memory_arena_size}'"
+        )
+
+    if memory_arena_size > MAX_INT32:
+        raise ValueError(
+            f"memory_arena_size can't be higher than '{MAX_INT32}'. It is '{memory_arena_size}'"
+        )
+
+    return AppConfig(
+        requested_plugins=requested_plugins,
+        max_plugin_amount=max_plugin_amount,
+        memory_arena_size=memory_arena_size,
+    )
 
 
 def parse_lifetime(val: str) -> PluginLifetime:

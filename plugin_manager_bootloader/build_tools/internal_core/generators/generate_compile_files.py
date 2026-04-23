@@ -190,11 +190,15 @@ def generate_plugin_manager_bootloader_generated_src(
     interface_definitions: list[InterfaceDefinition],
     plugin_manifests: list[PluginManifest],
     requested_plugins: list[RequestedPlugin],
+    memory_pool_size: int,
+    max_plugin_amount: int,
 ):
     replacements = (
         create_plugin_registry_replacements(interface_definitions)
         + create_plugin_metadata_replacements(plugin_manifests)
         + create_requested_plugin_replacements(requested_plugins)
+        + [("MEMORY_POOL_SIZE", str(memory_pool_size)),
+           ("MAX_PLUGIN_AMOUNT", str(max_plugin_amount))]
     )
 
     configure_file(source_path, destination_path, replacements, False)
@@ -214,4 +218,3 @@ def generate_plugin_manager_depfile(
     )
 
     create_and_write_to_file(destination_path, manifest_paths_content, False)
-

@@ -35,4 +35,7 @@ class RequestedPlugin:
 @dataclass
 class AppConfig:
     requested_plugins: list[RequestedPlugin]
+    max_plugin_amount: int
+    memory_arena_size: int
+
 

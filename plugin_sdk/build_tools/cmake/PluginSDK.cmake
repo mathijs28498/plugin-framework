@@ -1,7 +1,7 @@
 include_guard(GLOBAL)
 
 function(plugin_generate_register_inc TARGET_NAME)
-    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    find_package(Python3 3.7 REQUIRED COMPONENTS Interpreter)
 
     get_filename_component(PLUGIN_SDK_BUILD_TOOLS_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/.." ABSOLUTE)
 

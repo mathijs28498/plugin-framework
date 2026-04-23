@@ -1,8 +1,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include <plugin_sdk/plugin_sdk_types/v1/plugin_sdk_types.h>
+#include <plugin_sdk/plugin_utils.h>
+
+TODO("Add context memory size and actual size in the error");
+_Static_assert(sizeof(@INTERFACE_NAME_PASCAL_CASE@Context) <= PLUGIN_CONTEXT_MEMORY_SLAB_SIZE, "Context size should be less than the context memory slab size");
 
 @INJECT_DEPENDENCY_FN_DEFINITION_TEXT@
 
@@ -13,19 +18,13 @@ static @INTERFACE_NAME_PASCAL_CASE@Context *create_context()
     return context;
 }
 
-static int32_t destroy_context(@INTERFACE_NAME_PASCAL_CASE@Context *context)
-{
-    free(context);
-    return 0;
-}
 
 static const PluginProvider plugin_provider = {
     .vtable = &plugin_vtable,
-    .create_context = (PluginCreateContext_Fn)create_context,
     .inject_dependency = @INJECT_DEPENDENCY_FN_TEXT@,
     .init = @PLUGIN_INIT_FN_TEXT@,
     .shutdown = @PLUGIN_SHUTDOWN_FN_TEXT@,
-    .destroy_context = (PluginDestroyContext_Fn)destroy_context,
+    .context_size = (uint64_t) sizeof(@INTERFACE_NAME_PASCAL_CASE@Context),
 };
 
 @PLUGIN_DEPENDENCIES_TEXT@

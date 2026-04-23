@@ -57,7 +57,7 @@ int32_t get_bootloader_plugin_metadatas(
 
     int32_t ret;
     const PluginDefinition *plugin_manager_plugin_definition;
-   ret = get_plugin_manager_definition(plugin_registry, &plugin_manager_plugin_definition);
+    ret = get_plugin_manager_definition(plugin_registry, &plugin_manager_plugin_definition);
     if (ret < 0)
     {
         TODO("Add error log");
@@ -77,7 +77,7 @@ int32_t get_bootloader_plugin_metadatas(
 
     *out_plugin_metadatas = NULL;
     *out_plugin_manager_metadata = get_metadata_fn();
-    
+
     return 0;
 }
 #endif // #if PLUGIN_BUILD_SHARED
@@ -90,6 +90,8 @@ int32_t plugin_manager_bootloader_bootstrap(int argc, char **argv, void *platfor
     const RequestedPlugin *requested_plugins = get_bootloader_requested_plugins();
     const PluginMetadata *plugin_manager_metadata;
     const struct PluginMetadata *const *static_plugin_metadatas;
+
+    PluginFrameworkMemory *plugin_framework_memory = get_plugin_framework_memory();
 
     ret = get_bootloader_plugin_metadatas(plugin_registry, &static_plugin_metadatas, &plugin_manager_metadata);
 
@@ -106,7 +108,8 @@ int32_t plugin_manager_bootloader_bootstrap(int argc, char **argv, void *platfor
     }
 
     const PluginProvider *plugin_manager_provider = plugin_manager_metadata->provider;
-    struct PluginManagerContext *plugin_manager_context = plugin_manager_provider->create_context();
+    struct PluginManagerContext *plugin_manager_context = (struct PluginManagerContext *)plugin_framework_memory->context_slab_pool.pool;
+    plugin_framework_memory->context_slab_pool.occupied_bitmap |= 1U;
     const PluginManagerPMVtable *plugin_manager_vtable = (const PluginManagerPMVtable *)plugin_manager_provider->vtable;
 
     if (plugin_manager_provider->init != NULL)
@@ -120,20 +123,24 @@ int32_t plugin_manager_bootloader_bootstrap(int argc, char **argv, void *platfor
         .context = plugin_manager_context,
     };
 
-    plugin_manager_pm_bootstrap(&plugin_manager_interface,
-                                plugin_manager_metadata,
-                                argc, argv, platform_context,
-                                plugin_registry,
-                                static_plugin_metadatas,
-                                requested_plugins);
+    ret = plugin_manager_pm_bootstrap(&plugin_manager_interface,
+                                      plugin_manager_metadata,
+                                      plugin_framework_memory,
+                                      argc, argv, platform_context,
+                                      plugin_registry,
+                                      static_plugin_metadatas,
+                                      requested_plugins);
 
-    ret = plugin_manager_bootloader_main(&plugin_manager_interface);
+    if (ret == 0)
+    {
+        ret = plugin_manager_bootloader_main(&plugin_manager_interface);
+    }
 
     if (plugin_manager_provider->shutdown)
     {
         ret = plugin_manager_provider->shutdown(plugin_manager_context);
     }
 
-    plugin_manager_provider->destroy_context(plugin_manager_context);
+    plugin_framework_memory->context_slab_pool.occupied_bitmap &= ~(1U);
     return ret;
 }

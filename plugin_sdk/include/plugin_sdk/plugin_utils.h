@@ -3,6 +3,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 
+#define PLUGIN_CONTEXT_MEMORY_SLAB_SIZE 1024
+
 #define STRINGIZE2(x) #x
 #define STRINGIZE(x) STRINGIZE2(x)
 
@@ -58,14 +60,6 @@ static const bool IS_PLUGIN_BUILD_SHARED = false;
             break;                                         \
         }                                                  \
         else
-
-#ifndef STATIC_ASSERT
-#define STATIC_ASSERT_CONCAT_(a, b) a##b
-#define STATIC_ASSERT_CONCAT(a, b) STATIC_ASSERT_CONCAT_(a, b)
-
-#define STATIC_ASSERT(expr, msg) \
-    typedef char STATIC_ASSERT_CONCAT(assertion_failed_, __LINE__)[(expr) ? 1 : -1]
-#endif
 
 #define NOT_IMPLEMENTED(return_type, ...) \
     ((void)(__VA_ARGS__),                 \
@@ -186,7 +180,7 @@ typedef union
 
 #define ARRAY_PUSH_CHECKED_DEFAULT_RETURN(logger, arr_ptr, element)            \
     ARRAY_PUSH_CHECKED(arr_ptr, element, {                                     \
-        LOG_ERR(logger, "Unable to push to " #arr_ptr ", exceeding capacity"); \
+        LOG_ERR_TRACE(logger, "Unable to push to " #arr_ptr ", exceeding capacity"); \
         return -1;                                                             \
     })
 
@@ -210,7 +204,7 @@ typedef union
         if ((condition))                                    \
         {                                                   \
             if ((logger) != NULL)                           \
-                LOG_ERR((logger), ##__VA_ARGS__);           \
+                LOG_ERR_TRACE((logger), ##__VA_ARGS__);           \
             return (err_ret_val);                           \
         }                                                   \
     } while (0)
@@ -225,7 +219,7 @@ typedef union
         if ((condition))                                                                             \
         {                                                                                            \
             if ((logger) != NULL)                                                                    \
-                LOG_ERR((logger), ##__VA_ARGS__);                                                    \
+                LOG_ERR_TRACE((logger), ##__VA_ARGS__);                                                    \
             return (err_ret_val);                                                                    \
         }                                                                                            \
     } while (0)

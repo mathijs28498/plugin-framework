@@ -12,10 +12,12 @@ struct PluginManagerContext;
 struct PluginRegistry;
 struct PluginMetadata;
 struct RequestedPlugin;
+struct PluginFrameworkMemory;
 
 int32_t plugin_manager_default_bootstrap(
     struct PluginManagerContext *context,
     const struct PluginMetadata *plugin_manager_metadata,
+    struct PluginFrameworkMemory *plugin_framework_memory,
     int argc, char **argv, void *platform_context,
     const struct PluginRegistry *plugin_registry,
     const struct PluginMetadata *const *static_plugin_metadatas,

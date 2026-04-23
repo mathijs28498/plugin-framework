@@ -1,5 +1,7 @@
 add_library(@TARGET_NAME@)
 
+target_compile_options(@TARGET_NAME@ PRIVATE ${MY_STRICT_WARNINGS})
+
 target_sources(@TARGET_NAME@
     PRIVATE
     @SOURCE_FILE_NAMES@

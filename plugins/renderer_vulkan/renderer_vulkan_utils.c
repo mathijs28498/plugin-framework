@@ -7,6 +7,7 @@
 
 #include <plugin_sdk/plugin_utils.h>
 #include <plugin_sdk/logger/v1/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_utils, LOG_LEVEL_DEBUG)
 
 #include "renderer_vulkan_register.h"
@@ -27,6 +28,25 @@ int32_t vk_get_instance_proc(LoggerInterface *logger, VkInstance instance, const
     return 0;
 }
 
+void rv_call_record_execute(RV_CallRecord *record)
+{
+    switch (record->call_type)
+    {
+    case RV_CALL_TYPE_1:
+        ((rv_call_fn_1)(record->fn))(record->arg_0);
+        break;
+    case RV_CALL_TYPE_2:
+        ((rv_call_fn_2)(record->fn))(record->arg_0, record->arg_1);
+        break;
+    case RV_CALL_TYPE_3:
+        ((rv_call_fn_3)(record->fn))(record->arg_0, record->arg_1, record->arg_2);
+        break;
+    case RV_CALL_TYPE_4:
+        ((rv_call_fn_4)(record->fn))(record->arg_0, record->arg_1, record->arg_2, record->arg_3);
+        break;
+    }
+}
+
 int32_t rv_call_queue_push_(LoggerInterface *logger, RV_CallQueue *queue, RV_CallType call_type,
                             rv_call_fn_any fn, uint64_t arg_0, uint64_t arg_1, uint64_t arg_2, uint64_t arg_3)
 {
@@ -34,7 +54,21 @@ int32_t rv_call_queue_push_(LoggerInterface *logger, RV_CallQueue *queue, RV_Cal
     assert(queue != NULL);
     assert(fn != NULL);
 
-    RETURN_IF_FALSE(logger, queue->queue_len < ARRAY_SIZE(queue->queue), -1, "Failed to add destroy data to queue");
+    if (queue->queue_len >= GET_ARRAY_CAPACITY(queue->queue))
+    {
+        LOG_ERR_TRACE(logger, "Failed to add destroy data to queue");
+
+        RV_CallRecord record = {
+            .call_type = call_type,
+            .arg_0 = arg_0,
+            .arg_1 = arg_1,
+            .arg_2 = arg_2,
+            .arg_3 = arg_3,
+            .fn = fn,
+        };
+        rv_call_record_execute(&record);
+        return -1;
+    }
 
     queue->queue[queue->queue_len].call_type = call_type;
     queue->queue[queue->queue_len].arg_0 = arg_0;
@@ -65,34 +99,21 @@ int32_t rv_call_queue_push_2(LoggerInterface *logger, RV_CallQueue *queue, rv_ca
 
 int32_t rv_call_queue_push_1(LoggerInterface *logger, RV_CallQueue *queue, rv_call_fn_any fn, uint64_t arg_0)
 {
+
     return rv_call_queue_push_(logger, queue, RV_CALL_TYPE_1, fn, arg_0, 0U, 0U, 0U);
 }
 
-TODO("Maybe look into error handling if necessary");
 void rv_call_queue_flush(RV_CallQueue *queue)
 {
     assert(queue != NULL);
 
+    // Loop through the queue backwards as a LIFO queue
     for (size_t i = 0; i < queue->queue_len; i++)
     {
         size_t queue_index = queue->queue_len - i - 1;
         RV_CallRecord *record = &queue->queue[queue_index];
 
-        switch (record->call_type)
-        {
-        case RV_CALL_TYPE_1:
-            ((rv_call_fn_1)(record->fn))(record->arg_0);
-            break;
-        case RV_CALL_TYPE_2:
-            ((rv_call_fn_2)(record->fn))(record->arg_0, record->arg_1);
-            break;
-        case RV_CALL_TYPE_3:
-            ((rv_call_fn_3)(record->fn))(record->arg_0, record->arg_1, record->arg_2);
-            break;
-        case RV_CALL_TYPE_4:
-            ((rv_call_fn_4)(record->fn))(record->arg_0, record->arg_1, record->arg_2, record->arg_3);
-            break;
-        }
+        rv_call_record_execute(record);
     }
     queue->queue_len = 0;
 }

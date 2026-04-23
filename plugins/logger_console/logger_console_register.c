@@ -7,21 +7,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <conio.h>
+#include <assert.h>
 
 #include <plugin_sdk/logger/v1/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(logger_console, LOG_LEVEL_DEBUG);
 
 #include "logger_console.h"
-
 
 #if IS_DEBUG && WINDOWS_GUI
 #include <windows.h>
 #endif // #if IS_DEBUG && WINDOWS_GUI
 
-STATIC_ASSERT(LOG_LEVEL_MAX == LOGGER_CONSOLE_LOG_LEVEL_MAX, "log_level max_mismatch!");
+_Static_assert(LOG_LEVEL_MAX == LOGGER_CONSOLE_LOG_LEVEL_MAX, "log_level max_mismatch!");
 
 static const LoggerVtable plugin_vtable = {
     .log = logger_console_log,
+    .log_trace = logger_console_log_trace,
     .set_colors = logger_console_set_colors,
     .set_level = logger_console_set_level,
 };

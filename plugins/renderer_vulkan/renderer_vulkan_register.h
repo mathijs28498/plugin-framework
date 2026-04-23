@@ -9,7 +9,8 @@
 
 #pragma pack(push, 8)
 
-#define MAX_RV_VK_DESTROY_QUEUE_LEN 256
+// #define MAX_RV_VK_DESTROY_QUEUE_LEN 256
+#define MAX_RV_VK_DESTROY_QUEUE_LEN 2
 
 #define FRAMES_LEN 2
 #define MAX_SWAPCHAIN_IMAGES_LEN 4

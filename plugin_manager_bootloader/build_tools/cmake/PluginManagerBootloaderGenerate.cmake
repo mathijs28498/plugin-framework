@@ -1,7 +1,7 @@
 include_guard(GLOBAL)
 
 function(plugin_manager_bootloader_setup TARGET_NAME)
-    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    find_package(Python3 3.7 REQUIRED COMPONENTS Interpreter)
 
     get_filename_component(INTERNAL_BUILD_TOOLS_PATH "${CMAKE_CURRENT_LIST_DIR}/build_tools" ABSOLUTE)
 
@@ -54,13 +54,18 @@ function(plugin_manager_bootloader_setup TARGET_NAME)
         "${PLUGIN_REGISTRY_TOML_PATH}"
         "${APP_TOML_PATH}"
 
-        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/plugin_resolver.py"
-        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/generators/generate_configure_files.py"
-        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/parsers/plugin_manager_parse"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/__init__.py"
         "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/datatypes.py"
-        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/utils.py"
-        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/datatypes.py"
-        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/parsers/manifest_parse.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/plugin_resolver.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/generators/__init__.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/generators/generate_configure_files.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/parsers/__init__.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/parsers/plugin_manager_parse.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/plugin_sdk_core/__init__.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/plugin_sdk_core/utils.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/plugin_sdk_core/datatypes.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/plugin_sdk_core/parsers/__init__.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/plugin_sdk_core/parsers/manifest_parse.py"
 
         "${PLUGIN_MANAGER_GENERATE_CONFIGURE_SCRIPT_PATH}"
     )
@@ -120,13 +125,19 @@ function(plugin_manager_bootloader_setup TARGET_NAME)
 
         "${SOURCE_PLUGIN_MANAGER_BOOTLOADER_GENERATED_SRC_PATH}"
 
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/__init__.py"
         "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/plugin_resolver.py"
-        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/generators/generate_compile_files.py"
-        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/parsers/plugin_manager_parse"
         "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/datatypes.py"
-        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/utils.py"
-        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/datatypes.py"
-        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/parsers/manifest_parse.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/memory_pool_size.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/generators/__init__.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/generators/generate_compile_files.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/parsers/__init__.py"
+        "${INTERNAL_BUILD_TOOLS_PATH}/internal_core/parsers/plugin_manager_parse.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/plugin_sdk_core/__init__.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/plugin_sdk_core/utils.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/plugin_sdk_core/datatypes.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/plugin_sdk_core/parsers/__init__.py"
+        "${PLUGIN_SDK_BUILD_TOOLS_PATH}/plugin_sdk_core/parsers/manifest_parse.py"
         DEPFILE "${PLUGIN_MANAGER_DEPFILE_PATH}"
 
         COMMENT "Generating c code files"

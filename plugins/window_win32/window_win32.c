@@ -7,6 +7,7 @@
 #include <plugin_sdk/environment/v1/environment_interface.h>
 #include <plugin_sdk/plugin_utils.h>
 #include <plugin_sdk/logger/v1/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(window_win32, LOG_LEVEL_DEBUG);
 
 #include "window_win32_register.h"
@@ -97,7 +98,10 @@ int32_t window_win32_get_window_size(WindowContext *context, uint32_t *width, ui
 int32_t window_win32_close_window(WindowContext *context)
 {
     assert(context != NULL);
-    DestroyWindow(context->hwnd);
+    if (context->hwnd != NULL)
+    {
+        DestroyWindow(context->hwnd);
+    }
     return 0;
 }
 
@@ -111,7 +115,7 @@ int32_t window_win32_poll_os_events(WindowContext *context)
         PeekMessage(&msg, NULL, 0, 0, PM_REMOVE),
         WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME,
         {
-            LOG_WRN(logger, "Too many os events in one frame (%d), skipping events till next frame", WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME);
+            LOG_WRN_TRACE(logger, "Too many os events in one frame (%d), skipping events till next frame", WINDOW_WIN32_MAX_OS_EVENTS_PER_FRAME);
         })
     {
         if (msg.message == WM_QUIT)

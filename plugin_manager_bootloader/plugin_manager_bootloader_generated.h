@@ -18,4 +18,7 @@ struct RequestedPlugin;
 
 const struct RequestedPlugin *get_bootloader_requested_plugins(void);
 
+struct PluginFrameworkMemory;
+struct PluginFrameworkMemory *get_plugin_framework_memory(void);
+
 #pragma pack(pop)

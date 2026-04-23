@@ -5,3 +5,6 @@ init = true
 shutdown = true
 supported_lifetimes = ["singleton"]
 module_path = "${build_dir}/logger_console.dll"
+
+[dependencies]
+time = {}

@@ -8,6 +8,7 @@ from internal_core.parsers.plugin_manager_parse import (
     parse_statically_resolved_plugin_manifests,
 )
 from internal_core.plugin_resolver import create_interface_definitions
+from internal_core.memory_pool_size import calculate_memory_pool_size
 
 from plugin_sdk_core.utils import read_json, read_toml
 
@@ -133,6 +134,8 @@ def main():
         interface_definitions,
         plugin_manifests,
         app_config.requested_plugins,
+        calculate_memory_pool_size(app_config),
+        app_config.max_plugin_amount,
     )
 
     generate_plugin_manager_depfile(

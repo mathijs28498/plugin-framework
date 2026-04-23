@@ -2,6 +2,7 @@
 #include <plugin_sdk/plugin_manager/v1/plugin_manager_interface.h>
 
 #include <plugin_sdk/logger/v1/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/window/v1/window_interface.h>
 #include <plugin_sdk/gui_application/v1/gui_application_interface.h>
@@ -19,7 +20,7 @@ int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager)
         return ret;
     }
 
-    LOG_WRN(logger, "This works baby!");
+    LOG_WRN_TRACE(logger, "This works baby!");
 
     GuiApplicationInterface *gui_application;
     RETURN_IF_ERROR(logger, ret, PLUGIN_MANAGER_GET_SINGLETON(plugin_manager, "gui_application", &gui_application),

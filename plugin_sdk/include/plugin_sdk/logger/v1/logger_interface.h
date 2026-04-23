@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+
 struct LoggerContext;
 
 typedef enum LoggerInterfaceLogLevel
@@ -15,10 +17,10 @@ typedef enum LoggerInterfaceLogLevel
 typedef struct LoggerVtable
 {
     void (*log)(const struct LoggerContext *context, LoggerInterfaceLogLevel log_level, LoggerInterfaceLogLevel urgent_log_level, const char *tag, const char *message, ...);
+    void (*log_trace)(const struct LoggerContext *context, LoggerInterfaceLogLevel log_level, LoggerInterfaceLogLevel urgent_log_level, const char *tag, const char *file_path, uint32_t line_number, const char *message, ...);
     void (*set_level)(struct LoggerContext *context, LoggerInterfaceLogLevel log_level);
     void (*set_colors)(struct LoggerContext *context, const char *colors[LOG_LEVEL_MAX]);
-}
-LoggerVtable;
+} LoggerVtable;
 
 #pragma pack(push, 8)
 
@@ -39,24 +41,3 @@ static inline void logger_set_colors(LoggerInterface *iface, const char *colors[
 {
     iface->vtable->set_colors(iface->context, colors);
 }
-
-#define LOGGER_INTERFACE_REGISTER_URGENCY(tag, log_level, urgent_log_level)           \
-    static const char LOGGER_INTERFACE_TAG[] = #tag;                                  \
-    static const enum LoggerInterfaceLogLevel LOGGER_INTERFACE_LOG_LEVEL = log_level; \
-    static const enum LoggerInterfaceLogLevel LOGGER_INTERFACE_URGENT_LOG_LEVEL = urgent_log_level;
-
-#define LOGGER_INTERFACE_REGISTER(tag, log_level) LOGGER_INTERFACE_REGISTER_URGENCY(tag, log_level, LOG_LEVEL_WARNING)
-
-#define LOG(logger, log_level, ...)                                                                                                    \
-    do                                                                                                                                 \
-    {                                                                                                                                  \
-        if (log_level <= LOGGER_INTERFACE_LOG_LEVEL)                                                                                   \
-        {                                                                                                                              \
-            (logger)->vtable->log((logger)->context, log_level, LOGGER_INTERFACE_URGENT_LOG_LEVEL, LOGGER_INTERFACE_TAG, __VA_ARGS__); \
-        }                                                                                                                              \
-    } while (0)
-
-#define LOG_ERR(logger, ...) LOG(logger, LOG_LEVEL_ERROR, __VA_ARGS__)
-#define LOG_WRN(logger, ...) LOG(logger, LOG_LEVEL_WARNING, __VA_ARGS__)
-#define LOG_INF(logger, ...) LOG(logger, LOG_LEVEL_INFO, __VA_ARGS__)
-#define LOG_DBG(logger, ...) LOG(logger, LOG_LEVEL_DEBUG, __VA_ARGS__)

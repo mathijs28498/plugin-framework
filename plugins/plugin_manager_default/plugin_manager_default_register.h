@@ -1,14 +1,18 @@
 #pragma once
 
+#include <stdint.h>
+
 #include <plugin_sdk/plugin_utils.h>
 
 #include "plugin_dependencies.h"
 
-#define MAX_REGISTERED_PLUGINS_LEN 64
-#define MAX_INTERFACE_PER_SCOPE 64
+TODO("Fix this differently");
+#define MAX_REGISTERED_PLUGINS_LEN 20
+#define MAX_INTERFACE_PER_SCOPE 10
 
 struct PluginMetadata;
 enum PluginLifetime;
+struct PluginContextSlabPool;
 
 #pragma pack(push, 8)
 
@@ -21,6 +25,7 @@ typedef struct ScopedPluginInterface
 typedef struct ScopedPlugin
 {
     const char *interface_name;
+    uint8_t context_slab_index;
     ScopedPluginInterface iface;
 } ScopedPlugin;
 
@@ -45,6 +50,7 @@ typedef struct PluginManagerContext
     TODO("Maybe DO add the plugin_manager as registered plugin so that other plugins can have it as a dependency for scopes, just look into how to handle shutdown and destroy")
     ARRAY_FIELD(struct RegisteredPlugin, registered_plugins, MAX_REGISTERED_PLUGINS_LEN);
     PluginScope singleton_scope;
+    struct PluginContextSlabPool *context_slab_pool;
 } PluginManagerContext;
 
 #pragma pack(pop)

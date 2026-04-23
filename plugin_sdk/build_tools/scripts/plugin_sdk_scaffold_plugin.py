@@ -6,15 +6,8 @@ def snake_to_pascal_case(snake_str: str):
     return "".join(x.capitalize() for x in snake_str.lower().split("_"))
 
 
-def parse_arguments() -> tuple[Path, Path, str, str]:
+def parse_arguments() -> tuple[Path, str, str]:
     parser = argparse.ArgumentParser()
-
-    parser.add_argument(
-        "--interface-include-directory",
-        required=True,
-        type=Path,
-        help="Interface directory",
-    )
 
     parser.add_argument(
         "--plugin-base-directory",
@@ -35,7 +28,6 @@ def parse_arguments() -> tuple[Path, Path, str, str]:
     args = parser.parse_args()
 
     return (
-        args.interface_include_directory.resolve(),
         args.plugin_base_directory.resolve(),
         args.interface_name,
         args.plugin_name,
@@ -83,7 +75,6 @@ def configure_file(
 
 def main():
     (
-        interface_include_directory_path,
         plugin_base_directory_path,
         interface_name,
         plugin_name,
@@ -110,8 +101,8 @@ def main():
     replacements = {
         "INTERFACE_NAME": interface_name,
         "PLUGIN_NAME": plugin_name,
-        "INTERFACE_TYPE_NAME": f"{interface_name_pascal}Interface",
-        "INTERFACE_CONTEXT_TYPE_NAME": f"{interface_name_pascal}InterfaceContext",
+        "INTERFACE_TYPE_NAME": f"{interface_name_pascal}",
+        "INTERFACE_CONTEXT_TYPE_NAME": f"{interface_name_pascal}Context",
         "PLUGIN_INTERFACE_HEADER_FILE_NAME": interface_header_file_name,
         "PLUGIN_REGISTER_HEADER_FILE_NAME": plugin_register_header_file_name,
         "PLUGIN_HEADER_FILE_NAME": plugin_header_file_name,
@@ -119,7 +110,7 @@ def main():
         "SOURCE_FILE_NAMES": "\n    ".join(source_file_names),
     }
 
-    template_directory = Path(__file__).parent / "templates"
+    template_directory = Path(__file__).parent.parent / "plugin_sdk_core" / "templates"
 
     plugin_source_and_destination_file_names = [
         ("plugin_register.h.in", plugin_register_header_file_name),
@@ -137,22 +128,6 @@ def main():
             replacements,
             False,
         )
-
-    interface_destination_path = (
-        interface_include_directory_path / interface_header_file_name
-    )
-    if interface_destination_path.exists():
-        print(
-            f"-- Skipping creation of interface header as interface header already exists: {interface_destination_path.as_posix()}"
-        )
-        return
-
-    configure_file(
-        template_directory / "interface.h.in",
-        interface_destination_path,
-        replacements,
-        False,
-    )
 
 
 if __name__ == "__main__":

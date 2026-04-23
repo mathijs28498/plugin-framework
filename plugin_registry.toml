@@ -8,6 +8,7 @@ plugin_manifests = [
     "${plugin_registry}/plugins/draw_default",
     "${plugin_registry}/plugins/draw_2d_default",
     "${plugin_registry}/plugins/renderer_vulkan",
+    "${plugin_registry}/plugins/time_win32",
 ]
 
 interfaces = [
@@ -15,6 +16,9 @@ interfaces = [
     { interface_name = "environment", default = "default" },
     { interface_name = "logger", default = "console" },
     { interface_name = "window", default = [
+        { target = "win32", plugin_name = "win32" },
+    ] },
+    { interface_name = "time", default = [
         { target = "win32", plugin_name = "win32" },
     ] },
     { interface_name = "gui_application", default = "default" },

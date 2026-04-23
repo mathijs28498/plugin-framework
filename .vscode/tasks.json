@@ -4,7 +4,7 @@
         {
             "label": "Generate interface and plugin",
             "type": "shell",
-            "command": "\"python\" \"${workspaceFolder}/plugin_manager/tools/gen_plugin/gen_plugin.py\" --interface-name \"${input:interfaceName}\" --plugin-name \"${input:pluginName}\" --interface-include-directory \"${input:interfaceIncludeDirectory}\" --plugin-base-directory \"${input:pluginBaseDirectory}\"",
+            "command": "\"python\" \"${workspaceFolder}/plugin_sdk/build_tools/scripts/plugin_sdk_scaffold_plugin.py\" --interface-name \"${input:interfaceName}\" --plugin-name \"${input:pluginName}\" --plugin-base-directory \"${input:pluginBaseDirectory}\"",
             "problemMatcher": []
         }
     ],
@@ -18,12 +18,6 @@
             "id": "pluginName",
             "type": "promptString",
             "description": "Plugin name (e.g. vulkan)"
-        },
-        {
-            "id": "interfaceIncludeDirectory",
-            "type": "promptString",
-            "description": "Directory where the interface header lives",
-            "default": "${workspaceFolder}/plugin_manager_include"
         },
         {
             "id": "pluginBaseDirectory",

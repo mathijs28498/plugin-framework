@@ -53,11 +53,15 @@
   - [x] This can now be described in the toml with different allocation methods for singleton vs the others possibly
 - [x] figure out how to properly structure the code to be used outside this repo
 - [x] Add ${registry_dir} and ${build_dir} anchors for manifest paths
+- [x] Change calloc for context to use a static allocator
+  - [x] Also make it work with scopes
+- [x] Get rid of all static, non relative paths
 
 ### 1
 - [ ] Fix all todos
 
 ### 2
+- [ ] Create own dataclass for pre 3.7 python version
 - [ ] Automatic python dependency tracking: https://www.perplexity.ai/search/i-have-this-cmake-code-message-s.fOhSFMS_Ssx0ouZ9YzjQ?sm=d
   - [ ] custom commands create their own dependency .d depfile
   - [ ] configure needs to add the cmake
@@ -83,9 +87,8 @@
 - [ ] Add a composite Graphics/GPU interface that does the GPU initialization like vulkan. Then the renderer/ gpu_compute interface plugins can depend on this somehow. They need to depend specifically on the vulkan version however. This way you can specify a renderer and the composite one gets added right away.
 - [ ] Add more robust checks for user facing plugins (like checking if context != NULL)
 - [ ] Rename whole project to something acidy from framework
-- [ ] Make it so that plugins have access to the plugin_manager for scoped plugins for example (allow for scoped plugin dependencies)
-- [ ] Change calloc for context to use a static allocator
-  - [ ] Also make it work with scopes
+- [ ] Make it so that plugins have access to the plugin_manager for scoped plugins for example 
+  - [ ] Add plugin_manager as dependency
 - [ ] Create logger fallback for initial plugin_manager dependency resolver
 - [ ] Add attachments that are defined in .toml
   - [ ] attachments are just interfaces
@@ -106,7 +109,6 @@
 
 ### 3
 - [ ] Add proper error numbers
-- [ ] Get rid of all static, non relative paths
 - [ ] Add configurations to plugins
 - [ ] Create proper templating stuff in python with loops and everything
   - [ ] Look into string.Template

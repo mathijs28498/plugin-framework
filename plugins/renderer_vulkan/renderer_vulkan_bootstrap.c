@@ -11,6 +11,7 @@
 #include <assert.h>
 
 #include <plugin_sdk/logger/v1/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface_macros.h>
 // LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_DEBUG)
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_WARNING)
 #include <plugin_sdk/window/v1/window_interface.h>
@@ -130,16 +131,16 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
     switch (message_severity)
     {
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-        LOG_DBG(context->deps.logger, "validation layer: %s", callback_data->pMessage);
+        LOG_DBG_TRACE(context->deps.logger, "validation layer: %s", callback_data->pMessage);
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-        LOG_INF(context->deps.logger, "validation layer: %s", callback_data->pMessage);
+        LOG_INF_TRACE(context->deps.logger, "validation layer: %s", callback_data->pMessage);
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-        LOG_WRN(context->deps.logger, "validation layer: %s", callback_data->pMessage);
+        LOG_WRN_TRACE(context->deps.logger, "validation layer: %s", callback_data->pMessage);
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-        LOG_ERR(context->deps.logger, "validation layer: %s", callback_data->pMessage);
+        LOG_ERR_TRACE(context->deps.logger, "validation layer: %s", callback_data->pMessage);
         break;
     }
 
@@ -185,7 +186,7 @@ int32_t setup_debug_messenger(RendererContext *context)
     ret = vk_get_instance_proc(context->deps.logger, context->instance, "vkDestroyDebugUtilsMessengerEXT", (vk_func_void_void *)&destroy_func);
     if (ret < 0)
     {
-        LOG_ERR(context->deps.logger, "Could not get instance proc: %d", ret);
+        LOG_ERR_TRACE(context->deps.logger, "Could not get instance proc: %d", ret);
         return ret;
     }
 
@@ -218,7 +219,7 @@ int32_t create_instance(RendererContext *context)
     CREATE_ARRAY(const char *, required_extensions, MAX_EXTENSIONS_LEN);
     ARRAY_PUSH_ARRAY(required_extensions, plugin_required_extensions,
                      {
-                         LOG_ERR(context->deps.logger, "Unable to add required extension, reached max capacity");
+                         LOG_ERR_TRACE(context->deps.logger, "Unable to add required extension, reached max capacity");
                          return -1;
                      });
 
@@ -230,7 +231,7 @@ int32_t create_instance(RendererContext *context)
     ARRAY_PUSH_MULTI_CHECKED(
         required_extensions, platform_required_extensions, GET_ARRAY_LENGTH(platform_required_extensions),
         {
-            LOG_ERR(context->deps.logger, "Unable to add platform extensions to required extensions, reached max capacity");
+            LOG_ERR_TRACE(context->deps.logger, "Unable to add platform extensions to required extensions, reached max capacity");
             return -1;
         });
 
@@ -529,7 +530,7 @@ int32_t rate_physical_device_suitability(RendererContext *context, VkPhysicalDev
         uint32_t minor = VK_API_VERSION_MINOR(device_properties.apiVersion);
 
         TODO("Add better logging");
-        LOG_WRN(context->deps.logger, "Device '%s' supports up to Vulkan %u.%u, Required 1.3", device_properties.deviceName, major, minor);
+        LOG_WRN_TRACE(context->deps.logger, "Device '%s' supports up to Vulkan %u.%u, Required 1.3", device_properties.deviceName, major, minor);
         return -1;
     }
 
@@ -628,7 +629,7 @@ int32_t push_queue_family_indices_to_create_info_arr(
         };
 
         ARRAY_PUSH_CHECKED(queue_create_info_arr, queue_create_info, {
-            LOG_ERR(context->deps.logger, "Reached max capacity when adding queue create info");
+            LOG_ERR_TRACE(context->deps.logger, "Reached max capacity when adding queue create info");
             return -1;
         });
     }

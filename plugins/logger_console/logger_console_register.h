@@ -1,5 +1,7 @@
 #pragma once
 
+#include <plugin_dependencies.h>
+
 #pragma pack(push, 8)
 
 #define ANSI_COLOR_RED "\x1b[31m"
@@ -13,6 +15,8 @@ enum LoggerInterfaceLogLevel;
 
 typedef struct LoggerContext
 {
+    PluginDependencies deps;
+
     enum LoggerInterfaceLogLevel log_level;
     const char *colors[LOGGER_CONSOLE_LOG_LEVEL_MAX]; 
 } LoggerContext;

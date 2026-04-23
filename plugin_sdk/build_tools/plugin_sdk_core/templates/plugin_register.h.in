@@ -4,8 +4,6 @@
 
 #pragma pack(push, 8)
 
-struct LoggerInterface;
-
 typedef struct @INTERFACE_CONTEXT_TYPE_NAME@
 {
     PluginDependencies deps;

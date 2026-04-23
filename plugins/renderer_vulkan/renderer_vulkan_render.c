@@ -8,6 +8,7 @@
 #include <math.h>
 
 #include <plugin_sdk/logger/v1/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_render, LOG_LEVEL_DEBUG)
 
 #include "renderer_vulkan_utils.h"
@@ -76,7 +77,7 @@ int32_t begin_frame(RendererContext *context, RendererFrameData **out_frame, uin
     {
         renderer_vulkan_start_recreate_swapchain(context);
         TODO("Add proper enum values");
-        LOG_WRN(context->deps.logger, "Swapchain is out of date or suboptimal, aborting frame");
+        LOG_WRN_TRACE(context->deps.logger, "Swapchain is out of date or suboptimal, aborting frame");
         return 2;
     }
 

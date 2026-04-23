@@ -6,6 +6,7 @@
 #include <assert.h>
 
 #include <plugin_sdk/logger/v1/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_descriptor_set, LOG_LEVEL_DEBUG)
 
 #include "renderer_vulkan_utils.h"

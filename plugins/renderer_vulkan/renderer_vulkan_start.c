@@ -8,6 +8,7 @@
 
 #include <plugin_sdk/plugin_utils.h>
 #include <plugin_sdk/logger/v1/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_WARNING)
 
 #include "renderer_vulkan_bootstrap.h"

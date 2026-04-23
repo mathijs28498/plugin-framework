@@ -21,7 +21,7 @@
         (err_var) = (create_func_call);                                    \
         if ((err_var) < 0)                                                 \
         {                                                                  \
-            LOG_ERR((logger), __VA_ARGS__);                                \
+            LOG_ERR_TRACE((logger), __VA_ARGS__);                                \
             rv_call_queue_flush(destroy_queue);                      \
             return (err_var);                                              \
         }                                                                  \

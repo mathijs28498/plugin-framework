@@ -17,7 +17,6 @@ target_link_libraries(gui_application_default
 )
 
 include("PluginSDK")
-message(STATUS "Generate inc: gui_app")
 plugin_generate_register_inc(gui_application_default
     GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
     TOML_DIR_PATH "${CMAKE_CURRENT_LIST_DIR}"

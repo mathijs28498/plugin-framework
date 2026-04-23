@@ -4,6 +4,7 @@
 
 #include <plugin_sdk/window/v1/window_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(gui_application_default, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/input/v1/input_interface.h>
 #include <plugin_sdk/plugin_utils.h>
@@ -29,7 +30,7 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
 {
     int32_t ret;
 
-    LOG_INF(context->deps.logger, "Starting main loop");
+    LOG_INF_TRACE(context->deps.logger, "Starting main loop");
 
     bool gui_application_running = true;
     while (gui_application_running)
@@ -45,7 +46,7 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
             window_pop_window_event(context->deps.window, &window_event),
             GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME,
             {
-                LOG_WRN(context->deps.logger, "Too many window events in one frame (%d), skipping events till next frame", GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME);
+                LOG_WRN_TRACE(context->deps.logger, "Too many window events in one frame (%d), skipping events till next frame", GUI_APPLICATION_DEFAULT_MAX_WINDOW_EVENTS_PER_FRAME);
             })
         {
             switch (window_event.type)
@@ -64,7 +65,7 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
                                 "Failed to process window event: %d", ret);
                 break;
             default:
-                LOG_WRN(context->deps.logger, "Unrecognized event: %d", window_event.type);
+                LOG_WRN_TRACE(context->deps.logger, "Unrecognized event: %d", window_event.type);
                 break;
             }
         }
@@ -75,7 +76,7 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
 
         if (input_key_pressed(context->deps.input, WINDOW_EVENT_KEY_ESCAPE))
         {
-            LOG_DBG(context->deps.logger, "Closing application");
+            LOG_DBG_TRACE(context->deps.logger, "Closing application");
             RETURN_IF_ERROR(context->deps.logger, ret, window_close_window(context->deps.window),
                             "Failed to close window: %d", ret);
             break;

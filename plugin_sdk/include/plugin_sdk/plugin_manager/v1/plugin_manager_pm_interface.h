@@ -8,6 +8,27 @@
 
 #pragma pack(push, 8)
 
+typedef struct PluginContextSlabPool
+{
+    uint8_t *pool;
+    const uint64_t pool_size;
+    const uint32_t max_plugin_amount;
+    uint64_t occupied_bitmap;
+
+} PluginContextSlabPool;
+
+typedef struct PluginMemoryPool
+{
+    uint8_t *pool;
+    const uint64_t pool_size;
+} PluginMemoryPool;
+
+typedef struct PluginFrameworkMemory
+{
+    PluginContextSlabPool context_slab_pool;
+    PluginMemoryPool memory_pool;
+} PluginFrameworkMemory;
+
 typedef struct PluginDependencyDefinition
 {
     const char *interface_name;
@@ -58,6 +79,7 @@ typedef struct PluginManagerPMVtable
 
     int32_t (*bootstrap)(struct PluginManagerContext *context,
                          const struct PluginMetadata *plugin_manager_metadata,
+                         PluginFrameworkMemory *plugin_framework_memory,
                          int argc, char *argv[], void *platform_context,
                          const PluginRegistry *plugin_registry,
                          const struct PluginMetadata *const *static_plugin_metadatas,
@@ -69,10 +91,19 @@ typedef struct PluginManagerPMVtable
 static inline int32_t plugin_manager_pm_bootstrap(
     PluginManagerInterface *iface,
     const struct PluginMetadata *plugin_manager_metadata,
+    PluginFrameworkMemory *plugin_framework_memory,
     int argc, char **argv, void *platform_context,
     const PluginRegistry *plugin_registry,
     const struct PluginMetadata *const *static_plugin_metadatas,
     const RequestedPlugin *requested_plugins_explicit)
 {
-    return ((PluginManagerPMVtable *)iface->vtable)->bootstrap(iface->context, plugin_manager_metadata, argc, argv, platform_context, plugin_registry, static_plugin_metadatas, requested_plugins_explicit);
+    return ((PluginManagerPMVtable *)iface->vtable)
+        ->bootstrap(
+            iface->context,
+            plugin_manager_metadata,
+            plugin_framework_memory,
+            argc, argv, platform_context,
+            plugin_registry,
+            static_plugin_metadatas,
+            requested_plugins_explicit);
 }

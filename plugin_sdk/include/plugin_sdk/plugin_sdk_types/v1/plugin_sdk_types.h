@@ -7,20 +7,17 @@
 
 #pragma pack(push, 8)
 
-typedef void *(*PluginCreateContext_Fn)(void);
 typedef int32_t (*PluginInjectDependency_Fn)(void *context, const char *interface_name, void *iface);
 typedef int32_t (*PluginInit_Fn)(void *context);
 typedef int32_t (*PluginShutdown_Fn)(void *context);
-typedef int32_t (*PluginDestroyContext_Fn)(void *context);
 
 typedef struct PluginProvider
 {
     const void *vtable;
-    PluginCreateContext_Fn create_context;
     PluginInjectDependency_Fn inject_dependency;
     PluginInit_Fn init;
     PluginShutdown_Fn shutdown;
-    PluginDestroyContext_Fn destroy_context;
+    uint64_t context_size;
 } PluginProvider;
 
 typedef struct PluginDependency

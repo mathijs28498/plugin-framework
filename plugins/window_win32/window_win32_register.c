@@ -1,5 +1,7 @@
 #include "window_win32_register.h"
 
+#include <assert.h>
+
 #include <plugin_sdk/window/v1/window_interface.h>
 
 #include "window_win32.h"
@@ -16,5 +18,12 @@ static const WindowVtable plugin_vtable = {
     .wait_for_os_events = window_win32_wait_for_os_events,
     .pop_window_event = window_win32_window_events_pop,
 };
+
+int32_t plugin_shutdown(WindowContext *context )
+{
+    assert(context != NULL);
+    window_win32_close_window(context);
+    return 0;
+}
 
 #include "plugin_register.c.inc"

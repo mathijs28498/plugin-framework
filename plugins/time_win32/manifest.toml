@@ -1,0 +1,5 @@
+interface_name = "time"
+interface_version = "1"
+plugin_name = "win32"
+module_path = "${build_dir}/time_win32.dll"
+supported_lifetimes = ["singleton"]

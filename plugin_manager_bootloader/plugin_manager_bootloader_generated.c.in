@@ -63,3 +63,29 @@ CREATE_INITIALIZED_ARRAY_WITH_DECL(
 const RequestedPlugin *get_bootloader_requested_plugins(void){
     return requested_plugins;
 }
+
+static uint8_t base_memory_pool[@MEMORY_POOL_SIZE@];
+
+#if @MAX_PLUGIN_AMOUNT@ < 64
+#define INITIAL_OCCUPIED_BITMAP ~(0ULL) << @MAX_PLUGIN_AMOUNT@
+#else // #if @MAX_PLUGIN_AMOUNT@ < 64
+#define INITIAL_OCCUPIED_BITMAP 0
+#endif // #if @MAX_PLUGIN_AMOUNT@ < 64
+
+PluginFrameworkMemory *get_plugin_framework_memory(void)
+{
+    static PluginFrameworkMemory plugin_framework_memory = {
+        .context_slab_pool = {
+            .pool = base_memory_pool,
+            .pool_size = @MAX_PLUGIN_AMOUNT@ * PLUGIN_CONTEXT_MEMORY_SLAB_SIZE,
+            .max_plugin_amount = @MAX_PLUGIN_AMOUNT@,
+            .occupied_bitmap = INITIAL_OCCUPIED_BITMAP,
+        },
+        .memory_pool = {
+            .pool = &base_memory_pool[@MAX_PLUGIN_AMOUNT@ * PLUGIN_CONTEXT_MEMORY_SLAB_SIZE],
+            .pool_size = ((uint64_t) sizeof(base_memory_pool)) - (@MAX_PLUGIN_AMOUNT@ * PLUGIN_CONTEXT_MEMORY_SLAB_SIZE),
+        },
+    };
+
+    return &plugin_framework_memory;
+}

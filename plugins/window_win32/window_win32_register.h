@@ -1,6 +1,7 @@
 #pragma once
 
 #include <plugin_sdk/window/v1/window_interface_window_event.h>
+#include <plugin_sdk/plugin_utils.h>
 
 #include "plugin_dependencies.h"
 
@@ -11,7 +12,8 @@ typedef struct HWND__ *HWND;
 
 #pragma pack(push, 8)
 
-#define WINDOW_WIN32_WINDOW_EVENTS_SIZE 256
+TODO("Fix this differently")
+#define WINDOW_WIN32_WINDOW_EVENTS_SIZE 32
 
 typedef struct WindowContext
 {
