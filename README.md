@@ -61,7 +61,13 @@
 - [ ] Fix all todos
 
 ### 2
-- [ ] Create own dataclass for pre 3.7 python version
+- [ ] Add interface and plugin configurations
+  - [ ] Interface plugins at include folder next to header, toml file
+  - [ ] Plugin plugins at plugin, toml file
+  - [ ] Read toml file and generate headers based on toml files in plugin
+  - [ ] Read toml file and generate headers and sources in framework py sources should be const structs
+  - [ ] Hand the configurations in the plugin_init by reference
+  - [ ] Allow configurations in app.toml
 - [ ] Automatic python dependency tracking: https://www.perplexity.ai/search/i-have-this-cmake-code-message-s.fOhSFMS_Ssx0ouZ9YzjQ?sm=d
   - [ ] custom commands create their own dependency .d depfile
   - [ ] configure needs to add the cmake

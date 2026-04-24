@@ -131,16 +131,16 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
     switch (message_severity)
     {
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT:
-        LOG_DBG_TRACE(context->deps.logger, "validation layer: %s", callback_data->pMessage);
+        LOG_DBG(context->deps.logger, "validation layer: %s", callback_data->pMessage);
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT:
-        LOG_INF_TRACE(context->deps.logger, "validation layer: %s", callback_data->pMessage);
+        LOG_INF(context->deps.logger, "validation layer: %s", callback_data->pMessage);
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT:
-        LOG_WRN_TRACE(context->deps.logger, "validation layer: %s", callback_data->pMessage);
+        LOG_WRN(context->deps.logger, "validation layer: %s", callback_data->pMessage);
         break;
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-        LOG_ERR_TRACE(context->deps.logger, "validation layer: %s", callback_data->pMessage);
+        LOG_ERR(context->deps.logger, "validation layer: %s", callback_data->pMessage);
         break;
     }
 

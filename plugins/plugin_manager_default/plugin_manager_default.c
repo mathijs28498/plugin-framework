@@ -238,7 +238,7 @@ int32_t add_plugin_to_scope_unchecked(const LoggerInterface *logger,
 
     plugin->lifetime = scope->lifetime;
     if (logger != NULL)
-        LOG_DBG_TRACE(logger, "Plugin '%s' added to scope with lifetime '%d'", plugin->metadata->interface_name, scope->lifetime);
+        LOG_DBG(logger, "Plugin '%s' added to scope with lifetime '%d'", plugin->metadata->interface_name, scope->lifetime);
 
     return 0;
 }

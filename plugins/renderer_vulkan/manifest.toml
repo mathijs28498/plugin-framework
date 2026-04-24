@@ -9,3 +9,4 @@ shutdown = true
 [dependencies]  
 logger = {}
 window = {}
+arena_allocator = {}

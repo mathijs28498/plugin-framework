@@ -66,7 +66,7 @@ int32_t resolve_requested_plugins(const LoggerInterface *logger,
                     return -1;
                 });
                 if (logger != NULL)
-                    LOG_DBG_TRACE(logger, "Added requested plugin '%s' - '%s'", requested_plugin->interface_name, requested_plugin->plugin_name);
+                    LOG_DBG(logger, "Added requested plugin '%s' - '%s'", requested_plugin->interface_name, requested_plugin->plugin_name);
                 definition_found = true;
                 break;
             }
@@ -110,7 +110,7 @@ int32_t get_metadata_from_plugin_definition(const LoggerInterface *logger,
             {
                 *out_plugin_metadata = static_plugin_metadata;
                 if (logger != NULL)
-                    LOG_DBG_TRACE(logger, "Static plugin metadata for plugin '%s' added", plugin_definition->target_name);
+                    LOG_DBG(logger, "Static plugin metadata for plugin '%s' added", plugin_definition->target_name);
                 return 0;
             }
         }
@@ -136,7 +136,7 @@ int32_t get_metadata_from_plugin_definition(const LoggerInterface *logger,
     }
 
     if (logger != NULL)
-        LOG_DBG_TRACE(logger, "Dynamic plugin metadata for plugin '%s' added", plugin_definition->target_name);
+        LOG_DBG(logger, "Dynamic plugin metadata for plugin '%s' added", plugin_definition->target_name);
     return 0;
 }
 
@@ -174,7 +174,7 @@ int32_t resolve_plugin_metadatas(const LoggerInterface *logger,
         });
 
         if (logger != NULL)
-            LOG_DBG_TRACE(logger, "Added registered plugin '%s'", plugin_definition->target_name);
+            LOG_DBG(logger, "Added registered plugin '%s'", plugin_definition->target_name);
     }
 
     return 0;
@@ -209,7 +209,7 @@ int32_t resolve_plugin_metadata_dependencies(const LoggerInterface *logger,
             if (dependency_already_present)
             {
                 if (logger != NULL)
-                    LOG_DBG_TRACE(logger, "Don't request dependency '%s' as it has already been added", plugin_dependency->interface_name);
+                    LOG_DBG(logger, "Don't request dependency '%s' as it has already been added", plugin_dependency->interface_name);
                 continue;
             }
 
@@ -226,7 +226,7 @@ int32_t resolve_plugin_metadata_dependencies(const LoggerInterface *logger,
             if (dependency_already_present)
             {
                 if (logger != NULL)
-                    LOG_DBG_TRACE(logger, "Don't request dependency '%s' as it has already been requested", plugin_dependency->interface_name);
+                    LOG_DBG(logger, "Don't request dependency '%s' as it has already been requested", plugin_dependency->interface_name);
                 continue;
             }
 
@@ -244,7 +244,7 @@ int32_t resolve_plugin_metadata_dependencies(const LoggerInterface *logger,
             });
 
             if (logger != NULL)
-                LOG_DBG_TRACE(logger, "Requesting dependency '%s'", plugin_dependency->interface_name);
+                LOG_DBG(logger, "Requesting dependency '%s'", plugin_dependency->interface_name);
         }
     }
     return 0;
@@ -727,5 +727,7 @@ int32_t plugin_manager_default_bootstrap(
                          context->registered_plugins,
                          singleton_interfaces_to_add,
                          &context->singleton_scope);
+
+    arena_allocator_pm_freeze_permanent_arenas(context->deps.arena_allocator);
     return 0;
 }

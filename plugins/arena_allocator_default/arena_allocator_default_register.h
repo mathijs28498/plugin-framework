@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 
 #include "plugin_dependencies.h"
 
@@ -12,6 +13,7 @@ typedef struct ArenaAllocatorContext
 
     uint8_t *memory_pool;
     uint64_t memory_pool_size;
+    bool permanent_arenas_frozen;
 } ArenaAllocatorContext;
 
 #pragma pack(pop)

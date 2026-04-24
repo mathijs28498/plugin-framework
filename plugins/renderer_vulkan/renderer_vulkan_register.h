@@ -9,9 +9,6 @@
 
 #pragma pack(push, 8)
 
-// #define MAX_RV_VK_DESTROY_QUEUE_LEN 256
-#define MAX_RV_VK_DESTROY_QUEUE_LEN 2
-
 #define FRAMES_LEN 2
 #define MAX_SWAPCHAIN_IMAGES_LEN 4
 
@@ -77,7 +74,7 @@ typedef struct RV_CallRecord
 
 typedef struct RV_CallQueue
 {
-    RV_CallRecord queue[MAX_RV_VK_DESTROY_QUEUE_LEN];
+    RV_CallRecord *queue;
     size_t queue_len;
 } RV_CallQueue;
 

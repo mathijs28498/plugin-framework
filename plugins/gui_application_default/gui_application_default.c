@@ -76,7 +76,7 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
 
         if (input_key_pressed(context->deps.input, WINDOW_EVENT_KEY_ESCAPE))
         {
-            LOG_DBG_TRACE(context->deps.logger, "Closing application");
+            LOG_DBG(context->deps.logger, "Closing application");
             RETURN_IF_ERROR(context->deps.logger, ret, window_close_window(context->deps.window),
                             "Failed to close window: %d", ret);
             break;
