@@ -1,6 +1,7 @@
 include_guard(GLOBAL)
 
 function(target_embed_shader TARGET_NAME)
+    message("TODO: Dont do this every call")
     find_package(Python3 3.7 REQUIRED COMPONENTS Interpreter)
 
     get_filename_component(PLUGIN_SDK_BUILD_TOOLS_PATH "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/.." ABSOLUTE)
@@ -21,8 +22,8 @@ function(target_embed_shader TARGET_NAME)
     set(SOURCE_HEADER_PATH "${PLUGIN_SDK_TEMPLATES_DIR_PATH}/shader.h.in")
     set(SOURCE_SOURCE_PATH "${PLUGIN_SDK_TEMPLATES_DIR_PATH}/shader.c.in")
 
-    set(GENERATED_HEADER_PATH "${arg_GEN_DIR_PATH}/${SHADER_NAME}.h")
-    set(GENERATED_SOURCE_PATH "${arg_GEN_DIR_PATH}/${SHADER_NAME}.c")
+    set(GENERATED_HEADER_PATH "${arg_GEN_DIR_PATH}/shader_${SHADER_NAME}.h")
+    set(GENERATED_SOURCE_PATH "${arg_GEN_DIR_PATH}/shader_${SHADER_NAME}.c")
 
     set(RENDERER_SHADER_GENERATE_SCRIPT_PATH "${PLUGIN_SDK_SCRIPTS_DIR_PATH}/renderer_shader_generate.py")
     message("Adding custom command script: ${RENDERER_SHADER_GENERATE_SCRIPT_PATH}")
@@ -48,13 +49,9 @@ function(target_embed_shader TARGET_NAME)
         "${SOURCE_SOURCE_PATH}"
         "${arg_SHADER_FILE_PATH}"
 
-        # "${PLUGIN_SDK_CORE_DIR_PATH}/__init__.py"
-        # "${PLUGIN_SDK_CORE_DIR_PATH}/utils.py"
-        # "${PLUGIN_SDK_CORE_DIR_PATH}/datatypes.py"
-        # "${PLUGIN_SDK_CORE_DIR_PATH}/parsers/__init__.py"
-        # "${PLUGIN_SDK_CORE_DIR_PATH}/parsers/manifest_parse.py"
-        # "${PLUGIN_SDK_CORE_DIR_PATH}/generators/__init__.py"
-        # "${PLUGIN_SDK_CORE_DIR_PATH}/generators/generate_sdk_files.py"
+        "${PLUGIN_SDK_CORE_DIR_PATH}/__init__.py"
+        "${PLUGIN_SDK_CORE_DIR_PATH}/utils.py"
+
         COMMENT "Compiling and generating shader code"
         VERBATIM
     )

@@ -29,6 +29,7 @@ target_link_libraries(renderer_vulkan
     Vulkan::Vulkan
     vma
     plugin_sdk
+    cglm
 )
 
 include("PluginSDK")

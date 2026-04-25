@@ -7,8 +7,6 @@ LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/window/v1/window_interface.h>
 #include <plugin_sdk/gui_application/v1/gui_application_interface.h>
 
-
-
 int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager)
 {
     int ret;

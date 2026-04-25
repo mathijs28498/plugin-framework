@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cglm/types.h>
+
 #include <stdbool.h>
 
 #include <plugin_sdk/plugin_utils.h>
@@ -28,6 +30,8 @@ CREATE_VK_HANDLE_DEFINITION(VkFence);
 CREATE_VK_HANDLE_DEFINITION(VkDescriptorPool);
 CREATE_VK_HANDLE_DEFINITION(VkDescriptorSetLayout);
 CREATE_VK_HANDLE_DEFINITION(VkDescriptorSet);
+CREATE_VK_HANDLE_DEFINITION(VkPipelineLayout);
+CREATE_VK_HANDLE_DEFINITION(VkPipeline);
 
 CREATE_VK_HANDLE_DEFINITION(VmaAllocator);
 CREATE_VK_HANDLE_DEFINITION(VmaAllocation);
@@ -140,7 +144,18 @@ typedef struct RendererContext
 
     VkDescriptorSetLayout draw_image_descriptor_set_layout;
     VkDescriptorSet draw_image_descriptor_set;
+
+    VkPipelineLayout gradient_pipeline_layout;
+    VkPipeline gradient_pipeline;
     
 } RendererContext;
 
+
 #pragma pack(pop)
+
+typedef struct ComputePushConstants {
+    vec4 top_left;
+    vec4 top_right;
+    vec4 bottom_left;
+    vec4 bottom_right;
+} ComputePushConstants;

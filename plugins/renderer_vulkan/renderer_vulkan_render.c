@@ -1,7 +1,9 @@
 #include "renderer_vulkan_render.h"
 
 #include <vk_mem_alloc.h>
+#include <cglm/cglm.h>
 
+#include <assert.h>
 #include <stdint.h>
 #include <vulkan/vulkan.h>
 #include <assert.h>
@@ -27,13 +29,28 @@ VkExtent2D extent_2d(RV_VkExtent2D *rv_extent)
 
 void draw_background(RendererContext *context, VkCommandBuffer cmd)
 {
-    float color_val = fabsf(sinf(context->frame_number / 120.f));
-    float color_val_1 = fabsf(cosf(context->frame_number / 120.f));
-    float color_val_2 = 1.f - fabsf(cosf(context->frame_number / 120.f));
-    VkClearColorValue clear_color = {{color_val_1, color_val_2, color_val, 1.}};
-    VkImageSubresourceRange clear_range = rv_image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+    assert(context != NULL);
+    assert(cmd != VK_NULL_HANDLE);
 
-    vkCmdClearColorImage(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, &clear_color, 1, &clear_range);
+    // float color_val = fabsf(sinf(context->frame_number / 120.f));
+    // float color_val_1 = fabsf(cosf(context->frame_number / 120.f));
+    // float color_val_2 = 1.f - fabsf(cosf(context->frame_number / 120.f));
+    // VkClearColorValue clear_color = {{color_val_1, color_val_2, color_val, 1.}};
+    // VkImageSubresourceRange clear_range = rv_image_subresource_range(VK_IMAGE_ASPECT_COLOR_BIT);
+
+    // vkCmdClearColorImage(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, &clear_color, 1, &clear_range);
+
+    ComputePushConstants push_constants = {
+        .top_left= {1, 0, 0, 1},
+        .top_right = {0, 0, 1, 1},
+        .bottom_left = {0, 1, 1, 1},
+        .bottom_right = {0, 1, 0, 1},
+    };
+
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, context->gradient_pipeline);
+    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, context->gradient_pipeline_layout, 0, 1, &context->draw_image_descriptor_set, 0, NULL);
+    vkCmdPushConstants(cmd, context->gradient_pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputePushConstants), &push_constants);
+    vkCmdDispatch(cmd, (int)ceil(context->draw_extent.width / 16.0), (int)ceil(context->draw_extent.height / 16.0), 1);
 }
 
 TODO("Stop renderering if resize extent becomes 0, 0")

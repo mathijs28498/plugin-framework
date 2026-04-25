@@ -11,6 +11,8 @@
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_WARNING)
 
+#include "shader_gradient.h"
+
 #include "renderer_vulkan_bootstrap.h"
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan_register.h"
@@ -180,6 +182,98 @@ int32_t create_draw_image(RendererContext *context)
     return 0;
 }
 
+int32_t load_shader_module(RendererContext *context, const uint32_t *shader_code_u32, size_t shader_code_bytes_len, VkShaderModule *out_shader_module)
+{
+    assert(context != NULL);
+    assert(out_shader_module != NULL);
+
+    VkResult result;
+
+    VkShaderModuleCreateInfo shader_module_create_info = {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pCode = shader_code_u32,
+        .codeSize = shader_code_bytes_len,
+    };
+
+    VK_RETURN_IF_ERROR(
+        context->deps.logger, result,
+        vkCreateShaderModule(context->device, &shader_module_create_info, NULL, out_shader_module),
+        -1, "Failed to create shader module: %d", result);
+
+    return 0;
+}
+
+int32_t init_background_pipelines(RendererContext *context)
+{
+    assert(context != NULL);
+
+    VkResult result;
+    int32_t ret;
+
+    VkPushConstantRange compute_push_constant_range = {
+        .offset = 0,
+        .size = sizeof(ComputePushConstants),
+        .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+    };
+
+    VkPipelineLayoutCreateInfo compute_pipeline_layout_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+        .pSetLayouts = &context->draw_image_descriptor_set_layout,
+        .setLayoutCount = 1,
+        .pPushConstantRanges = &compute_push_constant_range,
+        .pushConstantRangeCount = 1,
+    };
+
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &compute_pipeline_layout_create_info, NULL, &context->gradient_pipeline_layout),
+                       -1, "Failed to create gradient pipeline layout: %d", result);
+
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, &context->main_destroy_queue, vkDestroyPipelineLayout, context->device, context->gradient_pipeline_layout, NULL),
+                    "Failed to push gradient pipeline layout destroy data to destroy queue: %d", ret);
+
+    VkShaderModule compute_shader_module;
+    RETURN_IF_ERROR(context->deps.logger, ret, load_shader_module(context, GRADIENT_SHADER_U32_CODE, GRADIENT_SHADER_BYTES_LEN, &compute_shader_module),
+                    "Failed to load shader module: %d", ret);
+
+    VkPipelineShaderStageCreateInfo stage_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+        .module = compute_shader_module,
+        .pName = "main",
+    };
+
+    VkComputePipelineCreateInfo compute_pipeline_create_info = {
+        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+        .layout = context->gradient_pipeline_layout,
+        .stage = stage_create_info,
+    };
+
+    VK_RETURN_IF_ERROR(context->deps.logger, result,
+                       vkCreateComputePipelines(context->device, VK_NULL_HANDLE, 1, &compute_pipeline_create_info, NULL, &context->gradient_pipeline),
+                       -1, "Failed to create compute pipelines: %d", result);
+
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, &context->main_destroy_queue, vkDestroyPipeline, context->device, context->gradient_pipeline, NULL),
+                    "Failed to push gradient pipeline destroy data to destroy queue: %d", ret);
+
+    TODO("Make sure it gets destroyed even if pipeline fails");
+    vkDestroyShaderModule(context->device, compute_shader_module, NULL);
+
+    return 0;
+}
+
+int32_t init_pipelines(RendererContext *context)
+{
+    assert(context != NULL);
+
+    int32_t ret;
+
+    RETURN_IF_ERROR(context->deps.logger, ret, init_background_pipelines(context),
+                    "Failed to initialize background pipelines: %d", ret);
+    assert(context != NULL);
+    return 0;
+}
+
 int32_t renderer_vulkan_start(RendererContext *context)
 {
     assert(context != NULL);
@@ -202,6 +296,9 @@ int32_t renderer_vulkan_start(RendererContext *context)
 
     VK_TRY_INIT(context->deps.logger, ret, create_descriptor_sets(context), &context->main_destroy_queue,
                 "Failed to create draw image: %d", ret);
+
+    VK_TRY_INIT(context->deps.logger, ret, init_pipelines(context), &context->main_destroy_queue,
+                "Failed to load shader module: %d", ret);
 
     return 0;
 }
@@ -235,6 +332,9 @@ int32_t renderer_vulkan_start_recreate_swapchain(RendererContext *context)
 
     RETURN_IF_ERROR(context->deps.logger, ret, create_draw_image(context),
                     "Failed to recreate draw image: %d", ret);
+
+    RETURN_IF_ERROR(context->deps.logger, ret, create_descriptor_sets(context),
+                    "Failed to recreate descriptor sets: %d", ret);
 
     context->resize_requested = false;
     return 0;

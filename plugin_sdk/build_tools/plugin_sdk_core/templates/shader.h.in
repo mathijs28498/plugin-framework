@@ -1,0 +1,8 @@
+#pragma once
+
+#include <stdint.h>
+#include <stddef.h>
+
+extern const uint32_t @SCREAMING_SHADER_NAME@_SHADER_U32_CODE[];
+extern const size_t @SCREAMING_SHADER_NAME@_SHADER_U32_LEN;
+extern const size_t @SCREAMING_SHADER_NAME@_SHADER_BYTES_LEN;

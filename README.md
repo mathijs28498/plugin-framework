@@ -61,6 +61,7 @@
 - [ ] Fix all todos
 
 ### 2
+- [ ] Add compile error checking for semantics and syntax in shader generate script
 - [ ] Add interface and plugin configurations
   - [ ] Interface plugins at include folder next to header, toml file
   - [ ] Plugin plugins at plugin, toml file
@@ -74,7 +75,7 @@
     - [ ] 2 stage configure where the first stage creates the cmake file dependencies for the second stage
 - [ ] Create depfile for python dependencies dynamically
 - [ ] Make get in app fail if it is not explicitly requested plugin
-- [ ] Change to glsl
+- [ ] Change to hlsl
 - [ ] Link vulkan indirectly for faster performance: https://docs.vulkan.org/guide/latest/loader.html#loader
 - [ ] Add project wide debug level
 - [ ] Add allocator plugin

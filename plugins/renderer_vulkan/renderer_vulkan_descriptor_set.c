@@ -71,14 +71,6 @@ int32_t allocate_descriptor_set(RendererContext *context, VkDescriptorSetLayout 
     return 0;
 }
 
-void destroy_descriptor_sets(RendererContext *context)
-{
-    assert(context != NULL);
-
-    vkDestroyDescriptorPool(context->device, context->global_descriptor_pool, NULL);
-    vkDestroyDescriptorSetLayout(context->device, context->draw_image_descriptor_set_layout, NULL);
-}
-
 int32_t create_descriptor_sets(RendererContext *context)
 {
     assert(context != NULL);
@@ -133,8 +125,13 @@ int32_t create_descriptor_sets(RendererContext *context)
     vkUpdateDescriptorSets(context->device, 1, &draw_image_write_descriptor_set, 0, NULL);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_1(context->deps.logger, &context->main_destroy_queue, destroy_descriptor_sets, context),
-                    "Failed to push destroy descriptor sets to destroy queue: %d", ret);
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, &context->swapchain_destroy_queue, vkDestroyDescriptorPool, context->device, context->global_descriptor_pool, NULL),
+                    "Failed to push descriptor pool to swapchain destroy queue: %d", ret);
+
+    TODO("This belongs in the main_destroy_queue, so shouldnt be here, but the whole function is being called in recreate_swapchain, so fix that")
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, &context->swapchain_destroy_queue, vkDestroyDescriptorSetLayout, context->device, context->draw_image_descriptor_set_layout, NULL),
+                    "Failed to push descriptor set layout to swapchain destroy queue: %d", ret);
 
     return 0;
 }

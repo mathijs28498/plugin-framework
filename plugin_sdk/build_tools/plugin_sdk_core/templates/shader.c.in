@@ -1,0 +1,8 @@
+#include "@SHADER_HEADER_FILE_NAME@"
+
+#include <stdint.h>
+#include <stddef.h>
+
+const uint32_t @SCREAMING_SHADER_NAME@_SHADER_U32_CODE[] = {@SHADER_U32_CODE@};
+const size_t @SCREAMING_SHADER_NAME@_SHADER_U32_LEN = @SHADER_U32_LEN@;
+const size_t @SCREAMING_SHADER_NAME@_SHADER_BYTES_LEN = @SHADER_BYTES_LEN@;
