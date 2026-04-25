@@ -37,3 +37,8 @@ plugin_generate_register_inc(renderer_vulkan
     TOML_DIR_PATH "${CMAKE_CURRENT_LIST_DIR}"
 )
 
+include("RendererShaderGenerator")
+target_embed_shader(renderer_vulkan
+    GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
+    SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/gradient.comp"
+)

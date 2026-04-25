@@ -6,7 +6,7 @@
 
 #include "plugin_dependencies.h"
 
-TODO("Fix this differently");
+TODO("Make a permanent arena for housing the context");
 #define MAX_REGISTERED_PLUGINS_LEN 20
 #define MAX_INTERFACE_PER_SCOPE 10
 

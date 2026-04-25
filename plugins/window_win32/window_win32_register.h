@@ -12,7 +12,7 @@ typedef struct HWND__ *HWND;
 
 #pragma pack(push, 8)
 
-TODO("Fix this differently")
+TODO("Make this arena buffered if necessary")
 #define WINDOW_WIN32_WINDOW_EVENTS_SIZE 32
 
 typedef struct WindowContext
