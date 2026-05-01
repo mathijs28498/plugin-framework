@@ -5,8 +5,8 @@ layout (location = 0) out vec3 outColor;
 void main() 
 {
 	const vec3 positions[3] = vec3[3](
-		vec3(0.3f,0.5f, 0.0f),
-		vec3(-0.5f,0.5f, 0.0f),
+		vec3(0.8f,0.7f, 0.0f),
+		vec3(-0.9f,0.8f, 0.0f),
 		vec3(0.0f,-0.7f, 0.0f)
 	);
 
@@ -18,6 +18,6 @@ void main()
 	);
 
 	//output the position of each vertex
-	gl_Position = vec4(positions[gl_VertexIndex], .5f);
+	gl_Position = vec4(positions[gl_VertexIndex], 1.0f);
 	outColor = colors[gl_VertexIndex];
 }

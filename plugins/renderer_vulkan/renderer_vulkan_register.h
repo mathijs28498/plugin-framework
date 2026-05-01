@@ -124,7 +124,7 @@ typedef struct GPUMeshBuffers
 
 typedef struct GPUDrawPushConstants
 {
-    // mat4 world_matrix;
+    mat4 world_matrix;
     VkDeviceAddress vertex_buffer_address;
 
 } GPUDrawPushConstants;

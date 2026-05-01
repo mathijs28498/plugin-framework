@@ -582,8 +582,15 @@ int32_t execute_start_command_buffer(RendererContext *context, RendererStartCont
     VK_RETURN_IF_ERROR(context->deps.logger, result, vkEndCommandBuffer(start_context->command_buffer),
                        -1, "Failed to end start command buffer: %d", result);
 
+    VkCommandBufferSubmitInfo buffer_submit_info = {
+        .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO,
+        .commandBuffer = start_context->command_buffer,
+    };
+
     VkSubmitInfo2 submit_info = {
         .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO_2,
+        .commandBufferInfoCount = 1,
+        .pCommandBufferInfos = &buffer_submit_info,
     };
     VK_RETURN_IF_ERROR(context->deps.logger, result, vkQueueSubmit2(context->graphics_queue, 1, &submit_info, VK_NULL_HANDLE),
                        -1, "Failed to submit start command buffer to queue: %d", result);
@@ -653,7 +660,7 @@ int32_t renderer_vulkan_start(RendererContext *context)
 
 int32_t renderer_vulkan_start_recreate_swapchain(RendererContext *context)
 {
-    TODO("What needs to happen of fail? delete all queues?")
+    TODO("What needs to happen if fail? delete all queues?")
     assert(context != NULL);
     assert(context->device != VK_NULL_HANDLE);
     assert(context->swapchain != VK_NULL_HANDLE);

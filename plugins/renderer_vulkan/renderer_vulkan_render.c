@@ -89,31 +89,20 @@ void draw_geometry(RendererContext *context, VkCommandBuffer cmd)
     };
 
     vkCmdBeginRendering(cmd, &renderInfo);
-
-    // vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context->mesh_pipeline);
-
-    // vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-    // vkCmdSetScissor(cmd, 0, 1, &scissor);
-
-    // vkCmdDraw(cmd, 3, 1, 0, 0);
-
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context->mesh_pipeline);
-
     vkCmdSetViewport(cmd, 0, 1, &viewport);
-
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context->triangle_pipeline);
+    vkCmdDraw(cmd, 3, 1, 0, 0);
+
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context->mesh_pipeline);
     GPUDrawPushConstants mesh_push_constants = {
-        // .world_matrix = GLM_MAT4_IDENTITY_INIT,
+        .world_matrix = GLM_MAT4_IDENTITY_INIT,
         .vertex_buffer_address = context->rectangle_mesh_buffers.vertex_buffer_address,
     };
-
     vkCmdPushConstants(cmd, context->mesh_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &mesh_push_constants);
     vkCmdBindIndexBuffer(cmd, context->rectangle_mesh_buffers.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-
-    // vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
-    vkCmdDraw(cmd, 3, 1, 0, 0);
+    vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
 
     vkCmdEndRendering(cmd);
 }
