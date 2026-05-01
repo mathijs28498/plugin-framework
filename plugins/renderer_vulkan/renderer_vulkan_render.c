@@ -41,7 +41,7 @@ void draw_background(RendererContext *context, VkCommandBuffer cmd)
     // vkCmdClearColorImage(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, &clear_color, 1, &clear_range);
 
     ComputePushConstants push_constants = {
-        .top_left= {1, 0, 0, 1},
+        .top_left = {1, 0, 0, 1},
         .top_right = {0, 0, 1, 1},
         .bottom_left = {0, 1, 1, 1},
         .bottom_right = {0, 1, 0, 1},
@@ -51,6 +51,71 @@ void draw_background(RendererContext *context, VkCommandBuffer cmd)
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, context->gradient_pipeline_layout, 0, 1, &context->draw_image_descriptor_set, 0, NULL);
     vkCmdPushConstants(cmd, context->gradient_pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputePushConstants), &push_constants);
     vkCmdDispatch(cmd, (int)ceil(context->draw_extent.width / 16.0), (int)ceil(context->draw_extent.height / 16.0), 1);
+}
+
+void draw_geometry(RendererContext *context, VkCommandBuffer cmd)
+{
+    assert(context != NULL);
+    assert(cmd != VK_NULL_HANDLE);
+
+    VkRenderingAttachmentInfo colorAttachment = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+        .imageView = context->draw_image.image_view,
+        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+    };
+
+    VkRenderingInfo renderInfo = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea = {
+            .extent = extent_2d(&context->draw_extent),
+        },
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &colorAttachment,
+    };
+
+    VkViewport viewport = {
+        .x = 0,
+        .y = 0,
+        .width = (float)context->draw_extent.width,
+        .height = (float)context->draw_extent.height,
+    };
+    VkRect2D scissor = {
+        .offset.x = 0,
+        .offset.y = 0,
+        .extent = extent_2d(&context->draw_extent),
+    };
+
+    vkCmdBeginRendering(cmd, &renderInfo);
+
+    // vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context->mesh_pipeline);
+
+    // vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+    // vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+    // vkCmdDraw(cmd, 3, 1, 0, 0);
+
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context->mesh_pipeline);
+
+    vkCmdSetViewport(cmd, 0, 1, &viewport);
+
+    vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+    GPUDrawPushConstants mesh_push_constants = {
+        // .world_matrix = GLM_MAT4_IDENTITY_INIT,
+        .vertex_buffer_address = context->rectangle_mesh_buffers.vertex_buffer_address,
+    };
+
+    vkCmdPushConstants(cmd, context->mesh_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &mesh_push_constants);
+    vkCmdBindIndexBuffer(cmd, context->rectangle_mesh_buffers.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+
+    // vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
+    vkCmdDraw(cmd, 3, 1, 0, 0);
+
+    vkCmdEndRendering(cmd);
 }
 
 TODO("Stop renderering if resize extent becomes 0, 0")
@@ -78,7 +143,7 @@ int32_t begin_frame(RendererContext *context, RendererFrameData **out_frame, uin
     VK_RETURN_IF_ERROR(context->deps.logger, result, vkWaitForFences(context->device, 1, &frame->render_fence, VK_TRUE, SECOND_IN_NS),
                        -1, "Failed to wait for render fence: %d", result);
 
-    rv_call_queue_flush(&frame->destroy_queue);
+    rv_call_queue_flush(frame->destroy_queue);
 
     VK_RETURN_IF_ERROR(context->deps.logger, result, vkResetFences(context->device, 1, &frame->render_fence),
                        -1, "Failed to reset render fence: %d", result);
@@ -151,14 +216,15 @@ int32_t renderer_vulkan_render(RendererContext *context)
 
     VkCommandBuffer cmd = frame->main_command_buffer;
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkResetCommandBuffer(cmd, 0),
-                       -1, "Failed to reset command buffer: %d", result);
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkResetCommandPool(context->device, frame->command_pool, 0),
+                       -1, "Failed to reset frame command pool: %d", result);
 
     VkCommandBufferBeginInfo cmd_begin_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
     };
 
+    TODO("Check where this should be in the function");
     context->draw_extent.width = context->draw_image.image_extent.width;
     context->draw_extent.height = context->draw_image.image_extent.height;
 
@@ -169,7 +235,11 @@ int32_t renderer_vulkan_render(RendererContext *context)
 
     draw_background(context, cmd);
 
-    rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+    draw_geometry(context, cmd);
+
+    rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
     rv_transition_image(cmd, swapchain_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     rv_copy_image_to_image(cmd, context->draw_image.image, swapchain_image, extent_2d(&context->draw_extent), extent_2d(&context->swapchain_extent));

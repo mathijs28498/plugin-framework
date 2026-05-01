@@ -43,10 +43,10 @@ static int32_t plugin_init(RendererContext *context)
     RETURN_IF_ERROR(context->deps.logger, ret, arena_allocator_get_arena(context->deps.arena_allocator, alloc_size, &arena),
                     "Unable to allocate arena allocator: %d", -1);
 
-    BIND_ARRAY(RV_CallRecord, arena->main_destroy_queue_mem, context->main_destroy_queue.queue, MAIN_DESTROY_QUEUE_CAPACITY);
-    BIND_ARRAY(RV_CallRecord, arena->swapchain_destroy_queue_mem, context->swapchain_destroy_queue.queue, MAIN_DESTROY_QUEUE_CAPACITY);
-    BIND_ARRAY(RV_CallRecord, arena->frame_0_destroy_queue_mem, context->frames[0].destroy_queue.queue, MAIN_DESTROY_QUEUE_CAPACITY);
-    BIND_ARRAY(RV_CallRecord, arena->frame_1_destroy_queue_mem, context->frames[1].destroy_queue.queue, MAIN_DESTROY_QUEUE_CAPACITY);
+    BIND_ARRAY(RV_CallRecord, arena->main_destroy_queue_mem, context->main_destroy_queue, MAIN_DESTROY_QUEUE_CAPACITY);
+    BIND_ARRAY(RV_CallRecord, arena->swapchain_destroy_queue_mem, context->swapchain_destroy_queue, SWAPCHAIN_DESTROY_QUEUE_CAPACITY);
+    BIND_ARRAY(RV_CallRecord, arena->frame_0_destroy_queue_mem, context->frames[0].destroy_queue, FRAME_DESTROY_QUEUE_CAPACITY);
+    BIND_ARRAY(RV_CallRecord, arena->frame_1_destroy_queue_mem, context->frames[1].destroy_queue, FRAME_DESTROY_QUEUE_CAPACITY);
 
     return 0;
 }

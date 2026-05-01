@@ -47,11 +47,12 @@ int32_t arena_allocator_default_get_arena(ArenaAllocatorContext *context, size_t
     assert(size > 0);
     assert(out_arena != NULL);
 
-    if (context->permanent_arenas_frozen)
-    {
-        LOG_ERR_TRACE(context->deps.logger, "Non permanent frozen arenas are currently not supported");
-        return -1;
-    }
+    TODO("Make this work better with non permanent arenas")
+    // if (context->permanent_arenas_frozen)
+    // {
+    //     LOG_ERR_TRACE(context->deps.logger, "Non permanent frozen arenas are currently not supported");
+    //     return -1;
+    // }
 
     return allocate_permanent_arena(context, size, out_arena);
 }
