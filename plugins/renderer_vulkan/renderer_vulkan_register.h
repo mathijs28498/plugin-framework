@@ -32,6 +32,7 @@ CREATE_VK_HANDLE_DEFINITION(VkDescriptorSetLayout);
 CREATE_VK_HANDLE_DEFINITION(VkDescriptorSet);
 CREATE_VK_HANDLE_DEFINITION(VkPipelineLayout);
 CREATE_VK_HANDLE_DEFINITION(VkPipeline);
+CREATE_VK_HANDLE_DEFINITION(VkBuffer);
 
 CREATE_VK_HANDLE_DEFINITION(VmaAllocator);
 CREATE_VK_HANDLE_DEFINITION(VmaAllocation);
@@ -76,12 +77,6 @@ typedef struct RV_CallRecord
     rv_call_fn_any fn;
 } RV_CallRecord;
 
-typedef struct RV_CallQueue
-{
-    RV_CallRecord *queue;
-    size_t queue_len;
-} RV_CallQueue;
-
 typedef struct RendererFrameData
 {
     VkCommandPool command_pool;
@@ -90,7 +85,7 @@ typedef struct RendererFrameData
     VkSemaphore render_semaphore;
     VkFence render_fence;
 
-    RV_CallQueue destroy_queue;
+    RV_CallRecord *destroy_queue;
 } RendererFrameData;
 
 typedef struct RV_AllocatedImage
@@ -101,6 +96,38 @@ typedef struct RV_AllocatedImage
     RV_VkExtent3D image_extent;
     RV_VkFormat image_format;
 } RV_AllocatedImage;
+
+typedef struct AllocatedBuffer
+{
+    VkBuffer buffer;
+    VmaAllocation allocation;
+} AllocatedBuffer;
+
+typedef struct Vertex
+{
+
+    vec3 position;
+    float uv_x;
+    vec3 normal;
+    float uv_y;
+    vec4 color;
+} Vertex;
+
+typedef uint64_t VkDeviceAddress;
+
+typedef struct GPUMeshBuffers
+{
+    AllocatedBuffer index_buffer;
+    AllocatedBuffer vertex_buffer;
+    VkDeviceAddress vertex_buffer_address;
+} GPUMeshBuffers;
+
+typedef struct GPUDrawPushConstants
+{
+    mat4 world_matrix;
+    VkDeviceAddress vertex_buffer_address;
+
+} GPUDrawPushConstants;
 
 TODO("Maybe split up the struct into smaller structs, like a queue/logical device struct")
 TODO("The smaller struct could also be one for the bootstrap and one for runtime")
@@ -137,8 +164,8 @@ typedef struct RendererContext
     RV_AllocatedImage draw_image;
     RV_VkExtent2D draw_extent;
 
-    RV_CallQueue main_destroy_queue;
-    RV_CallQueue swapchain_destroy_queue;
+    RV_CallRecord *main_destroy_queue;
+    RV_CallRecord *swapchain_destroy_queue;
 
     VkDescriptorPool global_descriptor_pool;
 
@@ -147,13 +174,18 @@ typedef struct RendererContext
 
     VkPipelineLayout gradient_pipeline_layout;
     VkPipeline gradient_pipeline;
-    
-} RendererContext;
+    VkPipeline triangle_pipeline;
+    VkPipelineLayout mesh_pipeline_layout;
+    VkPipeline mesh_pipeline;
 
+    GPUMeshBuffers rectangle_mesh_buffers;
+
+} RendererContext;
 
 #pragma pack(pop)
 
-typedef struct ComputePushConstants {
+typedef struct ComputePushConstants
+{
     vec4 top_left;
     vec4 top_right;
     vec4 bottom_left;

@@ -59,6 +59,7 @@
 
 ### 1
 - [ ] Fix all todos
+- [ ] Make pre render loop command buffer mechanism to use for the program
 
 ### 2
 - [ ] Add compile error checking for semantics and syntax in shader generate script

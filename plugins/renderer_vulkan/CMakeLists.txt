@@ -14,6 +14,7 @@ target_sources(renderer_vulkan
     renderer_vulkan_render.c
     renderer_vulkan_descriptor_set.c
     renderer_vulkan.c
+    renderer_vulkan_pipeline.c
 
     PUBLIC
     FILE_SET HEADERS
@@ -42,4 +43,21 @@ include("RendererShaderGenerator")
 target_embed_shader(renderer_vulkan
     GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
     SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/gradient.comp"
+    SHADER_STAGE "compute"
+)
+target_embed_shader(renderer_vulkan
+    GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
+    SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/colored_triangle.vert"
+    SHADER_STAGE "vertex"
+)
+target_embed_shader(renderer_vulkan
+    GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
+    SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/colored_triangle.frag"
+    SHADER_STAGE "fragment"
+)
+
+target_embed_shader(renderer_vulkan
+    GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
+    SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/colored_triangle_mesh.vert"
+    SHADER_STAGE "vertex"
 )

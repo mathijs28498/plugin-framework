@@ -5,6 +5,8 @@
 #include <vulkan/vulkan.h>
 #include <assert.h>
 
+#include <vk_mem_alloc.h>
+
 #include <plugin_sdk/plugin_utils.h>
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
@@ -47,14 +49,15 @@ void rv_call_record_execute(RV_CallRecord *record)
     }
 }
 
-int32_t rv_call_queue_push_(LoggerInterface *logger, RV_CallQueue *queue, RV_CallType call_type,
+int32_t rv_call_queue_push_(LoggerInterface *logger, RV_CallRecord *call_queue, RV_CallType call_type,
                             rv_call_fn_any fn, uint64_t arg_0, uint64_t arg_1, uint64_t arg_2, uint64_t arg_3)
 {
     assert(logger != NULL);
-    assert(queue != NULL);
+    assert(call_queue != NULL);
     assert(fn != NULL);
 
-    if (queue->queue_len >= GET_ARRAY_CAPACITY(queue->queue))
+    size_t queue_len = GET_ARRAY_LENGTH(call_queue);
+    if (queue_len >= GET_ARRAY_CAPACITY(call_queue))
     {
         LOG_ERR_TRACE(logger, "Failed to add destroy data to queue");
 
@@ -70,52 +73,51 @@ int32_t rv_call_queue_push_(LoggerInterface *logger, RV_CallQueue *queue, RV_Cal
         return -1;
     }
 
-    queue->queue[queue->queue_len].call_type = call_type;
-    queue->queue[queue->queue_len].arg_0 = arg_0;
-    queue->queue[queue->queue_len].arg_1 = arg_1;
-    queue->queue[queue->queue_len].arg_2 = arg_2;
-    queue->queue[queue->queue_len].arg_3 = arg_3;
-    queue->queue[queue->queue_len].fn = fn;
+    call_queue[queue_len].call_type = call_type;
+    call_queue[queue_len].arg_0 = arg_0;
+    call_queue[queue_len].arg_1 = arg_1;
+    call_queue[queue_len].arg_2 = arg_2;
+    call_queue[queue_len].arg_3 = arg_3;
+    call_queue[queue_len].fn = fn;
 
-    queue->queue_len += 1;
+    GET_ARRAY_LENGTH(call_queue) += 1;
 
     return 0;
 }
 
-int32_t rv_call_queue_push_4(LoggerInterface *logger, RV_CallQueue *queue, rv_call_fn_any fn, uint64_t arg_0, uint64_t arg_1, uint64_t arg_2, uint64_t arg_3)
+int32_t rv_call_queue_push_4(LoggerInterface *logger, RV_CallRecord *call_queue, rv_call_fn_any fn, uint64_t arg_0, uint64_t arg_1, uint64_t arg_2, uint64_t arg_3)
 {
-    return rv_call_queue_push_(logger, queue, RV_CALL_TYPE_4, fn, arg_0, arg_1, arg_2, arg_3);
+    return rv_call_queue_push_(logger, call_queue, RV_CALL_TYPE_4, fn, arg_0, arg_1, arg_2, arg_3);
 }
 
-int32_t rv_call_queue_push_3(LoggerInterface *logger, RV_CallQueue *queue, rv_call_fn_any fn, uint64_t arg_0, uint64_t arg_1, uint64_t arg_2)
+int32_t rv_call_queue_push_3(LoggerInterface *logger, RV_CallRecord *call_queue, rv_call_fn_any fn, uint64_t arg_0, uint64_t arg_1, uint64_t arg_2)
 {
-    return rv_call_queue_push_(logger, queue, RV_CALL_TYPE_3, fn, arg_0, arg_1, arg_2, 0U);
+    return rv_call_queue_push_(logger, call_queue, RV_CALL_TYPE_3, fn, arg_0, arg_1, arg_2, 0U);
 }
 
-int32_t rv_call_queue_push_2(LoggerInterface *logger, RV_CallQueue *queue, rv_call_fn_any fn, uint64_t arg_0, uint64_t arg_1)
+int32_t rv_call_queue_push_2(LoggerInterface *logger, RV_CallRecord *call_queue, rv_call_fn_any fn, uint64_t arg_0, uint64_t arg_1)
 {
-    return rv_call_queue_push_(logger, queue, RV_CALL_TYPE_2, fn, arg_0, arg_1, 0U, 0U);
+    return rv_call_queue_push_(logger, call_queue, RV_CALL_TYPE_2, fn, arg_0, arg_1, 0U, 0U);
 }
 
-int32_t rv_call_queue_push_1(LoggerInterface *logger, RV_CallQueue *queue, rv_call_fn_any fn, uint64_t arg_0)
+int32_t rv_call_queue_push_1(LoggerInterface *logger, RV_CallRecord *call_queue, rv_call_fn_any fn, uint64_t arg_0)
 {
-
-    return rv_call_queue_push_(logger, queue, RV_CALL_TYPE_1, fn, arg_0, 0U, 0U, 0U);
+    return rv_call_queue_push_(logger, call_queue, RV_CALL_TYPE_1, fn, arg_0, 0U, 0U, 0U);
 }
 
-void rv_call_queue_flush(RV_CallQueue *queue)
+void rv_call_queue_flush(RV_CallRecord *call_queue)
 {
-    assert(queue != NULL);
+    assert(call_queue != NULL);
 
     // Loop through the queue backwards as a LIFO queue
-    for (size_t i = 0; i < queue->queue_len; i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(call_queue); i++)
     {
-        size_t queue_index = queue->queue_len - i - 1;
-        RV_CallRecord *record = &queue->queue[queue_index];
+        size_t queue_index = GET_ARRAY_LENGTH(call_queue) - i - 1;
+        RV_CallRecord *record = &call_queue[queue_index];
 
         rv_call_record_execute(record);
     }
-    queue->queue_len = 0;
+    GET_ARRAY_LENGTH(call_queue) = 0;
 }
 
 VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mask)
@@ -273,4 +275,36 @@ void rv_copy_image_to_image(VkCommandBuffer cmd, VkImage source, VkImage destina
     };
 
     vkCmdBlitImage2(cmd, &blit_image_info);
+}
+
+int32_t rv_create_buffer(RendererContext *context, size_t alloc_size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage, AllocatedBuffer *out_buffer)
+{
+    assert(alloc_size > 0);
+    assert(out_buffer != NULL);
+
+    VkResult result;
+
+    VkBufferCreateInfo buffer_create_info = {
+        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
+        .size = alloc_size,
+        .usage = usage,
+    };
+
+    VmaAllocationCreateInfo alloc_create_info = {
+        .usage = memory_usage,
+        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+    };
+
+    VmaAllocationInfo allocation_info;
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vmaCreateBuffer(context->vma_allocator, &buffer_create_info, &alloc_create_info, &out_buffer->buffer, &out_buffer->allocation, &allocation_info),
+                       -1, "Failed to create buffer: %d", result);
+
+    return 0;
+}
+
+void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation allocation)
+{
+    assert(allocator != VK_NULL_HANDLE);
+    assert(buffer != NULL);
+    vmaDestroyBuffer(allocator, buffer, allocation);
 }

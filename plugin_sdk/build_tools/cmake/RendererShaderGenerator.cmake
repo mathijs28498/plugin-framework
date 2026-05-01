@@ -10,10 +10,21 @@ function(target_embed_shader TARGET_NAME)
     set(PLUGIN_SDK_SCRIPTS_DIR_PATH "${PLUGIN_SDK_BUILD_TOOLS_PATH}/scripts")
     set(PLUGIN_SDK_TEMPLATES_DIR_PATH "${PLUGIN_SDK_CORE_DIR_PATH}/templates")
 
-    set(oneValueArgs GEN_DIR_PATH SHADER_FILE_PATH)
+    set(oneValueArgs GEN_DIR_PATH SHADER_FILE_PATH SHADER_STAGE)
     cmake_parse_arguments(PARSE_ARGV 1 arg "" "${oneValueArgs}" "")
 
+    set(VALID_SHADER_STAGES vertex fragment compute geometry tesscontrol tesseval)
+
+    if(NOT DEFINED arg_SHADER_STAGE)
+        message(FATAL_ERROR "target_embed_shader: SHADER_STAGE must be provided.")
+    endif()
+
+    if(NOT arg_SHADER_STAGE IN_LIST VALID_SHADER_STAGES)
+        message(FATAL_ERROR "target_embed_shader: Invalid SHADER_STAGE '${arg_SHADER_STAGE}'. Valid stages are: ${VALID_SHADER_STAGES}")
+    endif()
+
     get_filename_component(SHADER_NAME "${arg_SHADER_FILE_PATH}" NAME_WLE)
+    set(SHADER_NAME "${SHADER_NAME}_${arg_SHADER_STAGE}")
 
     string(REPLACE "." "_" SHADER_NAME ${SHADER_NAME})
 
