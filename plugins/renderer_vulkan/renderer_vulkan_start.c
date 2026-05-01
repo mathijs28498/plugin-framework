@@ -362,6 +362,8 @@ int32_t create_triangle_pipeline(RendererContext *context)
     rv_pipeline_set_cull_mode(pipeline_builder, RV_CULL_MODE_NONE, RV_FRONT_FACE_CLOCKWISE);
     rv_pipeline_set_multisampling_none(pipeline_builder);
     rv_pipeline_disable_blending(pipeline_builder);
+    // rv_pipeline_enable_blending_additive(pipeline_builder);
+    // rv_pipeline_enable_blending_alphablend(pipeline_builder);
     rv_pipeline_disable_depthtest(pipeline_builder);
 
     rv_pipeline_set_color_attachment_format(pipeline_builder, context->draw_image.image_format);
@@ -420,6 +422,8 @@ int32_t create_mesh_pipeline(RendererContext *context)
     rv_pipeline_set_cull_mode(pipeline_builder, RV_CULL_MODE_NONE, RV_FRONT_FACE_CLOCKWISE);
     rv_pipeline_set_multisampling_none(pipeline_builder);
     rv_pipeline_disable_blending(pipeline_builder);
+    // rv_pipeline_enable_blending_additive(pipeline_builder);
+    // rv_pipeline_enable_blending_alphablend(pipeline_builder);
     rv_pipeline_disable_depthtest(pipeline_builder);
 
     rv_pipeline_set_color_attachment_format(pipeline_builder, context->draw_image.image_format);

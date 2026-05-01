@@ -195,6 +195,32 @@ void rv_pipeline_disable_blending(RV_PipelineBuilder *pipeline_builder)
     pipeline_builder->color_blend_attachment_ci.blendEnable = VK_FALSE;
 }
 
+void rv_pipeline_enable_blending_additive(RV_PipelineBuilder *pipeline_builder)
+{
+    assert(pipeline_builder != NULL);
+    pipeline_builder->color_blend_attachment_ci.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    pipeline_builder->color_blend_attachment_ci.blendEnable = VK_TRUE;
+    pipeline_builder->color_blend_attachment_ci.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    pipeline_builder->color_blend_attachment_ci.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+    pipeline_builder->color_blend_attachment_ci.colorBlendOp = VK_BLEND_OP_ADD;
+    pipeline_builder->color_blend_attachment_ci.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    pipeline_builder->color_blend_attachment_ci.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    pipeline_builder->color_blend_attachment_ci.alphaBlendOp = VK_BLEND_OP_ADD;
+}
+
+void rv_pipeline_enable_blending_alphablend(RV_PipelineBuilder *pipeline_builder)
+{
+    assert(pipeline_builder != NULL);
+    pipeline_builder->color_blend_attachment_ci.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    pipeline_builder->color_blend_attachment_ci.blendEnable = VK_TRUE;
+    pipeline_builder->color_blend_attachment_ci.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    pipeline_builder->color_blend_attachment_ci.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    pipeline_builder->color_blend_attachment_ci.colorBlendOp = VK_BLEND_OP_ADD;
+    pipeline_builder->color_blend_attachment_ci.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    pipeline_builder->color_blend_attachment_ci.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    pipeline_builder->color_blend_attachment_ci.alphaBlendOp = VK_BLEND_OP_ADD;
+}
+
 void rv_pipeline_set_color_attachment_format(RV_PipelineBuilder *pipeline_builder, RV_VkFormat format)
 {
     assert(pipeline_builder != NULL);
