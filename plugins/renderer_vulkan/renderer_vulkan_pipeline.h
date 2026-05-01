@@ -58,6 +58,8 @@ void rv_pipeline_set_polygon_mode(RV_PipelineBuilder *pipeline_builder, RV_VkPol
 void rv_pipeline_set_cull_mode(RV_PipelineBuilder *pipeline_builder, RV_VkCullModeFlags cull_mode_flags, RV_VkFrontFace front_face);
 void rv_pipeline_set_multisampling_none(RV_PipelineBuilder *pipeline_builder);
 void rv_pipeline_disable_blending(RV_PipelineBuilder *pipeline_builder);
+void rv_pipeline_enable_blending_additive(RV_PipelineBuilder *pipeline_builder);
+void rv_pipeline_enable_blending_alphablend(RV_PipelineBuilder *pipeline_builder);
 void rv_pipeline_set_color_attachment_format(RV_PipelineBuilder *pipeline_builder, RV_VkFormat format);
 void rv_pipeline_set_depth_format(RV_PipelineBuilder *pipeline_builder, RV_VkFormat format);
 void rv_pipeline_disable_depthtest(RV_PipelineBuilder *pipeline_builder);

@@ -167,6 +167,16 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         ValidateRect(hwnd, NULL);
         return 0;
 
+    case WM_SIZING:
+        window_event.type = WINDOW_EVENT_TYPE_RESIZE;
+
+        RECT *rect = (RECT *)lParam;
+        window_event.resize.width = rect->right - rect->left;
+        window_event.resize.height = rect->bottom - rect->top;
+
+        window_win32_window_events_push(context, &window_event);
+        return 0;
+
     case WM_SIZE:
         window_event.type = WINDOW_EVENT_TYPE_RESIZE;
         window_event.resize.width = (uint32_t)LOWORD(lParam);
