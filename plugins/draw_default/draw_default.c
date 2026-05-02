@@ -28,9 +28,14 @@ int32_t draw_default_present(DrawContext *context)
 {
     assert(context != NULL);
     int32_t ret;
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_begin_frame(context->deps.renderer),
+                    "Failed to begin frame: %d", ret);
 
     RETURN_IF_ERROR(context->deps.logger, ret, renderer_render(context->deps.renderer),
                     "Error rendering renderer: %d", ret);
+
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_end_frame(context->deps.renderer),
+                    "Failed to end frame: %d", ret);
     return 0;
 }
 

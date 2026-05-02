@@ -129,6 +129,13 @@ typedef struct GPUDrawPushConstants
 
 } GPUDrawPushConstants;
 
+typedef struct ActiveFrameState
+{
+    RendererFrameData *frame;
+    uint32_t swapchain_index;
+    bool is_active;
+} ActiveFrameState;
+
 TODO("Maybe split up the struct into smaller structs, like a queue/logical device struct")
 TODO("The smaller struct could also be one for the bootstrap and one for runtime")
 typedef struct RendererContext
@@ -158,6 +165,7 @@ typedef struct RendererContext
 
     uint32_t frame_number;
     RendererFrameData frames[FRAMES_LEN];
+    ActiveFrameState active_frame_state;
 
     VmaAllocator vma_allocator;
 

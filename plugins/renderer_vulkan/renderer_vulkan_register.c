@@ -15,6 +15,8 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_register, LOG_LEVEL_DEBUG)
 
 static const RendererVtable plugin_vtable = {
     .start = renderer_vulkan_start,
+    .begin_frame = renderer_vulkan_render_begin_frame,
+    .end_frame = renderer_vulkan_render_end_frame,
     .render = renderer_vulkan_render,
     .on_window_resize = renderer_vulkan_on_window_resize,
 };
@@ -35,8 +37,7 @@ static int32_t plugin_init(RendererContext *context)
     {
         _Alignas(ArrayHeader_) uint8_t main_destroy_queue_mem[ARRAY_MEMORY_SIZE(RV_CallRecord, MAIN_DESTROY_QUEUE_CAPACITY)];
         _Alignas(ArrayHeader_) uint8_t swapchain_destroy_queue_mem[ARRAY_MEMORY_SIZE(RV_CallRecord, SWAPCHAIN_DESTROY_QUEUE_CAPACITY)];
-        _Alignas(ArrayHeader_) uint8_t frame_0_destroy_queue_mem[ARRAY_MEMORY_SIZE(RV_CallRecord, FRAME_DESTROY_QUEUE_CAPACITY)];
-        _Alignas(ArrayHeader_) uint8_t frame_1_destroy_queue_mem[ARRAY_MEMORY_SIZE(RV_CallRecord, FRAME_DESTROY_QUEUE_CAPACITY)];
+        _Alignas(ArrayHeader_) uint8_t frame_destroy_queue_mem[ARRAY_SIZE(context->frames)][ARRAY_MEMORY_SIZE(RV_CallRecord, FRAME_DESTROY_QUEUE_CAPACITY)];
     } *arena;
 
     size_t alloc_size = sizeof(*arena);
@@ -45,8 +46,10 @@ static int32_t plugin_init(RendererContext *context)
 
     BIND_ARRAY(RV_CallRecord, arena->main_destroy_queue_mem, context->main_destroy_queue, MAIN_DESTROY_QUEUE_CAPACITY);
     BIND_ARRAY(RV_CallRecord, arena->swapchain_destroy_queue_mem, context->swapchain_destroy_queue, SWAPCHAIN_DESTROY_QUEUE_CAPACITY);
-    BIND_ARRAY(RV_CallRecord, arena->frame_0_destroy_queue_mem, context->frames[0].destroy_queue, FRAME_DESTROY_QUEUE_CAPACITY);
-    BIND_ARRAY(RV_CallRecord, arena->frame_1_destroy_queue_mem, context->frames[1].destroy_queue, FRAME_DESTROY_QUEUE_CAPACITY);
+    for (size_t i = 0; i < ARRAY_SIZE(context->frames); i++)
+    {
+        BIND_ARRAY(RV_CallRecord, arena->frame_destroy_queue_mem[i], context->frames[i].destroy_queue, FRAME_DESTROY_QUEUE_CAPACITY);
+    }
 
     return 0;
 }

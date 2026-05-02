@@ -33,6 +33,7 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
     LOG_INF(context->deps.logger, "Starting main loop");
 
     bool gui_application_running = true;
+    TODO("Handle minimized screens to stop rendering and stuff")
     while (gui_application_running)
     {
         RETURN_IF_ERROR(context->deps.logger, ret, window_poll_os_events(context->deps.window),
@@ -82,11 +83,9 @@ int32_t gui_application_default_run(GuiApplicationContext *context)
             break;
         }
 
-        // logic->update(logic->context);
-        // if (gui_application_do_fixed_update(context))
-        // {
-        //     logic->fixed_update(logic->context);
-        // }
+        // RETURN_IF_ERROR(context->deps.logger, ret, logic_update(context->deps.logic),
+        //     "Failed to call logic update: %d", ret);
+
 
         RETURN_IF_ERROR(context->deps.logger, ret, draw_present(context->deps.draw),
                         "Failed to present draw: %d", ret);

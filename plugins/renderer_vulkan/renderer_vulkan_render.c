@@ -107,12 +107,11 @@ void draw_geometry(RendererContext *context, VkCommandBuffer cmd)
     vkCmdEndRendering(cmd);
 }
 
-TODO("Stop renderering if resize extent becomes 0, 0")
-int32_t begin_frame(RendererContext *context, RendererFrameData **out_frame, uint32_t *out_swapchain_index)
+TODO("Return a commandlist to start rendering")
+int32_t renderer_vulkan_render_begin_frame(RendererContext *context)
 {
     assert(context != NULL);
-    assert(out_frame != NULL);
-    assert(out_swapchain_index != NULL);
+    assert(!context->active_frame_state.is_active);
 
     VkResult result;
 
@@ -134,9 +133,6 @@ int32_t begin_frame(RendererContext *context, RendererFrameData **out_frame, uin
 
     rv_call_queue_flush(frame->destroy_queue);
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkResetFences(context->device, 1, &frame->render_fence),
-                       -1, "Failed to reset render fence: %d", result);
-
     uint32_t swapchain_image_index;
     VK_RETURN_IF_ERROR_CONDITION(
         context->deps.logger, result, result < 0 && result != VK_ERROR_OUT_OF_DATE_KHR,
@@ -152,16 +148,21 @@ int32_t begin_frame(RendererContext *context, RendererFrameData **out_frame, uin
         return 2;
     }
 
-    *out_frame = &context->frames[context->frame_number % ARRAY_SIZE(context->frames)];
-    *out_swapchain_index = swapchain_image_index;
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkResetFences(context->device, 1, &frame->render_fence),
+                       -1, "Failed to reset render fence: %d", result);
+
+    context->active_frame_state.frame = &context->frames[context->frame_number % ARRAY_SIZE(context->frames)];
+    context->active_frame_state.swapchain_index = swapchain_image_index;
+    context->active_frame_state.is_active = true;
 
     return 0;
 }
 
-int32_t end_frame(RendererContext *context, RendererFrameData *frame, uint32_t swapchain_index)
+TODO("Take a commandlist to finish rendering")
+int32_t renderer_vulkan_render_end_frame(RendererContext *context)
 {
     assert(context != NULL);
-    assert(frame != NULL);
+    assert(context->active_frame_state.frame != NULL);
 
     VkResult result;
 
@@ -170,11 +171,12 @@ int32_t end_frame(RendererContext *context, RendererFrameData *frame, uint32_t s
         .pSwapchains = &context->swapchain,
         .swapchainCount = 1,
 
-        .pWaitSemaphores = &frame->render_semaphore,
+        .pWaitSemaphores = &context->active_frame_state.frame->render_semaphore,
         .waitSemaphoreCount = 1,
 
-        .pImageIndices = &swapchain_index,
+        .pImageIndices = &context->active_frame_state.swapchain_index,
     };
+    context->active_frame_state.is_active = false;
 
     VK_RETURN_IF_ERROR(context->deps.logger, result, vkQueuePresentKHR(context->present_queue, &present_info),
                        -1, "Failed to present queue: %d", result);
@@ -187,21 +189,17 @@ int32_t end_frame(RendererContext *context, RendererFrameData *frame, uint32_t s
 int32_t renderer_vulkan_render(RendererContext *context)
 {
     assert(context != NULL);
+    assert(context->active_frame_state.is_active);
     VkResult result;
-    uint32_t ret;
 
-    RendererFrameData *frame;
-    uint32_t swapchain_index;
+    RendererFrameData *frame = context->active_frame_state.frame;
+    VkImage swapchain_image = context->swapchain_images[context->active_frame_state.swapchain_index];
 
-    RETURN_IF_ERROR(context->deps.logger, ret, begin_frame(context, &frame, &swapchain_index),
-                    "Failed to begin frame: %d", ret);
-
-    if (ret == 1 || ret == 2)
-    {
-        return ret;
-    }
-
-    VkImage swapchain_image = context->swapchain_images[swapchain_index];
+    // TODO: This is inside draw
+    // if (ret == 1 || ret == 2)
+    // {
+    //     return ret;
+    // }
 
     VkCommandBuffer cmd = frame->main_command_buffer;
 
@@ -247,9 +245,6 @@ int32_t renderer_vulkan_render(RendererContext *context)
 
     VK_RETURN_IF_ERROR(context->deps.logger, result, vkQueueSubmit2(context->graphics_queue, 1, &submit, frame->render_fence),
                        -1, "Failed to submit cmd to queue: %d", result);
-
-    VK_RETURN_IF_ERROR(context->deps.logger, result, end_frame(context, frame, swapchain_index),
-                       -1, "Failed to end frame: %d", result);
 
     return 0;
 }

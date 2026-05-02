@@ -21,6 +21,8 @@ typedef struct RendererWindowConfig
 typedef struct RendererVtable
 {
     int32_t (*start)(struct RendererContext *context);
+    int32_t (*begin_frame)(struct RendererContext *context);
+    int32_t (*end_frame)(struct RendererContext *context);
     int32_t (*render)(struct RendererContext *context);
     void (*on_window_resize)(struct RendererContext *context, uint32_t width, uint32_t height);
 } RendererVtable;
@@ -34,6 +36,16 @@ typedef struct RendererInterface
 static inline int32_t renderer_start(RendererInterface *iface)
 {
     return iface->vtable->start(iface->context);
+}
+
+static inline int32_t renderer_begin_frame(RendererInterface *iface)
+{
+    return iface->vtable->begin_frame(iface->context);
+}
+
+static inline int32_t renderer_end_frame(RendererInterface *iface)
+{
+    return iface->vtable->end_frame(iface->context);
 }
 
 static inline int32_t renderer_render(RendererInterface *iface)

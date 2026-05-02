@@ -24,6 +24,11 @@ int32_t renderer_vulkan_cleanup(RendererContext *context)
                            -1, "Failed to wait for device to idle: %d", result);
     }
 
+    for (size_t i = 0; i < ARRAY_SIZE(context->frames); i++)
+    {
+        rv_call_queue_flush(context->frames[i].destroy_queue);
+    }
+
     rv_call_queue_flush(context->swapchain_destroy_queue);
     rv_call_queue_flush(context->main_destroy_queue);
 
