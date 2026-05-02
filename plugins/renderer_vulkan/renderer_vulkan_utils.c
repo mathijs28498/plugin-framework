@@ -49,6 +49,22 @@ void rv_call_record_execute(RV_CallRecord *record)
     }
 }
 
+void rv_call_queue_flush(RV_CallRecord *call_queue)
+{
+    assert(call_queue != NULL);
+
+    // Loop through the queue backwards as a LIFO queue
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(call_queue); i++)
+    {
+        size_t queue_index = GET_ARRAY_LENGTH(call_queue) - i - 1;
+        RV_CallRecord *record = &call_queue[queue_index];
+
+        rv_call_record_execute(record);
+    }
+    GET_ARRAY_LENGTH(call_queue) = 0;
+}
+
+TODO("Allow for a pointer to be registered to be set to 0 with memset and a size")
 int32_t rv_call_queue_push_(LoggerInterface *logger, RV_CallRecord *call_queue, RV_CallType call_type,
                             rv_call_fn_any fn, uint64_t arg_0, uint64_t arg_1, uint64_t arg_2, uint64_t arg_3)
 {
@@ -103,21 +119,6 @@ int32_t rv_call_queue_push_2(LoggerInterface *logger, RV_CallRecord *call_queue,
 int32_t rv_call_queue_push_1(LoggerInterface *logger, RV_CallRecord *call_queue, rv_call_fn_any fn, uint64_t arg_0)
 {
     return rv_call_queue_push_(logger, call_queue, RV_CALL_TYPE_1, fn, arg_0, 0U, 0U, 0U);
-}
-
-void rv_call_queue_flush(RV_CallRecord *call_queue)
-{
-    assert(call_queue != NULL);
-
-    // Loop through the queue backwards as a LIFO queue
-    for (size_t i = 0; i < GET_ARRAY_LENGTH(call_queue); i++)
-    {
-        size_t queue_index = GET_ARRAY_LENGTH(call_queue) - i - 1;
-        RV_CallRecord *record = &call_queue[queue_index];
-
-        rv_call_record_execute(record);
-    }
-    GET_ARRAY_LENGTH(call_queue) = 0;
 }
 
 VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mask)
