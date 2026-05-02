@@ -60,6 +60,18 @@
 ### 1
 - [ ] Fix all todos
 - [ ] Make pre render loop command buffer mechanism to use for the program
+- [ ] Create proper renderer abstraction and draw plugins
+- [ ] Add hotreloading of all of vulkan without closing windows: https://www.perplexity.ai/search/efd4e2be-4cde-417e-86ec-25e7a01ed4cd
+  - [ ] Call the cleanup and bootstrap of renderer
+  - [ ] Keep track of any handles gotten from the renderer inside the draw so they can be recreated
+  - [ ] Figure out how to recreate all necessary textures
+    - [ ] storing them in CPU backing store vs storing path to texture locations
+  - [ ] Allow for hot gpu swapping
+  - [ ] Check functionality for handling VK_ERROR_DEVICE_LOST by
+    - [ ] infinite loop shader in fragment (maybe other phases too?)
+    - [ ] Use after free, delete a pipeline without vkDeviceWaitIdle
+    - [ ] Win + Ctrl + Shift + B forceful restart graphics driver
+  - [ ] Make destroying set the handle to VK_NULL_HANDLE somehow
 
 ### 2
 - [ ] Add compile error checking for semantics and syntax in shader generate script
