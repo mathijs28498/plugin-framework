@@ -14,7 +14,9 @@ target_sources(renderer_vulkan
     renderer_vulkan_render.c
     renderer_vulkan_descriptor_set.c
     renderer_vulkan.c
+    renderer_vulkan_cmd.c
     renderer_vulkan_pipeline.c
+
 
     PUBLIC
     FILE_SET HEADERS

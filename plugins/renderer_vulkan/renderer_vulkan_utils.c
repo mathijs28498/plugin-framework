@@ -309,3 +309,11 @@ void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation al
     assert(buffer != NULL);
     vmaDestroyBuffer(allocator, buffer, allocation);
 }
+
+VkExtent2D extent_2d(RV_VkExtent2D *rv_extent)
+{
+    return (VkExtent2D){
+        .width = rv_extent->width,
+        .height = rv_extent->height,
+    };
+}

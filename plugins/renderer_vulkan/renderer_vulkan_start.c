@@ -58,7 +58,7 @@ int32_t create_frame_command_buffers(RendererContext *context)
         command_buffer_alloc_info.commandPool = frame->command_pool;
 
         VK_RETURN_IF_ERROR(context->deps.logger, result,
-                           vkAllocateCommandBuffers(context->device, &command_buffer_alloc_info, &frame->main_command_buffer),
+                           vkAllocateCommandBuffers(context->device, &command_buffer_alloc_info, &frame->command_list.command_buffer),
                            -1, "Failed to allocate frame command buffer for frame %d: %d", i, result);
     }
     return 0;
@@ -243,6 +243,8 @@ int32_t create_draw_image(RendererContext *context)
     context->draw_image.image_extent.width = draw_image_extent.width;
     context->draw_image.image_extent.height = draw_image_extent.height;
     context->draw_image.image_extent.depth = draw_image_extent.depth;
+    context->draw_extent.width = draw_image_extent.width;
+    context->draw_extent.height = draw_image_extent.height;
 
     return 0;
 }

@@ -77,10 +77,14 @@ typedef struct RV_CallRecord
     rv_call_fn_any fn;
 } RV_CallRecord;
 
+typedef struct RendererCommandList {
+    VkCommandBuffer command_buffer;
+} RendererCommandList;
+
 typedef struct RendererFrameData
 {
     VkCommandPool command_pool;
-    VkCommandBuffer main_command_buffer;
+    RendererCommandList command_list;
     VkSemaphore swapchain_semaphore;
     VkSemaphore render_semaphore;
     VkFence render_fence;
@@ -148,32 +152,31 @@ typedef struct RendererContext
     VkPhysicalDevice physical_device;
 
     VkDevice device;
-    VkQueue graphics_queue;
-    uint32_t graphics_queue_family;
-    VkQueue present_queue;
-    uint32_t present_queue_family;
     VkSwapchainKHR swapchain;
     VkSwapchainKHR old_swapchain;
-    bool resize_requested;
-    bool halt_render;
-    RV_VkExtent2D resize_extent;
+    RV_CallRecord *swapchain_destroy_queue;
     TODO("Figure out what to do with the size/capacity here")
     ARRAY_FIELD(VkImage, swapchain_images, MAX_SWAPCHAIN_IMAGES_LEN);
     ARRAY_FIELD(VkImageView, swapchain_image_views, MAX_SWAPCHAIN_IMAGES_LEN);
     RV_VkFormat swapchain_image_format;
     RV_VkExtent2D swapchain_extent;
-
-    uint32_t frame_number;
-    RendererFrameData frames[FRAMES_LEN];
-    ActiveFrameState active_frame_state;
-
     VmaAllocator vma_allocator;
+    RV_CallRecord *main_destroy_queue;
 
     RV_AllocatedImage draw_image;
     RV_VkExtent2D draw_extent;
 
-    RV_CallRecord *main_destroy_queue;
-    RV_CallRecord *swapchain_destroy_queue;
+    bool resize_requested;
+    bool halt_render;
+    RV_VkExtent2D resize_extent;
+
+    VkQueue graphics_queue;
+    uint32_t graphics_queue_family;
+    VkQueue present_queue;
+    uint32_t present_queue_family;
+    uint32_t frame_number;
+    RendererFrameData frames[FRAMES_LEN];
+    ActiveFrameState active_frame_state;
 
     VkDescriptorPool global_descriptor_pool;
 

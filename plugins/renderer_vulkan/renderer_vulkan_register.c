@@ -12,16 +12,19 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_register, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan.h"
 #include "renderer_vulkan_start.h"
 #include "renderer_vulkan_render.h"
+#include "renderer_vulkan_cmd.h"
 
 static const RendererVtable plugin_vtable = {
     .start = renderer_vulkan_start,
     .begin_frame = renderer_vulkan_render_begin_frame,
     .end_frame = renderer_vulkan_render_end_frame,
-    .render = renderer_vulkan_render,
     .on_window_resize = renderer_vulkan_on_window_resize,
-};
 
-// #define ALLOC_ARRAY(type, arr_ptr, var_name, cap)
+    .cmd_begin_render_pass = renderer_vulkan_cmd_begin_render_pass,
+    .cmd_end_render_pass = renderer_vulkan_cmd_end_render_pass,
+    .cmd_bind_pipeline = renderer_vulkan_cmd_bind_pipeline,
+    .cmd_draw = renderer_vulkan_cmd_draw,
+};
 
 TODO("Figure out what these sizes should be");
 #define MAIN_DESTROY_QUEUE_CAPACITY 64

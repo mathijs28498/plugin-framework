@@ -82,6 +82,8 @@ typedef uint32_t VkImageAspectFlags;
 typedef uint64_t VkPipelineStageFlags2;
 typedef uint32_t VkBufferUsageFlags;
 typedef uint32_t VmaMemoryUsage;
+struct VkExtent2D;
+struct RV_VkExtent2D;
 
 struct VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mask);
 // ways to improve this efficiency: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples
@@ -95,3 +97,4 @@ struct VkImageViewCreateInfo rv_create_image_view_info(enum VkFormat format, VkI
 void rv_copy_image_to_image(VkCommandBuffer cmd, VkImage source, VkImage destination, struct VkExtent2D src_size, struct VkExtent2D dst_size);
 int32_t rv_create_buffer(struct RendererContext *context, size_t alloc_size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage, struct AllocatedBuffer *out_buffer);
 void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation allocation);
+struct VkExtent2D extent_2d(struct RV_VkExtent2D *rv_extent);
