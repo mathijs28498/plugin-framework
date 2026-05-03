@@ -11,14 +11,6 @@ _Static_assert(sizeof(@INTERFACE_NAME_PASCAL_CASE@Context) <= PLUGIN_CONTEXT_MEM
 
 @INJECT_DEPENDENCY_FN_DEFINITION_TEXT@
 
-static @INTERFACE_NAME_PASCAL_CASE@Context *create_context()
-{
-    @INTERFACE_NAME_PASCAL_CASE@Context *context = (@INTERFACE_NAME_PASCAL_CASE@Context *) calloc(1, sizeof(@INTERFACE_NAME_PASCAL_CASE@Context));
-
-    return context;
-}
-
-
 static const PluginProvider plugin_provider = {
     .vtable = &plugin_vtable,
     .inject_dependency = @INJECT_DEPENDENCY_FN_TEXT@,
