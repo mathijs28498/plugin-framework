@@ -72,6 +72,7 @@
     - [ ] Use after free, delete a pipeline without vkDeviceWaitIdle
     - [ ] Win + Ctrl + Shift + B forceful restart graphics driver
   - [ ] Make destroying set the handle to VK_NULL_HANDLE somehow
+- [ ] Add immediate execute where you begin, get a commandlist and id, then call commands, then end execute
 
 ### 2
 - [ ] Add compile error checking for semantics and syntax in shader generate script
@@ -168,6 +169,6 @@ interface inline regex creator:
 
 calculate lines of code:
 Get-ChildItem -Path . -Recurse -File | Where-Object {
-($_.Extension -in @('.md', '.c', '.h', '.txt', '.cmake', '.py', '.vert', '.frag', '.comp')) -and
+($_.Extension -in @('.md', '.c', '.h', '.txt', '.cmake', '.py', '.vert', '.frag', '.comp', '.in')) -and
 ($_.FullName -notmatch '\\lib\\' -or $_.FullName -match '\\lib\\plugin_manager_bootloader\\' -or $_.FullName -match '\\lib\\static_alloc\\')
 } | Get-Content | Measure-Object -Line
