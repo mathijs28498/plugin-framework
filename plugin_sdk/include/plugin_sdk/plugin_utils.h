@@ -161,7 +161,7 @@ typedef union
     decl type *(var_name) = (type *)var_name##_.arr
 
 #define ARRAY_MEMORY_SIZE(type, amount) (sizeof(type) * (amount) + sizeof(ArrayHeader_))
-#define INIT_ARRAY_MEMORY_FIELD(name, type, amount) _Alignas(ArrayHeader_) uint8_t (name)[ARRAY_MEMORY_SIZE(type, (amount))]
+#define INIT_ARRAY_MEMORY_FIELD(name, type, amount) _Alignas(ArrayHeader_) uint8_t(name)[ARRAY_MEMORY_SIZE(type, (amount))]
 
 #define GET_ARRAY_HEADER(arr_ptr) ((ArrayHeader_ *)(arr_ptr) - 1)
 #define GET_ARRAY_CAPACITY(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->capacity)
@@ -170,6 +170,13 @@ typedef union
 
 #define ARRAY_FOR(arr_ptr, index_name) \
     for (size_t index_name = 0; index_name < GET_ARRAY_LENGTH(arr_ptr); ++index_name)
+
+#define ARRAY_PUSH_UNCHECKED(arr_ptr, element)            \
+    do                                                    \
+    {                                                     \
+        (arr_ptr)[GET_ARRAY_LENGTH(arr_ptr)] = (element); \
+        GET_ARRAY_LENGTH(arr_ptr) += 1;                   \
+    } while (0)
 
 #define ARRAY_PUSH_CHECKED(arr_ptr, element, on_err)                  \
     do                                                                \
@@ -180,8 +187,7 @@ typedef union
         }                                                             \
         else                                                          \
         {                                                             \
-            (arr_ptr)[GET_ARRAY_LENGTH(arr_ptr)] = (element);         \
-            GET_ARRAY_LENGTH(arr_ptr) += 1;                           \
+            ARRAY_PUSH_UNCHECKED(arr_ptr, element);                   \
         }                                                             \
     } while (0)
 

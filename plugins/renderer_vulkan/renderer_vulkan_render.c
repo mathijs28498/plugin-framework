@@ -37,7 +37,7 @@ int32_t draw_background(RendererContext *context, VkCommandBuffer cmd)
     RendererCommandList command_list = {.command_buffer = cmd};
     renderer_vulkan_cmd_bind_compute_pipeline(context, &command_list, context->gradient_pipeline_handle);
     renderer_vulkan_cmd_bind_descriptor_sets(context, &command_list, RENDERER_PIPELINE_TYPE_COMPUTE, context->gradient_pipeline_layout_handle);
-    renderer_vulkan_cmd_push_constants(context, &command_list, context->gradient_pipeline_layout_handle, RENDERER_SHADER_STAGE_COMPUTE, 0, sizeof(ComputePushConstants), &push_constants);
+    renderer_vulkan_cmd_push_constants(context, &command_list, context->gradient_pipeline_layout_handle, RENDERER_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputePushConstants), &push_constants);
 
     renderer_vulkan_cmd_dispatch(context, &command_list, (uint32_t)ceil(context->draw_extent.width / 16.0), (uint32_t)ceil(context->draw_extent.height / 16.0), 1);
 

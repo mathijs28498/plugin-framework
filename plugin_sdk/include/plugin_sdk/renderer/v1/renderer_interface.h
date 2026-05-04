@@ -20,18 +20,20 @@ typedef struct RendererWindowConfig
 } RendererWindowConfig;
 
 typedef uint64_t RendererShaderHandle;
-typedef uint64_t RendererDescriptorSetHandle;
+typedef uint64_t RendererDescriptorSetLayoutHandle;
 typedef uint64_t RendererPipelineLayoutHandle;
 typedef uint64_t RendererGraphicsPipelineHandle;
 typedef uint64_t RendererComputePipelineHandle;
 typedef uint64_t RendererCommandListHandle;
 
-typedef enum RendererShaderStage
+typedef enum RendererShaderStageBits
 {
-    RENDERER_SHADER_STAGE_VERTEX,
-    RENDERER_SHADER_STAGE_FRAGMENT,
-    RENDERER_SHADER_STAGE_COMPUTE,
-} RendererShaderStage;
+    RENDERER_SHADER_STAGE_VERTEX_BIT = 0x00000001,
+    RENDERER_SHADER_STAGE_FRAGMENT_BIT = 0x00000002,
+    RENDERER_SHADER_STAGE_COMPUTE_BIT = 0x00000004,
+} RendererShaderStageBits;
+
+typedef uint32_t RendererShaderStageFlags;
 
 typedef enum RendererPipelineType
 {
@@ -39,11 +41,21 @@ typedef enum RendererPipelineType
     RENDERER_PIPELINE_TYPE_COMPUTE,
 } RendererPipelineType;
 
+typedef struct RendererPushConstantsInfo
+{
+    RendererShaderStageFlags render_stage_flags;
+    uint32_t offset;
+    uint32_t size;
+} RendererPushConstantsInfo;
+
 TODO("Allow for multiple push constants")
 TODO("Make this create info more complete with handles to descriptor sets")
 typedef struct RendererPipelineLayoutCreateInfo
 {
-    uint32_t push_constant_size;
+    uint32_t push_constants_len;
+    RendererPushConstantsInfo *push_constants;
+    uint32_t descriptor_set_layout_handles_len;
+    RendererDescriptorSetLayoutHandle *descriptor_set_layout_handles;
 } RendererPipelineLayoutCreateInfo;
 
 typedef struct RendererGraphicsPipelineCreateInfo

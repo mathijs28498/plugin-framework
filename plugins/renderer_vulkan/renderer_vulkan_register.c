@@ -43,6 +43,7 @@ TODO("Make these part of the configurations")
 #define SWAPCHAIN_DESTROY_QUEUE_CAPACITY 64
 #define FRAME_DESTROY_QUEUE_CAPACITY 32
 #define SHADER_MODULES_CAPACITY 128
+#define DESCRIPTOR_SET_LAYOUTS_CAPACITY 128
 #define PIPELINES_CAPACITY 128
 #define PIPELINE_LAYOUTS_CAPACITY 128
 
@@ -58,10 +59,12 @@ static int32_t plugin_init(RendererContext *context)
         INIT_ARRAY_MEMORY_FIELD(frame_destroy_queue_mem[ARRAY_SIZE(context->frames)], RV_CallRecord, FRAME_DESTROY_QUEUE_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(shader_modules_mem, VkShaderModule, SHADER_MODULES_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(shader_module_generations_mem, uint32_t, SHADER_MODULES_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(descriptor_set_layouts_mem, VkDescriptorSetLayout, DESCRIPTOR_SET_LAYOUTS_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(descriptor_set_layout_generations_mem, uint32_t, DESCRIPTOR_SET_LAYOUTS_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(pipeline_layouts_mem, VkPipelineLayout, PIPELINE_LAYOUTS_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(pipeline_layout_generations_mem, uint32_t, PIPELINE_LAYOUTS_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(pipelines_mem, VkPipeline, PIPELINES_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(pipeline_generations_mem, uint32_t, PIPELINES_CAPACITY);
-        INIT_ARRAY_MEMORY_FIELD(pipeline_layouts_mem, uint32_t, PIPELINE_LAYOUTS_CAPACITY);
-        INIT_ARRAY_MEMORY_FIELD(pipeline_layout_generations_mem, uint32_t, PIPELINE_LAYOUTS_CAPACITY);
     } *arena;
 
     size_t alloc_size = sizeof(*arena);
@@ -77,6 +80,9 @@ static int32_t plugin_init(RendererContext *context)
 
     BIND_ARRAY_FILLED(VkShaderModule, arena->shader_modules_mem, context->shader_modules, SHADER_MODULES_CAPACITY);
     BIND_ARRAY_FILLED(uint32_t, arena->shader_module_generations_mem, context->shader_module_generations, SHADER_MODULES_CAPACITY);
+
+    BIND_ARRAY_FILLED(VkDescriptorSetLayout, arena->descriptor_set_layouts_mem, context->descriptor_set_layouts, DESCRIPTOR_SET_LAYOUTS_CAPACITY);
+    BIND_ARRAY_FILLED(uint32_t, arena->descriptor_set_layout_generations_mem, context->descriptor_set_layout_generations, DESCRIPTOR_SET_LAYOUTS_CAPACITY);
 
     BIND_ARRAY_FILLED(VkPipelineLayout, arena->pipeline_layouts_mem, context->pipeline_layouts, PIPELINE_LAYOUTS_CAPACITY);
     BIND_ARRAY_FILLED(uint32_t, arena->pipeline_layout_generations_mem, context->pipeline_layout_generations, PIPELINE_LAYOUTS_CAPACITY);

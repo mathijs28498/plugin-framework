@@ -11,6 +11,7 @@
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_utils, LOG_LEVEL_DEBUG)
+#include <plugin_sdk/renderer/v1/renderer_interface.h>
 
 #include "renderer_vulkan_register.h"
 
@@ -316,4 +317,37 @@ VkExtent2D extent_2d(RV_VkExtent2D *rv_extent)
         .width = rv_extent->width,
         .height = rv_extent->height,
     };
+}
+
+VkShaderStageFlags rv_shader_stage_to_vk_shader_stage(RendererShaderStageFlags flags)
+{
+    VkShaderStageFlags vk_flags = 0;
+
+    if (flags & RENDERER_SHADER_STAGE_VERTEX_BIT)
+    {
+        vk_flags |= VK_SHADER_STAGE_VERTEX_BIT;
+    }
+    if (flags & RENDERER_SHADER_STAGE_FRAGMENT_BIT)
+    {
+        vk_flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+    }
+    if (flags & RENDERER_SHADER_STAGE_COMPUTE_BIT)
+    {
+        vk_flags |= VK_SHADER_STAGE_COMPUTE_BIT;
+    }
+
+    return vk_flags;
+}
+
+VkPipelineBindPoint rv_pipeline_type_to_vk_pipeline_bind_point(RendererPipelineType pipeline_type)
+{
+    switch (pipeline_type)
+    {
+    case RENDERER_PIPELINE_TYPE_GRAPHICS:
+        return VK_PIPELINE_BIND_POINT_GRAPHICS;
+    case RENDERER_PIPELINE_TYPE_COMPUTE:
+        return VK_PIPELINE_BIND_POINT_COMPUTE;
+    default:
+        return VK_PIPELINE_BIND_POINT_MAX_ENUM;
+    }
 }

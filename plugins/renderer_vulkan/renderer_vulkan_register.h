@@ -188,6 +188,9 @@ typedef struct RendererContext
     VkShaderModule *shader_modules;
     uint32_t *shader_module_generations;
 
+    VkDescriptorSetLayout *descriptor_set_layouts;
+    uint32_t *descriptor_set_layout_generations;
+
     VkPipelineLayout *pipeline_layouts;
     uint32_t *pipeline_layout_generations;
 

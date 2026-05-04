@@ -13,33 +13,6 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_cmd, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_register.h"
 #include "renderer_vulkan_utils.h"
 
-VkShaderStageFlags rv_shader_stage_to_vk_shader_stage(RendererShaderStage shader_stage)
-{
-    switch (shader_stage)
-    {
-    case RENDERER_SHADER_STAGE_VERTEX:
-        return VK_SHADER_STAGE_VERTEX_BIT;
-    case RENDERER_SHADER_STAGE_FRAGMENT:
-        return VK_SHADER_STAGE_FRAGMENT_BIT;
-    case RENDERER_SHADER_STAGE_COMPUTE:
-        return VK_SHADER_STAGE_COMPUTE_BIT;
-    default:
-        return VK_PIPELINE_BIND_POINT_MAX_ENUM;
-    }
-}
-
-VkPipelineBindPoint rv_pipeline_type_to_vk_pipeline_bind_point(RendererPipelineType pipeline_type)
-{
-    switch (pipeline_type)
-    {
-    case RENDERER_PIPELINE_TYPE_GRAPHICS:
-        return VK_PIPELINE_BIND_POINT_GRAPHICS;
-    case RENDERER_PIPELINE_TYPE_COMPUTE:
-        return VK_PIPELINE_BIND_POINT_COMPUTE;
-    default:
-        return VK_PIPELINE_BIND_POINT_MAX_ENUM;
-    }
-}
 
 void renderer_vulkan_cmd_begin_render_pass(RendererContext *context, RendererCommandList *command_list)
 {
@@ -105,7 +78,7 @@ void renderer_vulkan_cmd_bind_descriptor_sets(RendererContext *context, Renderer
 }
 
 TODO("Find a backend agnostic thing for this as push constants are vulkan, maybe a feature flag or something")
-void renderer_vulkan_cmd_push_constants(RendererContext *context, RendererCommandList *command_list, RendererPipelineLayoutHandle pipeline_layout_handle, RendererShaderStage renderer_shader_stage, uint32_t offset, uint32_t push_constants_size, void *push_constants)
+void renderer_vulkan_cmd_push_constants(RendererContext *context, RendererCommandList *command_list, RendererPipelineLayoutHandle pipeline_layout_handle, RendererShaderStageFlags renderer_shader_stage_flags, uint32_t offset, uint32_t push_constants_size, void *push_constants)
 {
     assert(context != NULL);
     assert(command_list != NULL);
@@ -114,7 +87,7 @@ void renderer_vulkan_cmd_push_constants(RendererContext *context, RendererComman
     VkPipelineLayout pipeline_layout;
     RV_RES_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_layouts, context->pipeline_layout_generations, rv_pipeline_layout_handle, pipeline_layout);
 
-    vkCmdPushConstants(command_list->command_buffer, pipeline_layout, rv_shader_stage_to_vk_shader_stage(renderer_shader_stage), offset, push_constants_size, push_constants);
+    vkCmdPushConstants(command_list->command_buffer, pipeline_layout, rv_shader_stage_to_vk_shader_stage(renderer_shader_stage_flags), offset, push_constants_size, push_constants);
 }
 
 void renderer_vulkan_cmd_dispatch(RendererContext *context, RendererCommandList *command_list, uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z)

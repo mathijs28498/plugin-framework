@@ -254,41 +254,26 @@ int32_t create_background_pipelines(RendererContext *context)
 {
     assert(context != NULL);
 
-    // VkResult result;
     int32_t ret;
 
-    // VkPushConstantRange compute_push_constant_range = {
-    //     .offset = 0,
-    //     .size = sizeof(ComputePushConstants),
-    //     .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-    // };
-
-    // VkPipelineLayoutCreateInfo compute_pipeline_layout_create_info = {
-    //     .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-    //     .pSetLayouts = &context->draw_image_descriptor_set_layout,
-    //     .setLayoutCount = 1,
-    //     .pPushConstantRanges = &compute_push_constant_range,
-    //     .pushConstantRangeCount = 1,
-    // };
-
-    // RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &compute_pipeline_layout_create_info, NULL, &context->gradient_pipeline_layout),
-    //                    -1, "Failed to create gradient pipeline layout: %d", result);
-
-    // RETURN_IF_ERROR(context->deps.logger, ret,
-    //                 RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, context->gradient_pipeline_layout, NULL),
-    //                 "Failed to push gradient pipeline layout destroy data to destroy queue: %d", ret);
-
-    TODO("REMOVE THIS")
-    // VkShaderModule compute_shader_module = NULL;
-    // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_shader(context, GRADIENT_COMPUTE_SHADER_U32_CODE, GRADIENT_COMPUTE_SHADER_BYTES_LEN, &compute_shader_module),
-    //                 "Failed to load shader module: %d", ret);
     RendererShaderHandle compute_shader_handle;
     RETURN_IF_ERROR(context->deps.logger, ret,
                     renderer_vulkan_create_shader(context, GRADIENT_COMPUTE_SHADER_U32_CODE, GRADIENT_COMPUTE_SHADER_BYTES_LEN, &compute_shader_handle),
                     "Failed to create shader: %d", ret);
 
+    RendererPushConstantsInfo push_constants_info[] = {{
+        .render_stage_flags = RENDERER_SHADER_STAGE_COMPUTE_BIT,
+        .offset = 0,
+        .size = sizeof(ComputePushConstants),
+    }};
+
+    // RendererDescriptorSetLayoutHandle descriptor_set_handles[] = {context->draw_image_descriptor_set_layout_handle};
+    RendererDescriptorSetLayoutHandle descriptor_set_handles[] = {0};
     RendererPipelineLayoutCreateInfo pipeline_layout_create_info = {
-        .push_constant_size = sizeof(ComputePushConstants),
+        .push_constants_len = ARRAY_SIZE(push_constants_info),
+        .push_constants = push_constants_info,
+        .descriptor_set_layout_handles_len = ARRAY_SIZE(descriptor_set_handles),
+        .descriptor_set_layout_handles = descriptor_set_handles,
     };
 
     RETURN_IF_ERROR(context->deps.logger, ret,
@@ -304,31 +289,6 @@ int32_t create_background_pipelines(RendererContext *context)
     RETURN_IF_ERROR(context->deps.logger, ret,
                     renderer_vulkan_create_compute_pipeline(context, &pipeline_create_info, &context->gradient_pipeline_handle),
                     "Failed to create compute pipeline: %d", ret);
-
-    // VkShaderModule compute_shader_module;
-    // RendererVulkanHandle rv_compute_shader_handle = {.raw = compute_shader_handle};
-    // RV_RES_HANDLE_GET_OR_RETURN(context->shader_modules, context->shader_module_generations, rv_compute_shader_handle, compute_shader_module);
-
-    // VkPipelineShaderStageCreateInfo stage_create_info = {
-    //     .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-    //     .stage = VK_SHADER_STAGE_COMPUTE_BIT,
-    //     .module = compute_shader_module,
-    //     .pName = "main",
-    // };
-
-    // VkComputePipelineCreateInfo compute_pipeline_create_info = {
-    //     .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
-    //     .layout = context->gradient_pipeline_layout,
-    //     .stage = stage_create_info,
-    // };
-
-    // RV_RETURN_IF_ERROR(context->deps.logger, result,
-    //                    vkCreateComputePipelines(context->device, VK_NULL_HANDLE, 1, &compute_pipeline_create_info, NULL, &context->gradient_pipeline),
-    //                    -1, "Failed to create compute pipelines: %d", result);
-
-    // RETURN_IF_ERROR(context->deps.logger, ret,
-    //                 RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipeline, context->device, context->gradient_pipeline, NULL),
-    //                 "Failed to push gradient pipeline destroy data to destroy queue: %d", ret);
 
     RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_destroy_shader(context, compute_shader_handle),
                     "Failed to destroy shader: %d", ret);
