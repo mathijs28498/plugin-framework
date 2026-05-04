@@ -217,7 +217,7 @@ int32_t create_instance(RendererContext *context)
     };
 
     CREATE_ARRAY(const char *, required_extensions, MAX_EXTENSIONS_LEN);
-    ARRAY_PUSH_ARRAY(required_extensions, plugin_required_extensions,
+    ARRAY_PUSH_ARRAY_CHECKED(required_extensions, plugin_required_extensions,
                      {
                          LOG_ERR_TRACE(context->deps.logger, "Unable to add required extension, reached max capacity");
                          return -1;

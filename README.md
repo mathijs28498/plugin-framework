@@ -73,6 +73,7 @@
     - [ ] Win + Ctrl + Shift + B forceful restart graphics driver
   - [ ] Make destroying set the handle to VK_NULL_HANDLE somehow
 - [ ] Add immediate execute where you begin, get a commandlist and id, then call commands, then end execute
+- [ ] Add generations to handles
 
 ### 2
 - [ ] Add compile error checking for semantics and syntax in shader generate script

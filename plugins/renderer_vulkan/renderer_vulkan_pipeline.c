@@ -7,14 +7,68 @@
 #include <vulkan/vulkan.h>
 TODO("Remove this dependency")
 #include <stdlib.h>
+#include <stdbool.h>
 
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_pipeline, LOG_LEVEL_DEBUG)
+#include <plugin_sdk/renderer/v1/renderer_interface.h>
+
+#include "shader_colored_triangle_vertex.h"
+#include "shader_colored_triangle_fragment.h"
 
 #include "renderer_vulkan_register.h"
+#include "renderer_vulkan.h"
 
 #define MAX_SHADER_STAGES 2
+
+int32_t renderer_vulkan_create_shader(RendererContext *context, const uint32_t *shader_code_u32, size_t shader_code_bytes_len, RendererShaderHandle *out_shader_handle)
+{
+    assert(context != NULL);
+    assert(out_shader_handle != NULL);
+
+    VkResult result;
+
+    VkShaderModuleCreateInfo shader_module_create_info = {
+        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+        .pCode = shader_code_u32,
+        .codeSize = shader_code_bytes_len,
+    };
+
+    VkShaderModule shader_module;
+    VK_RETURN_IF_ERROR(
+        context->deps.logger, result, vkCreateShaderModule(context->device, &shader_module_create_info, NULL, &shader_module),
+        -1, "Failed to create shader module: %d", result);
+
+    bool free_handle_found;
+    RendererVulkanHandle shader_handle = {0};
+    RENDERER_VULKAN_RES_HANDLE_ALLOC(context->shader_modules, context->shader_module_generations, shader_module, free_handle_found, shader_handle);
+
+    if (!free_handle_found)
+    {
+        LOG_ERR_TRACE(context->deps.logger, "Error message here");
+        vkDestroyShaderModule(context->device, shader_module, NULL);
+        return -1;
+    }
+
+    *out_shader_handle = shader_handle.raw;
+    return 0;
+}
+
+int32_t renderer_vulkan_destroy_shader(RendererContext *context, RendererShaderHandle shader_handle)
+{
+    assert(context != NULL);
+
+    RendererVulkanHandle vulkan_shader_handle = {.raw = shader_handle};
+
+    VkShaderModule shader_module;
+    RENDERER_VULKAN_RES_HANDLE_GET_RETURN_IF_ERROR(context->shader_modules, context->shader_module_generations, vulkan_shader_handle, shader_module);
+    RENDERER_VULKAN_RES_HANDLE_FREE_RETURN_IF_ERROR(context->shader_modules, context->shader_module_generations, vulkan_shader_handle);
+
+    vkDestroyShaderModule(context->device, shader_module, NULL);
+
+    return 0;
+}
 
 typedef struct RV_PipelineBuilder
 {
@@ -245,4 +299,74 @@ void rv_pipeline_disable_depthtest(RV_PipelineBuilder *pipeline_builder)
     pipeline_builder->depth_stencil_ci.stencilTestEnable = VK_FALSE;
     pipeline_builder->depth_stencil_ci.minDepthBounds = 0.f;
     pipeline_builder->depth_stencil_ci.maxDepthBounds = 1.f;
+}
+
+int32_t renderer_vulkan_create_graphics_pipeline(RendererContext *context, const RendererGraphicsPipelineCreateInfo *renderer_pipeline_create_info, const RendererGraphicsPipelineHandle *out_pipeline_handle)
+{
+    assert(context != NULL);
+    assert(renderer_pipeline_create_info != NULL);
+    assert(out_pipeline_handle != NULL);
+    return 0;
+}
+
+int32_t renderer_vulkan_create_compute_pipeline(RendererContext *context, const RendererComputePipelineCreateInfo *renderer_pipeline_create_info, const RendererComputePipelineHandle *out_pipeline_handle)
+{
+    assert(context != NULL);
+    assert(renderer_pipeline_create_info != NULL);
+    assert(out_pipeline_handle != NULL);
+    return 0;
+}
+
+int32_t create_triangle_pipeline(RendererContext *context)
+{
+    assert(context != NULL);
+
+    int32_t ret;
+    VkResult result;
+
+    TODO("REMVOE THIS");
+    VkShaderModule vertex_shader_module = NULL, fragment_shader_module = NULL;
+    // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_shader(context, COLORED_TRIANGLE_VERTEX_SHADER_U32_CODE, COLORED_TRIANGLE_VERTEX_SHADER_BYTES_LEN, &vertex_shader_module),
+    //                 "Failed to load vertex shader module: %d", ret);
+    // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_shader(context, COLORED_TRIANGLE_FRAGMENT_SHADER_U32_CODE, COLORED_TRIANGLE_FRAGMENT_SHADER_BYTES_LEN, &fragment_shader_module),
+    //                 "Failed to load fragment shader module: %d", ret);
+
+    VkPipelineLayoutCreateInfo graphics_pipeline_layout_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+    };
+
+    VkPipelineLayout graphics_pipeline_layout;
+    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &graphics_pipeline_layout_create_info, NULL, &graphics_pipeline_layout),
+                       -1, "Failed to create graphics pipeline layout: %d", result);
+
+    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, graphics_pipeline_layout, NULL);
+
+    RV_PipelineBuilder *pipeline_builder;
+    RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_create_pipeline_builder(&pipeline_builder),
+                    "Failed to create pipeline builder: %d", ret);
+
+    rv_pipeline_set_layout(pipeline_builder, graphics_pipeline_layout);
+    RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_set_shaders(pipeline_builder, vertex_shader_module, fragment_shader_module),
+                    "Failed to set shaders: %d", ret);
+    rv_pipeline_set_input_topology(pipeline_builder, RV_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+    rv_pipeline_set_polygon_mode(pipeline_builder, RV_POLYGON_MODE_FILL);
+    rv_pipeline_set_cull_mode(pipeline_builder, RV_CULL_MODE_NONE, RV_FRONT_FACE_CLOCKWISE);
+    rv_pipeline_set_multisampling_none(pipeline_builder);
+    rv_pipeline_disable_blending(pipeline_builder);
+    // rv_pipeline_enable_blending_additive(pipeline_builder);
+    // rv_pipeline_enable_blending_alphablend(pipeline_builder);
+    rv_pipeline_disable_depthtest(pipeline_builder);
+
+    rv_pipeline_set_color_attachment_format(pipeline_builder, context->draw_image.image_format);
+    rv_pipeline_set_depth_format(pipeline_builder, VK_FORMAT_UNDEFINED);
+
+    RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_builder_build(context, pipeline_builder, &context->triangle_pipeline),
+                    "Failed to build graphics pipeline: %d", ret);
+
+    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipeline, context->device, context->triangle_pipeline, NULL);
+
+    vkDestroyShaderModule(context->device, fragment_shader_module, NULL);
+    vkDestroyShaderModule(context->device, vertex_shader_module, NULL);
+
+    return 0;
 }

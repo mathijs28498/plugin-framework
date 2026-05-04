@@ -41,9 +41,9 @@ static const bool IS_PLUGIN_BUILD_SHARED = false;
 #define WINDOWS_GUI 0
 #endif // #ifndef WINDOWS_GUI
 
-#define SAFE_WHILE_CONCAT_(x, y) x##y
-#define SAFE_WHILE_CONCAT(x, y) SAFE_WHILE_CONCAT_(x, y)
-#define UNIQUE_VAR(prefix) SAFE_WHILE_CONCAT(prefix, __LINE__)
+#define CONCAT_2_(x, y) x##y
+#define CONCAT_2(x, y) CONCAT_2_(x, y)
+#define UNIQUE_VAR(prefix) CONCAT_2(prefix, __LINE__)
 
 #define SAFE_WHILE(condition, max_iterations, on_fail)     \
     for (uint32_t UNIQUE_VAR(_safety_loop_) = 0;           \
@@ -161,6 +161,7 @@ typedef union
     decl type *(var_name) = (type *)var_name##_.arr
 
 #define ARRAY_MEMORY_SIZE(type, amount) (sizeof(type) * (amount) + sizeof(ArrayHeader_))
+#define INIT_ARRAY_MEMORY_FIELD(name, type, amount) _Alignas(ArrayHeader_) uint8_t (name)[ARRAY_MEMORY_SIZE(type, (amount))]
 
 #define GET_ARRAY_HEADER(arr_ptr) ((ArrayHeader_ *)(arr_ptr) - 1)
 #define GET_ARRAY_CAPACITY(arr_ptr) (GET_ARRAY_HEADER(arr_ptr)->capacity)
@@ -201,7 +202,7 @@ typedef union
         GET_ARRAY_LENGTH(arr_ptr) += (element_count);                                                         \
     } while (0)
 
-#define ARRAY_PUSH_ARRAY(arr_ptr, other_arr_ptr, on_err) \
+#define ARRAY_PUSH_ARRAY_CHECKED(arr_ptr, other_arr_ptr, on_err) \
     ARRAY_PUSH_MULTI_CHECKED(arr_ptr, other_arr_ptr, GET_ARRAY_LENGTH(other_arr_ptr), on_err)
 
 #define RETURN_IF_TRUE(logger, condition, err_ret_val, ...) \

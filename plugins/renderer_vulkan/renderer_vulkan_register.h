@@ -33,6 +33,7 @@ CREATE_VK_HANDLE_DEFINITION(VkDescriptorSet);
 CREATE_VK_HANDLE_DEFINITION(VkPipelineLayout);
 CREATE_VK_HANDLE_DEFINITION(VkPipeline);
 CREATE_VK_HANDLE_DEFINITION(VkBuffer);
+CREATE_VK_HANDLE_DEFINITION(VkShaderModule);
 
 CREATE_VK_HANDLE_DEFINITION(VmaAllocator);
 CREATE_VK_HANDLE_DEFINITION(VmaAllocation);
@@ -182,6 +183,15 @@ typedef struct RendererContext
 
     VkDescriptorSetLayout draw_image_descriptor_set_layout;
     VkDescriptorSet draw_image_descriptor_set;
+
+    VkShaderModule *shader_modules;
+    uint32_t *shader_module_generations;
+
+    VkPipeline *graphics_pipelines;
+    uint32_t *graphics_pipeline_generations;
+
+    VkPipeline *compute_pipelines;
+    uint32_t *compute_pipeline_generations;
 
     VkPipelineLayout gradient_pipeline_layout;
     VkPipeline gradient_pipeline;
