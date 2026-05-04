@@ -12,14 +12,17 @@
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_render, LOG_LEVEL_DEBUG)
+#include <plugin_sdk/renderer/v1/renderer_interface.h>
 
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan_start.h"
 #include "renderer_vulkan_register.h"
+#include "renderer_vulkan_cmd.h"
+#include "renderer_vulkan.h"
 
 #define SECOND_IN_NS 1000000000
 
-void draw_background(RendererContext *context, VkCommandBuffer cmd)
+int32_t draw_background(RendererContext *context, VkCommandBuffer cmd)
 {
     assert(context != NULL);
     assert(cmd != VK_NULL_HANDLE);
@@ -31,13 +34,16 @@ void draw_background(RendererContext *context, VkCommandBuffer cmd)
         .bottom_right = {0, 1, 0, 1},
     };
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, context->gradient_pipeline);
-    vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, context->gradient_pipeline_layout, 0, 1, &context->draw_image_descriptor_set, 0, NULL);
-    vkCmdPushConstants(cmd, context->gradient_pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputePushConstants), &push_constants);
-    vkCmdDispatch(cmd, (int)ceil(context->draw_extent.width / 16.0), (int)ceil(context->draw_extent.height / 16.0), 1);
+    RendererCommandList command_list = {.command_buffer = cmd};
+    renderer_vulkan_cmd_bind_compute_pipeline(context, &command_list, context->gradient_pipeline_handle);
+    renderer_vulkan_cmd_bind_descriptor_sets(context, &command_list, RENDERER_PIPELINE_TYPE_COMPUTE, context->gradient_pipeline_layout_handle);
+    renderer_vulkan_cmd_push_constants(context, &command_list, context->gradient_pipeline_layout_handle, RENDERER_SHADER_STAGE_COMPUTE, 0, sizeof(ComputePushConstants), &push_constants);
+
+    renderer_vulkan_cmd_dispatch(context, &command_list, (uint32_t)ceil(context->draw_extent.width / 16.0), (uint32_t)ceil(context->draw_extent.height / 16.0), 1);
+
+    return 0;
 }
 
-TODO("Return a commandlist to start rendering")
 int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCommandList **out_command_list)
 {
     assert(context != NULL);
@@ -59,13 +65,13 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
 
     RendererFrameData *frame = &context->frames[context->frame_number % ARRAY_SIZE(context->frames)];
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkWaitForFences(context->device, 1, &frame->render_fence, VK_TRUE, SECOND_IN_NS),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkWaitForFences(context->device, 1, &frame->render_fence, VK_TRUE, SECOND_IN_NS),
                        -1, "Failed to wait for render fence: %d", result);
 
     rv_call_queue_flush(frame->destroy_queue);
 
     uint32_t swapchain_image_index;
-    VK_RETURN_IF_ERROR_CONDITION(
+    RV_RETURN_IF_ERROR_CONDITION(
         context->deps.logger, result, result < 0 && result != VK_ERROR_OUT_OF_DATE_KHR,
         vkAcquireNextImageKHR(context->device, context->swapchain, SECOND_IN_NS, frame->swapchain_semaphore, VK_NULL_HANDLE, &swapchain_image_index),
         -1, "Failed to acquire next image: %d", result);
@@ -79,12 +85,12 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
         return 2;
     }
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkResetFences(context->device, 1, &frame->render_fence),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetFences(context->device, 1, &frame->render_fence),
                        -1, "Failed to reset render fence: %d", result);
 
     VkCommandBuffer cmd = frame->command_list.command_buffer;
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkResetCommandPool(context->device, frame->command_pool, 0),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetCommandPool(context->device, frame->command_pool, 0),
                        -1, "Failed to reset frame command pool: %d", result);
 
     VkCommandBufferBeginInfo cmd_begin_info = {
@@ -92,7 +98,7 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
     };
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkBeginCommandBuffer(cmd, &cmd_begin_info),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkBeginCommandBuffer(cmd, &cmd_begin_info),
                        -1, "Failed to begin command buffer: %d", result);
 
     context->active_frame_state.frame = frame;
@@ -130,7 +136,7 @@ int32_t renderer_vulkan_render_end_frame(RendererContext *context)
 
     rv_transition_image(cmd, swapchain_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkEndCommandBuffer(cmd),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkEndCommandBuffer(cmd),
                        -1, "Failed to end buffer: %d", result);
 
     VkCommandBufferSubmitInfo cmd_info = rv_create_command_buffer_submit_info(cmd);
@@ -140,7 +146,7 @@ int32_t renderer_vulkan_render_end_frame(RendererContext *context)
 
     VkSubmitInfo2 submit = rv_create_submit_info(&cmd_info, &signal_info, &wait_info);
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkQueueSubmit2(context->graphics_queue, 1, &submit, frame->render_fence),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkQueueSubmit2(context->graphics_queue, 1, &submit, frame->render_fence),
                        -1, "Failed to submit cmd to queue: %d", result);
 
     VkPresentInfoKHR present_info = {
@@ -155,14 +161,13 @@ int32_t renderer_vulkan_render_end_frame(RendererContext *context)
     };
     context->active_frame_state.is_active = false;
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkQueuePresentKHR(context->present_queue, &present_info),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkQueuePresentKHR(context->present_queue, &present_info),
                        -1, "Failed to present queue: %d", result);
 
     context->frame_number++;
 
     return 0;
 }
-
 
 void draw_geometry(RendererContext *context, VkCommandBuffer cmd)
 {
@@ -180,5 +185,4 @@ void draw_geometry(RendererContext *context, VkCommandBuffer cmd)
     // vkCmdPushConstants(cmd, context->mesh_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &mesh_push_constants);
     // vkCmdBindIndexBuffer(cmd, context->rectangle_mesh_buffers.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
     // vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
-
 }

@@ -20,7 +20,7 @@ int32_t renderer_vulkan_cleanup(RendererContext *context)
     {
         VkResult result;
         TODO("Handle a device lost error here rather than erroring out")
-        VK_RETURN_IF_ERROR(context->deps.logger, result, vkDeviceWaitIdle(context->device),
+        RV_RETURN_IF_ERROR(context->deps.logger, result, vkDeviceWaitIdle(context->device),
                            -1, "Failed to wait for device to idle: %d", result);
     }
 

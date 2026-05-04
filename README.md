@@ -74,6 +74,12 @@
   - [ ] Make destroying set the handle to VK_NULL_HANDLE somehow
 - [ ] Add immediate execute where you begin, get a commandlist and id, then call commands, then end execute
 - [ ] Add generations to handles
+- [ ] Add destruction of handles
+  - [ ] Responsibility is owner (consumer plugin, so draw plugin)
+  - [ ] Decouple cpu and gpu destruction. Free the label, then add destruction of it to queue
+  - [ ] How to handle shutdown destruction?
+  - [ ] Make consumer have a queue or something to call at shutdown
+    - [ ] How about double frees?
 
 ### 2
 - [ ] Add compile error checking for semantics and syntax in shader generate script

@@ -7,9 +7,9 @@
 // Forward declare the context
 struct RendererContext;
 
-CREATE_VK_HANDLE_DEFINITION(VkPipeline);
-CREATE_VK_HANDLE_DEFINITION(VkShaderModule);
-CREATE_VK_HANDLE_DEFINITION(VkPipelineLayout);
+RV_CREATE_HANDLE_DEFINITION(VkPipeline);
+RV_CREATE_HANDLE_DEFINITION(VkShaderModule);
+RV_CREATE_HANDLE_DEFINITION(VkPipelineLayout);
 
 typedef struct RV_PipelineBuilder RV_PipelineBuilder;
 
@@ -67,16 +67,20 @@ void rv_pipeline_disable_depthtest(RV_PipelineBuilder *pipeline_builder);
 struct VkPipelineShaderStageCreateInfo rv_pipeline_create_shader_stage_ci(RV_VkShaderStageFlagBits shader_stage, VkShaderModule shader_module);
 
 typedef uint64_t RendererShaderHandle;
+typedef uint64_t RendererPipelineLayoutHandle;
 typedef uint64_t RendererGraphicsPipelineHandle;
 typedef uint64_t RendererComputePipelineHandle;
 
+struct RendererPipelineLayoutCreateInfo;
 struct RendererGraphicsPipelineCreateInfo;
 struct RendererComputePipelineCreateInfo;
 
 int32_t renderer_vulkan_create_shader(struct RendererContext *context, const uint32_t *shader_code_u32, size_t shader_code_bytes_len, RendererShaderHandle *out_shader_module);
 int32_t renderer_vulkan_destroy_shader(struct RendererContext *context, RendererShaderHandle shader_handle);
 
-int32_t renderer_vulkan_create_graphics_pipeline(struct RendererContext *context, const struct RendererGraphicsPipelineCreateInfo *renderer_pipeline_create_info, const RendererGraphicsPipelineHandle *out_pipeline_handle);
-int32_t renderer_vulkan_create_compute_pipeline(struct RendererContext *context, const struct RendererComputePipelineCreateInfo *renderer_pipeline_create_info, const RendererComputePipelineHandle *out_pipeline_handle);
+int32_t renderer_vulkan_create_pipeline_layout(struct RendererContext *context, const struct RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle);
+
+int32_t renderer_vulkan_create_graphics_pipeline(struct RendererContext *context, const struct RendererGraphicsPipelineCreateInfo *renderer_pipeline_create_info, RendererGraphicsPipelineHandle *out_pipeline_handle);
+int32_t renderer_vulkan_create_compute_pipeline(struct RendererContext *context, const struct RendererComputePipelineCreateInfo *renderer_pipeline_create_info, RendererComputePipelineHandle *out_pipeline_handle);
 
 int32_t create_triangle_pipeline(struct RendererContext *context);

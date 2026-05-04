@@ -14,29 +14,29 @@
 #define FRAMES_LEN 2
 #define MAX_SWAPCHAIN_IMAGES_LEN 4
 
-CREATE_VK_HANDLE_DEFINITION(VkDebugUtilsMessengerEXT);
-CREATE_VK_HANDLE_DEFINITION(VkInstance);
-CREATE_VK_HANDLE_DEFINITION(VkSurfaceKHR);
-CREATE_VK_HANDLE_DEFINITION(VkPhysicalDevice);
-CREATE_VK_HANDLE_DEFINITION(VkDevice);
-CREATE_VK_HANDLE_DEFINITION(VkQueue);
-CREATE_VK_HANDLE_DEFINITION(VkSwapchainKHR);
-CREATE_VK_HANDLE_DEFINITION(VkImage);
-CREATE_VK_HANDLE_DEFINITION(VkImageView);
-CREATE_VK_HANDLE_DEFINITION(VkCommandPool);
-CREATE_VK_HANDLE_DEFINITION(VkCommandBuffer);
-CREATE_VK_HANDLE_DEFINITION(VkSemaphore);
-CREATE_VK_HANDLE_DEFINITION(VkFence);
-CREATE_VK_HANDLE_DEFINITION(VkDescriptorPool);
-CREATE_VK_HANDLE_DEFINITION(VkDescriptorSetLayout);
-CREATE_VK_HANDLE_DEFINITION(VkDescriptorSet);
-CREATE_VK_HANDLE_DEFINITION(VkPipelineLayout);
-CREATE_VK_HANDLE_DEFINITION(VkPipeline);
-CREATE_VK_HANDLE_DEFINITION(VkBuffer);
-CREATE_VK_HANDLE_DEFINITION(VkShaderModule);
+RV_CREATE_HANDLE_DEFINITION(VkDebugUtilsMessengerEXT);
+RV_CREATE_HANDLE_DEFINITION(VkInstance);
+RV_CREATE_HANDLE_DEFINITION(VkSurfaceKHR);
+RV_CREATE_HANDLE_DEFINITION(VkPhysicalDevice);
+RV_CREATE_HANDLE_DEFINITION(VkDevice);
+RV_CREATE_HANDLE_DEFINITION(VkQueue);
+RV_CREATE_HANDLE_DEFINITION(VkSwapchainKHR);
+RV_CREATE_HANDLE_DEFINITION(VkImage);
+RV_CREATE_HANDLE_DEFINITION(VkImageView);
+RV_CREATE_HANDLE_DEFINITION(VkCommandPool);
+RV_CREATE_HANDLE_DEFINITION(VkCommandBuffer);
+RV_CREATE_HANDLE_DEFINITION(VkSemaphore);
+RV_CREATE_HANDLE_DEFINITION(VkFence);
+RV_CREATE_HANDLE_DEFINITION(VkDescriptorPool);
+RV_CREATE_HANDLE_DEFINITION(VkDescriptorSetLayout);
+RV_CREATE_HANDLE_DEFINITION(VkDescriptorSet);
+RV_CREATE_HANDLE_DEFINITION(VkPipelineLayout);
+RV_CREATE_HANDLE_DEFINITION(VkPipeline);
+RV_CREATE_HANDLE_DEFINITION(VkBuffer);
+RV_CREATE_HANDLE_DEFINITION(VkShaderModule);
 
-CREATE_VK_HANDLE_DEFINITION(VmaAllocator);
-CREATE_VK_HANDLE_DEFINITION(VmaAllocation);
+RV_CREATE_HANDLE_DEFINITION(VmaAllocator);
+RV_CREATE_HANDLE_DEFINITION(VmaAllocation);
 
 typedef uint32_t RV_VkFormat;
 
@@ -78,7 +78,8 @@ typedef struct RV_CallRecord
     rv_call_fn_any fn;
 } RV_CallRecord;
 
-typedef struct RendererCommandList {
+typedef struct RendererCommandList
+{
     VkCommandBuffer command_buffer;
 } RendererCommandList;
 
@@ -187,14 +188,15 @@ typedef struct RendererContext
     VkShaderModule *shader_modules;
     uint32_t *shader_module_generations;
 
-    VkPipeline *graphics_pipelines;
-    uint32_t *graphics_pipeline_generations;
+    VkPipelineLayout *pipeline_layouts;
+    uint32_t *pipeline_layout_generations;
 
-    VkPipeline *compute_pipelines;
-    uint32_t *compute_pipeline_generations;
+    VkPipeline *pipelines;
+    uint32_t *pipeline_generations;
 
-    VkPipelineLayout gradient_pipeline_layout;
-    VkPipeline gradient_pipeline;
+    // VkPipelineLayout gradient_pipeline_layout;
+    uint64_t gradient_pipeline_layout_handle;
+    uint64_t gradient_pipeline_handle;
     VkPipeline triangle_pipeline;
     VkPipelineLayout mesh_pipeline_layout;
     VkPipeline mesh_pipeline;

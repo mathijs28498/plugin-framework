@@ -4,8 +4,8 @@
 
 #include "renderer_vulkan_utils.h"
 
-CREATE_VK_HANDLE_DEFINITION(VkCommandPool);
-CREATE_VK_HANDLE_DEFINITION(VkCommandBuffer);
+RV_CREATE_HANDLE_DEFINITION(VkCommandPool);
+RV_CREATE_HANDLE_DEFINITION(VkCommandBuffer);
 
 typedef struct RendererStartContext {
     VkCommandPool command_pool;

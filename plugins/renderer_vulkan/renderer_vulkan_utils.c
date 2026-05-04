@@ -297,7 +297,7 @@ int32_t rv_create_buffer(RendererContext *context, size_t alloc_size, VkBufferUs
     };
 
     VmaAllocationInfo allocation_info;
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vmaCreateBuffer(context->vma_allocator, &buffer_create_info, &alloc_create_info, &out_buffer->buffer, &out_buffer->allocation, &allocation_info),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vmaCreateBuffer(context->vma_allocator, &buffer_create_info, &alloc_create_info, &out_buffer->buffer, &out_buffer->allocation, &allocation_info),
                        -1, "Failed to create buffer: %d", result);
 
     return 0;

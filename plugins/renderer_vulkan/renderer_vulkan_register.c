@@ -22,12 +22,18 @@ static const RendererVtable plugin_vtable = {
     .end_frame = renderer_vulkan_render_end_frame,
     .on_window_resize = renderer_vulkan_on_window_resize,
 
+    .create_shader = renderer_vulkan_create_shader,
+    .destroy_shader = renderer_vulkan_destroy_shader,
+
+    .create_pipeline_layout = renderer_vulkan_create_pipeline_layout,
+
     .create_graphics_pipeline = renderer_vulkan_create_graphics_pipeline,
     .create_compute_pipeline = renderer_vulkan_create_compute_pipeline,
 
     .cmd_begin_render_pass = renderer_vulkan_cmd_begin_render_pass,
     .cmd_end_render_pass = renderer_vulkan_cmd_end_render_pass,
-    .cmd_bind_pipeline = renderer_vulkan_cmd_bind_pipeline,
+    .cmd_bind_graphics_pipeline = renderer_vulkan_cmd_bind_graphics_pipeline,
+    .cmd_bind_compute_pipeline = renderer_vulkan_cmd_bind_compute_pipeline,
     .cmd_draw = renderer_vulkan_cmd_draw,
 };
 
@@ -37,8 +43,8 @@ TODO("Make these part of the configurations")
 #define SWAPCHAIN_DESTROY_QUEUE_CAPACITY 64
 #define FRAME_DESTROY_QUEUE_CAPACITY 32
 #define SHADER_MODULES_CAPACITY 128
-#define GRAPHICS_PIPELINES_CAPACITY 128
-#define COMPUTE_PIPELINES_CAPACITY 128
+#define PIPELINES_CAPACITY 128
+#define PIPELINE_LAYOUTS_CAPACITY 128
 
 static int32_t plugin_init(RendererContext *context)
 {
@@ -52,10 +58,10 @@ static int32_t plugin_init(RendererContext *context)
         INIT_ARRAY_MEMORY_FIELD(frame_destroy_queue_mem[ARRAY_SIZE(context->frames)], RV_CallRecord, FRAME_DESTROY_QUEUE_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(shader_modules_mem, VkShaderModule, SHADER_MODULES_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(shader_module_generations_mem, uint32_t, SHADER_MODULES_CAPACITY);
-        INIT_ARRAY_MEMORY_FIELD(graphics_pipelines_mem, VkPipeline, GRAPHICS_PIPELINES_CAPACITY);
-        INIT_ARRAY_MEMORY_FIELD(graphics_pipelines_generations_mem, uint32_t, GRAPHICS_PIPELINES_CAPACITY);
-        INIT_ARRAY_MEMORY_FIELD(compute_pipelines_mem, VkPipeline, COMPUTE_PIPELINES_CAPACITY);
-        INIT_ARRAY_MEMORY_FIELD(compute_pipelines_generations_mem, uint32_t, COMPUTE_PIPELINES_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(pipelines_mem, VkPipeline, PIPELINES_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(pipeline_generations_mem, uint32_t, PIPELINES_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(pipeline_layouts_mem, uint32_t, PIPELINE_LAYOUTS_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(pipeline_layout_generations_mem, uint32_t, PIPELINE_LAYOUTS_CAPACITY);
     } *arena;
 
     size_t alloc_size = sizeof(*arena);
@@ -68,12 +74,15 @@ static int32_t plugin_init(RendererContext *context)
     {
         BIND_ARRAY(RV_CallRecord, arena->frame_destroy_queue_mem[i], context->frames[i].destroy_queue, FRAME_DESTROY_QUEUE_CAPACITY);
     }
+
     BIND_ARRAY_FILLED(VkShaderModule, arena->shader_modules_mem, context->shader_modules, SHADER_MODULES_CAPACITY);
     BIND_ARRAY_FILLED(uint32_t, arena->shader_module_generations_mem, context->shader_module_generations, SHADER_MODULES_CAPACITY);
-    BIND_ARRAY_FILLED(VkPipeline, arena->graphics_pipelines_mem, context->graphics_pipelines, GRAPHICS_PIPELINES_CAPACITY);
-    BIND_ARRAY_FILLED(uint32_t, arena->graphics_pipelines_generations_mem, context->graphics_pipeline_generations, GRAPHICS_PIPELINES_CAPACITY);
-    BIND_ARRAY_FILLED(VkPipeline, arena->compute_pipelines_mem, context->compute_pipelines, COMPUTE_PIPELINES_CAPACITY);
-    BIND_ARRAY_FILLED(uint32_t, arena->compute_pipelines_generations_mem, context->compute_pipeline_generations, COMPUTE_PIPELINES_CAPACITY);
+
+    BIND_ARRAY_FILLED(VkPipelineLayout, arena->pipeline_layouts_mem, context->pipeline_layouts, PIPELINE_LAYOUTS_CAPACITY);
+    BIND_ARRAY_FILLED(uint32_t, arena->pipeline_layout_generations_mem, context->pipeline_layout_generations, PIPELINE_LAYOUTS_CAPACITY);
+
+    BIND_ARRAY_FILLED(VkPipeline, arena->pipelines_mem, context->pipelines, PIPELINES_CAPACITY);
+    BIND_ARRAY_FILLED(uint32_t, arena->pipeline_generations_mem, context->pipeline_generations, PIPELINES_CAPACITY);
 
     return 0;
 }

@@ -262,7 +262,7 @@ int32_t create_instance(RendererContext *context)
     VkResult result;
     int32_t ret;
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateInstance(&instance_create_info, NULL, &context->instance),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateInstance(&instance_create_info, NULL, &context->instance),
                        -1, "Failed to create vulkan instance!");
 
     RETURN_IF_ERROR(context->deps.logger, ret,
@@ -312,7 +312,7 @@ int32_t find_queue_families(RendererContext *context, VkPhysicalDevice physical_
         }
 
         VkBool32 present_support;
-        VK_RETURN_IF_ERROR(context->deps.logger, result, vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, i, context->surface, &present_support),
+        RV_RETURN_IF_ERROR(context->deps.logger, result, vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, i, context->surface, &present_support),
                            -1, "Unable to get physical device surface support: %d", result);
 
         if (present_support)
@@ -344,14 +344,14 @@ int32_t physical_device_extensions_are_supported(RendererContext *context, VkPhy
     TODO("Find a location for this")
 
     TODO("Create an arena allocator for the bootstrapping");
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_len, NULL),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_len, NULL),
                        -1, "Failed to enumerate physical device extensions", result);
     assert(extensions_len > 0);
 
     assert(MAX_PHYSICAL_DEVICE_EXTENSIONS_LEN >= extensions_len);
     CREATE_ARRAY_WITH_LEN(VkExtensionProperties, extensions, MAX_PHYSICAL_DEVICE_EXTENSIONS_LEN, extensions_len);
     uint32_t extensions_cap = (uint32_t)GET_ARRAY_CAPACITY(extensions);
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_cap, extensions),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_cap, extensions),
                        -1, "Failed to enumerate physical device extensions: %d", result);
 
     for (size_t i = 0; i < GET_ARRAY_LENGTH(required_physical_device_extensions); i++)
@@ -388,31 +388,31 @@ int32_t query_swapchain_support_details(RendererContext *context, VkPhysicalDevi
 
     VkResult result;
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result,
+    RV_RETURN_IF_ERROR(context->deps.logger, result,
                        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physical_device, context->surface, &out_swapchain_support_details->capabilities),
                        -1, "Failed to get device surface capabilities: %d", result);
 
     uint32_t format_len;
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, context->surface, &format_len, NULL),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, context->surface, &format_len, NULL),
                        -1, "Failed to get physical device formats: %d", result);
     assert(format_len > 0);
 
     assert(format_len <= GET_ARRAY_CAPACITY(out_swapchain_support_details->surface_formats));
     GET_ARRAY_LENGTH(out_swapchain_support_details->surface_formats) = (size_t)format_len;
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result,
+    RV_RETURN_IF_ERROR(context->deps.logger, result,
                        vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, context->surface, &format_len, out_swapchain_support_details->surface_formats),
                        -1, "Failed to get physical device formats: %d", result);
 
     uint32_t present_mode_len;
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, context->surface, &present_mode_len, NULL),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, context->surface, &present_mode_len, NULL),
                        -1, "Failed to get physical device present modes: %d", result);
     assert(present_mode_len > 0);
 
     assert(present_mode_len <= GET_ARRAY_CAPACITY(out_swapchain_support_details->present_modes));
     GET_ARRAY_LENGTH(out_swapchain_support_details->present_modes) = (size_t)present_mode_len;
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result,
+    RV_RETURN_IF_ERROR(context->deps.logger, result,
                        vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, context->surface, &present_mode_len, out_swapchain_support_details->present_modes),
                        -1, "Failed to get physical device present modes: %d", result);
     return 0;
@@ -551,7 +551,7 @@ int32_t pick_physical_device(RendererContext *context)
 
     uint32_t physical_devices_len = 0;
     VkResult result;
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, NULL),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, NULL),
                        -1, "Unable to get physical device count");
 
     assert(physical_devices_len != 0);
@@ -560,7 +560,7 @@ int32_t pick_physical_device(RendererContext *context)
 
     assert(MAX_PHYSICAL_DEVICES_LEN >= physical_devices_len);
     CREATE_ARRAY_WITH_LEN(VkPhysicalDevice, physical_devices, MAX_PHYSICAL_DEVICES_LEN, physical_devices_len);
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, physical_devices),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, physical_devices),
                        -1, "Unable to get physical devices");
 
     size_t chosen_physical_device_index = 0;
@@ -672,7 +672,7 @@ int32_t create_logical_device(RendererContext *context)
         .enabledLayerCount = 0,
     };
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateDevice(context->physical_device, &device_create_info, NULL, &context->device),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateDevice(context->physical_device, &device_create_info, NULL, &context->device),
                        -1, "Failed to create device: %d", result);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
@@ -839,7 +839,7 @@ int32_t create_swapchain(RendererContext *context)
     swapchain_create_info.presentMode = present_mode;
     swapchain_create_info.clipped = VK_TRUE;
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateSwapchainKHR(context->device, &swapchain_create_info, NULL, &context->swapchain),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateSwapchainKHR(context->device, &swapchain_create_info, NULL, &context->swapchain),
                        -1, "Failed to create swapchain: %d", ret);
 
     if (context->old_swapchain == VK_NULL_HANDLE)
@@ -898,7 +898,7 @@ int32_t create_image_views(RendererContext *context)
     {
         image_view_create_info.image = context->swapchain_images[i];
 
-        VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateImageView(context->device, &image_view_create_info, NULL, &context->swapchain_image_views[i]),
+        RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateImageView(context->device, &image_view_create_info, NULL, &context->swapchain_image_views[i]),
                            -1, "Failed to create image view %d: %d", i, result);
 
         RETURN_IF_ERROR(context->deps.logger, ret,
@@ -919,23 +919,23 @@ int32_t renderer_vulkan_bootstrap(RendererContext *context)
     }
 
     int32_t ret;
-    VK_TRY_INIT(context->deps.logger, ret, create_instance(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_instance(context), context->main_destroy_queue,
                 "Failed to create instance: %d", ret);
 
 #if IS_DEBUG
-    VK_TRY_INIT(context->deps.logger, ret, setup_debug_messenger(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, setup_debug_messenger(context), context->main_destroy_queue,
                 "Failed to setup debug messenger: %d", ret);
 #endif // #if IS_DEBUG
 
-    VK_TRY_INIT(context->deps.logger, ret, create_surface(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_surface(context), context->main_destroy_queue,
                 "Failed to create surface: %d", ret);
-    VK_TRY_INIT(context->deps.logger, ret, pick_physical_device(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, pick_physical_device(context), context->main_destroy_queue,
                 "failed to pick physical device: %d", ret);
-    VK_TRY_INIT(context->deps.logger, ret, create_logical_device(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_logical_device(context), context->main_destroy_queue,
                 "Failed to create logical device: %d", ret);
-    VK_TRY_INIT(context->deps.logger, ret, create_swapchain(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_swapchain(context), context->main_destroy_queue,
                 "failed to create swapchain, %d", ret);
-    VK_TRY_INIT(context->deps.logger, ret, create_image_views(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_image_views(context), context->main_destroy_queue,
                 "Failed to create image views: %d", ret);
 
     return 0;
@@ -943,13 +943,13 @@ int32_t renderer_vulkan_bootstrap(RendererContext *context)
 
 int32_t renderer_vulkan_bootstrap_recreate_swapchain(RendererContext *context)
 {
-    TODO("Figure out if need to use VK_TRY_INIT or not");
+    TODO("Figure out if need to use RV_TRY_INIT or not");
     assert(context != NULL);
     int32_t ret;
 
-    VK_TRY_INIT(context->deps.logger, ret, create_swapchain(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_swapchain(context), context->main_destroy_queue,
                 "failed to recreate swapchain, %d", ret);
-    VK_TRY_INIT(context->deps.logger, ret, create_image_views(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_image_views(context), context->main_destroy_queue,
                 "Failed to recreate image views: %d", ret);
 
     return 0;

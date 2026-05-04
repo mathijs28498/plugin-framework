@@ -11,6 +11,7 @@
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_WARNING)
+#include <plugin_sdk/renderer/v1/renderer_interface.h>
 
 #include "shader_gradient_compute.h"
 #include "shader_colored_triangle_mesh_vertex.h"
@@ -47,7 +48,7 @@ int32_t create_frame_command_buffers(RendererContext *context)
     for (size_t i = 0; i < ARRAY_SIZE(context->frames); i++)
     {
         RendererFrameData *frame = &context->frames[i];
-        VK_RETURN_IF_ERROR(context->deps.logger, result,
+        RV_RETURN_IF_ERROR(context->deps.logger, result,
                            vkCreateCommandPool(context->device, &command_pool_create_info, NULL, &frame->command_pool),
                            -1, "Failed to create frame command pool for frame %d: %d", i, result);
 
@@ -57,7 +58,7 @@ int32_t create_frame_command_buffers(RendererContext *context)
 
         command_buffer_alloc_info.commandPool = frame->command_pool;
 
-        VK_RETURN_IF_ERROR(context->deps.logger, result,
+        RV_RETURN_IF_ERROR(context->deps.logger, result,
                            vkAllocateCommandBuffers(context->device, &command_buffer_alloc_info, &frame->command_list.command_buffer),
                            -1, "Failed to allocate frame command buffer for frame %d: %d", i, result);
     }
@@ -78,7 +79,7 @@ int32_t create_start_command_buffer(RendererContext *context, RendererStartConte
         .flags = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT,
     };
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateCommandPool(context->device, &command_pool_create_info, NULL, &start_context->command_pool),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateCommandPool(context->device, &command_pool_create_info, NULL, &start_context->command_pool),
                        -1, "Failed to create start command pool: %d", result);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
@@ -92,7 +93,7 @@ int32_t create_start_command_buffer(RendererContext *context, RendererStartConte
         .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
     };
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkAllocateCommandBuffers(context->device, &command_buffer_alloc_info, &start_context->command_buffer),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkAllocateCommandBuffers(context->device, &command_buffer_alloc_info, &start_context->command_buffer),
                        -1, "Failed to allocate start command buffer: %d", ret);
 
     VkCommandBufferBeginInfo command_buffer_begin_info = {
@@ -100,7 +101,7 @@ int32_t create_start_command_buffer(RendererContext *context, RendererStartConte
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
     };
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkBeginCommandBuffer(start_context->command_buffer, &command_buffer_begin_info),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkBeginCommandBuffer(start_context->command_buffer, &command_buffer_begin_info),
                        -1, "Failed to begin command buffer: %d", -1);
 
     return 0;
@@ -141,21 +142,21 @@ int32_t create_sync_structures(RendererContext *context)
     for (size_t i = 0; i < ARRAY_SIZE(context->frames); i++)
     {
         RendererFrameData *frame = &context->frames[i];
-        VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateFence(context->device, &fence_create_info, NULL, &frame->render_fence),
+        RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateFence(context->device, &fence_create_info, NULL, &frame->render_fence),
                            -1, "Failed to create fence for frame %d: %d", i, result);
 
         RETURN_IF_ERROR(context->deps.logger, ret,
                         RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyFence, context->device, frame->render_fence, NULL),
                         "Failed to push render fence destroy data to destroy queue: %d", ret);
 
-        VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateSemaphore(context->device, &semaphore_create_info, NULL, &frame->render_semaphore),
+        RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateSemaphore(context->device, &semaphore_create_info, NULL, &frame->render_semaphore),
                            -1, "Failed to create render semaphore for frame %d: %d", i, result);
 
         RETURN_IF_ERROR(context->deps.logger, ret,
                         RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroySemaphore, context->device, frame->render_semaphore, NULL),
                         "Failed to push render semaphore destroy data to destroy queue: %d", ret);
 
-        VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateSemaphore(context->device, &semaphore_create_info, NULL, &frame->swapchain_semaphore),
+        RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateSemaphore(context->device, &semaphore_create_info, NULL, &frame->swapchain_semaphore),
                            -1, "Failed to create swacphain semaphore for frame %d: %d", i, result);
 
         RETURN_IF_ERROR(context->deps.logger, ret,
@@ -181,7 +182,7 @@ int32_t create_vma_allocator(RendererContext *context)
         .flags = VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT,
     };
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vmaCreateAllocator(&vma_alloc_create_info, &context->vma_allocator),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vmaCreateAllocator(&vma_alloc_create_info, &context->vma_allocator),
                        -1, "Unable to create vma allocator: %d", result);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
@@ -219,7 +220,7 @@ int32_t create_draw_image(RendererContext *context)
         .usage = VMA_MEMORY_USAGE_GPU_ONLY,
         .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
 
-    VK_RETURN_IF_ERROR(
+    RV_RETURN_IF_ERROR(
         context->deps.logger, result,
         vmaCreateImage(context->vma_allocator, &draw_image_create_info, &allocation_create_info, &context->draw_image.image, &context->draw_image.allocation, NULL),
         -1, "Failed to create draw image: %d", result);
@@ -230,7 +231,7 @@ int32_t create_draw_image(RendererContext *context)
 
     VkImageViewCreateInfo draw_image_view_create_info = rv_create_image_view_info(draw_image_format, context->draw_image.image, VK_IMAGE_ASPECT_COLOR_BIT);
 
-    VK_RETURN_IF_ERROR(
+    RV_RETURN_IF_ERROR(
         context->deps.logger, result,
         vkCreateImageView(context->device, &draw_image_view_create_info, NULL, &context->draw_image.image_view),
         -1, "Failed to create draw image: %d", result);
@@ -253,29 +254,29 @@ int32_t create_background_pipelines(RendererContext *context)
 {
     assert(context != NULL);
 
-    VkResult result;
+    // VkResult result;
     int32_t ret;
 
-    VkPushConstantRange compute_push_constant_range = {
-        .offset = 0,
-        .size = sizeof(ComputePushConstants),
-        .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-    };
+    // VkPushConstantRange compute_push_constant_range = {
+    //     .offset = 0,
+    //     .size = sizeof(ComputePushConstants),
+    //     .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+    // };
 
-    VkPipelineLayoutCreateInfo compute_pipeline_layout_create_info = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .pSetLayouts = &context->draw_image_descriptor_set_layout,
-        .setLayoutCount = 1,
-        .pPushConstantRanges = &compute_push_constant_range,
-        .pushConstantRangeCount = 1,
-    };
+    // VkPipelineLayoutCreateInfo compute_pipeline_layout_create_info = {
+    //     .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+    //     .pSetLayouts = &context->draw_image_descriptor_set_layout,
+    //     .setLayoutCount = 1,
+    //     .pPushConstantRanges = &compute_push_constant_range,
+    //     .pushConstantRangeCount = 1,
+    // };
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &compute_pipeline_layout_create_info, NULL, &context->gradient_pipeline_layout),
-                       -1, "Failed to create gradient pipeline layout: %d", result);
+    // RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &compute_pipeline_layout_create_info, NULL, &context->gradient_pipeline_layout),
+    //                    -1, "Failed to create gradient pipeline layout: %d", result);
 
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, context->gradient_pipeline_layout, NULL),
-                    "Failed to push gradient pipeline layout destroy data to destroy queue: %d", ret);
+    // RETURN_IF_ERROR(context->deps.logger, ret,
+    //                 RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, context->gradient_pipeline_layout, NULL),
+    //                 "Failed to push gradient pipeline layout destroy data to destroy queue: %d", ret);
 
     TODO("REMOVE THIS")
     // VkShaderModule compute_shader_module = NULL;
@@ -286,30 +287,48 @@ int32_t create_background_pipelines(RendererContext *context)
                     renderer_vulkan_create_shader(context, GRADIENT_COMPUTE_SHADER_U32_CODE, GRADIENT_COMPUTE_SHADER_BYTES_LEN, &compute_shader_handle),
                     "Failed to create shader: %d", ret);
 
-    VkShaderModule compute_shader_module;
-    RendererVulkanHandle rv_compute_shader_handle = {.raw = compute_shader_handle};
-    RENDERER_VULKAN_RES_HANDLE_GET_RETURN_IF_ERROR(context->shader_modules, context->shader_module_generations, rv_compute_shader_handle, compute_shader_module);
-
-    VkPipelineShaderStageCreateInfo stage_create_info = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
-        .module = compute_shader_module,
-        .pName = "main",
+    RendererPipelineLayoutCreateInfo pipeline_layout_create_info = {
+        .push_constant_size = sizeof(ComputePushConstants),
     };
-
-    VkComputePipelineCreateInfo compute_pipeline_create_info = {
-        .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
-        .layout = context->gradient_pipeline_layout,
-        .stage = stage_create_info,
-    };
-
-    VK_RETURN_IF_ERROR(context->deps.logger, result,
-                       vkCreateComputePipelines(context->device, VK_NULL_HANDLE, 1, &compute_pipeline_create_info, NULL, &context->gradient_pipeline),
-                       -1, "Failed to create compute pipelines: %d", result);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipeline, context->device, context->gradient_pipeline, NULL),
-                    "Failed to push gradient pipeline destroy data to destroy queue: %d", ret);
+                    renderer_vulkan_create_pipeline_layout(context, &pipeline_layout_create_info, &context->gradient_pipeline_layout_handle),
+                    "Failed to create pipeline layout: %d", ret);
+
+    RendererComputePipelineCreateInfo pipeline_create_info = {
+        .compute_shader_handle = compute_shader_handle,
+        .compute_shader_entry_point = "main",
+        .layout_handle = context->gradient_pipeline_layout_handle,
+    };
+
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    renderer_vulkan_create_compute_pipeline(context, &pipeline_create_info, &context->gradient_pipeline_handle),
+                    "Failed to create compute pipeline: %d", ret);
+
+    // VkShaderModule compute_shader_module;
+    // RendererVulkanHandle rv_compute_shader_handle = {.raw = compute_shader_handle};
+    // RV_RES_HANDLE_GET_OR_RETURN(context->shader_modules, context->shader_module_generations, rv_compute_shader_handle, compute_shader_module);
+
+    // VkPipelineShaderStageCreateInfo stage_create_info = {
+    //     .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+    //     .stage = VK_SHADER_STAGE_COMPUTE_BIT,
+    //     .module = compute_shader_module,
+    //     .pName = "main",
+    // };
+
+    // VkComputePipelineCreateInfo compute_pipeline_create_info = {
+    //     .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
+    //     .layout = context->gradient_pipeline_layout,
+    //     .stage = stage_create_info,
+    // };
+
+    // RV_RETURN_IF_ERROR(context->deps.logger, result,
+    //                    vkCreateComputePipelines(context->device, VK_NULL_HANDLE, 1, &compute_pipeline_create_info, NULL, &context->gradient_pipeline),
+    //                    -1, "Failed to create compute pipelines: %d", result);
+
+    // RETURN_IF_ERROR(context->deps.logger, ret,
+    //                 RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipeline, context->device, context->gradient_pipeline, NULL),
+    //                 "Failed to push gradient pipeline destroy data to destroy queue: %d", ret);
 
     RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_destroy_shader(context, compute_shader_handle),
                     "Failed to destroy shader: %d", ret);
@@ -342,7 +361,7 @@ int32_t create_background_pipelines(RendererContext *context)
 //         .pushConstantRangeCount = 1,
 //     };
 
-//     VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &graphics_pipeline_layout_create_info, NULL, &context->mesh_pipeline_layout),
+//     RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &graphics_pipeline_layout_create_info, NULL, &context->mesh_pipeline_layout),
 //                        -1, "Failed to create graphics pipeline layout: %d", result);
 
 //     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, context->mesh_pipeline_layout, NULL);
@@ -520,7 +539,7 @@ int32_t execute_start_command_buffer(RendererContext *context, RendererStartCont
 
     VkResult result;
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkEndCommandBuffer(start_context->command_buffer),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkEndCommandBuffer(start_context->command_buffer),
                        -1, "Failed to end start command buffer: %d", result);
 
     VkCommandBufferSubmitInfo buffer_submit_info = {
@@ -533,11 +552,11 @@ int32_t execute_start_command_buffer(RendererContext *context, RendererStartCont
         .commandBufferInfoCount = 1,
         .pCommandBufferInfos = &buffer_submit_info,
     };
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkQueueSubmit2(context->graphics_queue, 1, &submit_info, VK_NULL_HANDLE),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkQueueSubmit2(context->graphics_queue, 1, &submit_info, VK_NULL_HANDLE),
                        -1, "Failed to submit start command buffer to queue: %d", result);
 
     // Make sure all queues are awaited if more queues are
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkDeviceWaitIdle(context->device),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkDeviceWaitIdle(context->device),
                        -1, "Failed to wait for device idle: %d", result);
 
     return 0;
@@ -550,31 +569,31 @@ int32_t renderer_vulkan_start_internal(RendererContext *context, RendererStartCo
 
     int32_t ret;
 
-    VK_TRY_INIT(context->deps.logger, ret, renderer_vulkan_bootstrap(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, renderer_vulkan_bootstrap(context), context->main_destroy_queue,
                 "Failed to bootstrap vulkan: %d", ret);
 
-    VK_TRY_INIT(context->deps.logger, ret, create_command_buffers(context, start_context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_command_buffers(context, start_context), context->main_destroy_queue,
                 "Failed to init commands: %d", ret);
 
-    VK_TRY_INIT(context->deps.logger, ret, create_sync_structures(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_sync_structures(context), context->main_destroy_queue,
                 "Failed to create sync structures: %d", ret);
 
-    VK_TRY_INIT(context->deps.logger, ret, create_vma_allocator(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_vma_allocator(context), context->main_destroy_queue,
                 "Failed to create vma allocator: %d", ret);
 
-    VK_TRY_INIT(context->deps.logger, ret, create_draw_image(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_draw_image(context), context->main_destroy_queue,
                 "Failed to create draw image: %d", ret);
 
-    VK_TRY_INIT(context->deps.logger, ret, create_descriptor_sets(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_descriptor_sets(context), context->main_destroy_queue,
                 "Failed to create draw image: %d", ret);
 
-    VK_TRY_INIT(context->deps.logger, ret, init_pipelines(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, init_pipelines(context), context->main_destroy_queue,
                 "Failed to load shader module: %d", ret);
 
-    VK_TRY_INIT(context->deps.logger, ret, create_mesh_buffers(context, start_context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_mesh_buffers(context, start_context), context->main_destroy_queue,
                 "Failed to create mesh buffers: %d", ret);
 
-    VK_TRY_INIT(context->deps.logger, ret, execute_start_command_buffer(context, start_context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, execute_start_command_buffer(context, start_context), context->main_destroy_queue,
                 "Failed to execute initial command buffer: %d", ret);
 
     return 0;
@@ -609,7 +628,7 @@ int32_t renderer_vulkan_start_recreate_swapchain(RendererContext *context)
     int32_t ret;
     VkResult result;
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkDeviceWaitIdle(context->device),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkDeviceWaitIdle(context->device),
                        -1, "Failed to wait for device to idle: %d", result);
 
     rv_call_queue_flush(context->swapchain_destroy_queue);

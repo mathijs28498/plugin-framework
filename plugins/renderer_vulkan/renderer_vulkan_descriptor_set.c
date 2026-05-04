@@ -44,7 +44,7 @@ int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDe
         .poolSizeCount = (uint32_t)GET_ARRAY_LENGTH(descriptor_pool_sizes),
     };
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreateDescriptorPool(context->device, &descriptor_pool_create_info, NULL, out_descriptor_pool),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateDescriptorPool(context->device, &descriptor_pool_create_info, NULL, out_descriptor_pool),
                        -1, "Failed to allocate descriptor pool: %d", result);
 
     return 0;
@@ -65,7 +65,7 @@ int32_t allocate_descriptor_set(RendererContext *context, VkDescriptorSetLayout 
         .descriptorSetCount = 1,
     };
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vkAllocateDescriptorSets(context->device, &descriptor_set_alloc_info, out_descriptor_set),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkAllocateDescriptorSets(context->device, &descriptor_set_alloc_info, out_descriptor_set),
                        -1, "Failed to allocate descriptor sets: %d", result);
 
     return 0;
@@ -101,7 +101,7 @@ int32_t create_descriptor_sets(RendererContext *context)
         .flags = 0,
     };
 
-    VK_RETURN_IF_ERROR(context->deps.logger, result,
+    RV_RETURN_IF_ERROR(context->deps.logger, result,
                        vkCreateDescriptorSetLayout(context->device, &descriptor_set_layout_create_info, NULL, &context->draw_image_descriptor_set_layout),
                        -1, "Unable to create descriptor set layout: %d", result);
 
