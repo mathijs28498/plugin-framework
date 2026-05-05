@@ -182,7 +182,7 @@ typedef struct RendererContext
 
     VkDescriptorPool global_descriptor_pool;
 
-    VkDescriptorSetLayout draw_image_descriptor_set_layout;
+    uint64_t draw_image_descriptor_set_layout_handle;
     VkDescriptorSet draw_image_descriptor_set;
 
     VkShaderModule *shader_modules;

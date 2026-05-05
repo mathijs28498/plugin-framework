@@ -117,7 +117,7 @@ struct VkExtent2D extent_2d(struct RV_VkExtent2D *rv_extent);
         }                                                                                                 \
     } while (0)
 
-#define RV_RES_HANDLE_ALLOC_RETURN_IF_ERROR(logger, resource_pool, generations_pool, resource, out_resource_handle, destroy_func) \
+#define RV_RES_HANDLE_ALLOC_OR_RETURN(logger, resource_pool, generations_pool, resource, out_resource_handle, destroy_func) \
     do                                                                                                                            \
     {                                                                                                                             \
         bool UNIQUE_VAR(free_handle_found);                                                                                       \

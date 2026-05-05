@@ -8,7 +8,9 @@
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_descriptor_set, LOG_LEVEL_DEBUG)
+#include <plugin_sdk/renderer/v1/renderer_interface.h>
 
+#include "renderer_vulkan.h"
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan_register.h"
 
@@ -21,6 +23,7 @@ int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDe
     assert(descriptor_types != NULL);
 
     VkResult result;
+    int32_t ret;
 
     TODO("Use an arena allocator here, calculate the amount needed/ just add more at the end with a reference to the start maybe?");
     CREATE_ARRAY(VkDescriptorPoolSize, descriptor_pool_sizes, MAX_DESCRIPTOR_POOL_SIZES_LEN);
@@ -47,6 +50,10 @@ int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDe
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateDescriptorPool(context->device, &descriptor_pool_create_info, NULL, out_descriptor_pool),
                        -1, "Failed to allocate descriptor pool: %d", result);
 
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyDescriptorPool, context->device, context->global_descriptor_pool, NULL),
+                    "Failed to push descriptor pool to swapchain destroy queue: %d", ret);
+
     return 0;
 }
 
@@ -71,20 +78,17 @@ int32_t allocate_descriptor_set(RendererContext *context, VkDescriptorSetLayout 
     return 0;
 }
 
-int32_t create_descriptor_sets(RendererContext *context)
+TODO("Find proper name for this shite")
+int32_t renderer_vulkan_create_descriptor_set(RendererContext *context, RendererDescriptorSetLayoutHandle *out_descriptor_set_layout_handle)
 {
     assert(context != NULL);
+    assert(out_descriptor_set_layout_handle != NULL);
 
-    uint32_t ret;
     VkResult result;
-
-    CREATE_INITIALIZED_ARRAY(VkDescriptorType, descriptor_pool_sizes,
-                             {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE});
-
-    RETURN_IF_ERROR(context->deps.logger, ret, create_descriptor_pool(context, 10, descriptor_pool_sizes, &context->global_descriptor_pool),
-                    "Failed to create global descriptor pool: %d", ret);
+    int32_t ret;
 
     TODO("Use arena and dynamic allocation here")
+    TODO("Get data from arguments")
     CREATE_INITIALIZED_ARRAY(
         VkDescriptorSetLayoutBinding, descriptor_set_layout_bindings,
         {(VkDescriptorSetLayoutBinding){
@@ -101,12 +105,65 @@ int32_t create_descriptor_sets(RendererContext *context)
         .flags = 0,
     };
 
+    VkDescriptorSetLayout descriptor_set_layout;
     RV_RETURN_IF_ERROR(context->deps.logger, result,
-                       vkCreateDescriptorSetLayout(context->device, &descriptor_set_layout_create_info, NULL, &context->draw_image_descriptor_set_layout),
+                       vkCreateDescriptorSetLayout(context->device, &descriptor_set_layout_create_info, NULL, &descriptor_set_layout),
                        -1, "Unable to create descriptor set layout: %d", result);
 
-    RETURN_IF_ERROR(context->deps.logger, ret, allocate_descriptor_set(context, context->draw_image_descriptor_set_layout, &context->draw_image_descriptor_set),
+    TODO("This belongs in the main_destroy_queue, so shouldnt be here, but the whole function is being called in recreate_swapchain, so fix that")
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyDescriptorSetLayout, context->device, descriptor_set_layout, NULL),
+                    "Failed to push descriptor set layout to swapchain destroy queue: %d", ret);
+
+    RendererVulkanHandle rv_descriptor_set_layout_handle = {0};
+    RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->descriptor_set_layouts, context->descriptor_set_layout_generations, descriptor_set_layout, rv_descriptor_set_layout_handle,
+                                  vkDestroyDescriptorSetLayout(context->device, descriptor_set_layout, NULL));
+
+    *out_descriptor_set_layout_handle = rv_descriptor_set_layout_handle.raw;
+
+    return 0;
+}
+
+TODO("Create methods for both")
+int32_t create_descriptor_pool_and_set_layouts(RendererContext *context)
+{
+    assert(context != NULL);
+
+    int32_t ret;
+
+    CREATE_INITIALIZED_ARRAY(VkDescriptorType, descriptor_pool_sizes,
+                             {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE});
+
+    RETURN_IF_ERROR(context->deps.logger, ret, create_descriptor_pool(context, 10, descriptor_pool_sizes, &context->global_descriptor_pool),
+                    "Failed to create global descriptor pool: %d", ret);
+
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_descriptor_set(context, &context->draw_image_descriptor_set_layout_handle),
+                    "Failed to create descriptor set: %d", ret);
+
+    return 0;
+}
+
+TODO("Create a descriptor set handle for this, dont hardcode")
+int32_t renderer_vulkan_allocate_descriptor_set(RendererContext *context, RendererDescriptorSetLayoutHandle descriptor_set_layout_handle)
+{
+    assert(context != NULL);
+
+    int32_t ret;
+
+    VkDescriptorSetLayout descriptor_set_layout;
+    RendererVulkanHandle rv_descriptor_set_handle = {.raw = descriptor_set_layout_handle};
+    RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layouts, context->descriptor_set_layout_generations, rv_descriptor_set_handle, descriptor_set_layout);
+
+    RETURN_IF_ERROR(context->deps.logger, ret, allocate_descriptor_set(context, descriptor_set_layout, &context->draw_image_descriptor_set),
                     "Failed to allocate descriptor set: %d", ret);
+
+    return 0;
+}
+
+TODO("Add arguments for the infos")
+void renderer_vulkan_update_descriptor_set(RendererContext *context)
+{
+    assert(context != NULL);
 
     VkDescriptorImageInfo draw_image_descriptor_info = {
         .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
@@ -123,15 +180,21 @@ int32_t create_descriptor_sets(RendererContext *context)
     };
 
     vkUpdateDescriptorSets(context->device, 1, &draw_image_write_descriptor_set, 0, NULL);
+}
 
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->swapchain_destroy_queue, vkDestroyDescriptorPool, context->device, context->global_descriptor_pool, NULL),
-                    "Failed to push descriptor pool to swapchain destroy queue: %d", ret);
+int32_t create_descriptor_sets(RendererContext *context)
+{
+    assert(context != NULL);
 
-    TODO("This belongs in the main_destroy_queue, so shouldnt be here, but the whole function is being called in recreate_swapchain, so fix that")
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->swapchain_destroy_queue, vkDestroyDescriptorSetLayout, context->device, context->draw_image_descriptor_set_layout, NULL),
-                    "Failed to push descriptor set layout to swapchain destroy queue: %d", ret);
+    uint32_t ret;
+
+    RETURN_IF_ERROR(context->deps.logger, ret, create_descriptor_pool_and_set_layouts(context),
+                    "Failed to create descriptor pool and/or set layouts: %d", ret);
+
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_allocate_descriptor_set(context, context->draw_image_descriptor_set_layout_handle),
+                    "Failed to allocate descriptor set: %d", ret);
+
+    renderer_vulkan_update_descriptor_set(context);
 
     return 0;
 }

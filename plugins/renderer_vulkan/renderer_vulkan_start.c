@@ -267,8 +267,7 @@ int32_t create_background_pipelines(RendererContext *context)
         .size = sizeof(ComputePushConstants),
     }};
 
-    // RendererDescriptorSetLayoutHandle descriptor_set_handles[] = {context->draw_image_descriptor_set_layout_handle};
-    RendererDescriptorSetLayoutHandle descriptor_set_handles[] = {0};
+    RendererDescriptorSetLayoutHandle descriptor_set_handles[] = {context->draw_image_descriptor_set_layout_handle};
     RendererPipelineLayoutCreateInfo pipeline_layout_create_info = {
         .push_constants_len = ARRAY_SIZE(push_constants_info),
         .push_constants = push_constants_info,
@@ -608,8 +607,7 @@ int32_t renderer_vulkan_start_recreate_swapchain(RendererContext *context)
     RETURN_IF_ERROR(context->deps.logger, ret, create_draw_image(context),
                     "Failed to recreate draw image: %d", ret);
 
-    RETURN_IF_ERROR(context->deps.logger, ret, create_descriptor_sets(context),
-                    "Failed to recreate descriptor sets: %d", ret);
+    renderer_vulkan_update_descriptor_set(context);
 
     context->resize_requested = false;
     return 0;

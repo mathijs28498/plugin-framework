@@ -45,7 +45,7 @@ int32_t renderer_vulkan_create_shader(RendererContext *context, const uint32_t *
         -1, "Failed to create shader module: %d", result);
 
     RendererVulkanHandle shader_handle = {0};
-    RV_RES_HANDLE_ALLOC_RETURN_IF_ERROR(context->deps.logger, context->shader_modules, context->shader_module_generations, shader_module, shader_handle,
+    RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->shader_modules, context->shader_module_generations, shader_module, shader_handle,
                                         vkDestroyShaderModule(context->device, shader_module, NULL));
     *out_shader_handle = shader_handle.raw;
     return 0;
@@ -328,7 +328,6 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
         RendererVulkanHandle descriptor_set_layout_handle = {.raw = renderer_pipeline_layout_create_info->descriptor_set_layout_handles[i]};
         RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layouts, context->descriptor_set_layout_generations,
                                     descriptor_set_layout_handle, descriptor_set_layouts[i]);
-        descriptor_set_layouts[i] = context->draw_image_descriptor_set_layout;
     }
 
     VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
@@ -344,7 +343,7 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
                        -1, "Failed to create pipeline layout: %d", result);
 
     RendererVulkanHandle rv_pipeline_layout_handle = {0};
-    RV_RES_HANDLE_ALLOC_RETURN_IF_ERROR(context->deps.logger, context->pipeline_layouts, context->pipeline_layout_generations, pipeline_layout, rv_pipeline_layout_handle,
+    RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->pipeline_layouts, context->pipeline_layout_generations, pipeline_layout, rv_pipeline_layout_handle,
                                         vkDestroyPipelineLayout(context->device, pipeline_layout, NULL));
 
     RETURN_IF_ERROR(context->deps.logger, ret,
@@ -373,36 +372,6 @@ int32_t renderer_vulkan_create_compute_pipeline(RendererContext *context, const 
     VkResult result;
     int32_t ret;
 
-    // VkPushConstantRange compute_push_constant_range = {
-    //     .offset = 0,
-    //     .size = sizeof(ComputePushConstants),
-    //     .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-    // };
-
-    // VkPipelineLayoutCreateInfo compute_pipeline_layout_create_info = {
-    //     .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-    //     .pSetLayouts = &context->draw_image_descriptor_set_layout,
-    //     .setLayoutCount = 1,
-    //     .pPushConstantRanges = &compute_push_constant_range,
-    //     .pushConstantRangeCount = 1,
-    // };
-
-    // VK_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &compute_pipeline_layout_create_info, NULL, &context->gradient_pipeline_layout),
-    //                    -1, "Failed to create gradient pipeline layout: %d", result);
-
-    // RETURN_IF_ERROR(context->deps.logger, ret,
-    //                 RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, context->gradient_pipeline_layout, NULL),
-    //                 "Failed to push gradient pipeline layout destroy data to destroy queue: %d", ret);
-
-    // TODO("REMOVE THIS")
-    // VkShaderModule compute_shader_module = NULL;
-    // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_shader(context, GRADIENT_COMPUTE_SHADER_U32_CODE, GRADIENT_COMPUTE_SHADER_BYTES_LEN, &compute_shader_module),
-    //                 "Failed to load shader module: %d", ret);
-    // RendererShaderHandle compute_shader_handle;
-    // RETURN_IF_ERROR(context->deps.logger, ret,
-    //                 renderer_vulkan_create_shader(context, GRADIENT_COMPUTE_SHADER_U32_CODE, GRADIENT_COMPUTE_SHADER_BYTES_LEN, &compute_shader_handle),
-    //                 "Failed to create shader: %d", ret);
-
     VkShaderModule compute_shader_module;
     RendererVulkanHandle rv_compute_shader_handle = {.raw = renderer_pipeline_create_info->compute_shader_handle};
     RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->shader_modules, context->shader_module_generations, rv_compute_shader_handle, compute_shader_module);
@@ -430,7 +399,7 @@ int32_t renderer_vulkan_create_compute_pipeline(RendererContext *context, const 
                        -1, "Failed to create compute pipeline: %d", result);
 
     RendererVulkanHandle pipeline_handle = {0};
-    RV_RES_HANDLE_ALLOC_RETURN_IF_ERROR(context->deps.logger, context->pipelines, context->pipeline_generations, pipeline, pipeline_handle,
+    RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->pipelines, context->pipeline_generations, pipeline, pipeline_handle,
                                         vkDestroyPipeline(context->device, pipeline, NULL));
 
     TODO("Make owner responsible for destruction");
@@ -438,8 +407,6 @@ int32_t renderer_vulkan_create_compute_pipeline(RendererContext *context, const 
                     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipeline, context->device, pipeline, NULL),
                     "Failed to push gradient pipeline destroy data to destroy queue: %d", ret);
 
-    // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_destroy_shader(context, compute_shader_handle),
-    // "Failed to destroy shader: %d", ret);
     *out_pipeline_handle = pipeline_handle.raw;
 
     return 0;
