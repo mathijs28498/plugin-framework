@@ -13,7 +13,6 @@
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_WARNING)
 #include <plugin_sdk/renderer/v1/renderer_interface.h>
 
-#include "shader_gradient_compute.h"
 #include "shader_colored_triangle_mesh_vertex.h"
 #include "shader_colored_triangle_fragment.h"
 
@@ -250,51 +249,6 @@ int32_t create_draw_image(RendererContext *context)
     return 0;
 }
 
-int32_t create_background_pipelines(RendererContext *context)
-{
-    assert(context != NULL);
-
-    int32_t ret;
-
-    RendererShaderHandle compute_shader_handle;
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    renderer_vulkan_create_shader(context, GRADIENT_COMPUTE_SHADER_U32_CODE, GRADIENT_COMPUTE_SHADER_BYTES_LEN, &compute_shader_handle),
-                    "Failed to create shader: %d", ret);
-
-    RendererPushConstantsInfo push_constants_info[] = {{
-        .render_stage_flags = RENDERER_SHADER_STAGE_COMPUTE_BIT,
-        .offset = 0,
-        .size = sizeof(ComputePushConstants),
-    }};
-
-    RendererDescriptorSetLayoutHandle descriptor_set_handles[] = {context->draw_image_descriptor_set_layout_handle};
-    RendererPipelineLayoutCreateInfo pipeline_layout_create_info = {
-        .push_constants_len = ARRAY_SIZE(push_constants_info),
-        .push_constants = push_constants_info,
-        .descriptor_set_layout_handles_len = ARRAY_SIZE(descriptor_set_handles),
-        .descriptor_set_layout_handles = descriptor_set_handles,
-    };
-
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    renderer_vulkan_create_pipeline_layout(context, &pipeline_layout_create_info, &context->gradient_pipeline_layout_handle),
-                    "Failed to create pipeline layout: %d", ret);
-
-    RendererComputePipelineCreateInfo pipeline_create_info = {
-        .compute_shader_handle = compute_shader_handle,
-        .compute_shader_entry_point = "main",
-        .layout_handle = context->gradient_pipeline_layout_handle,
-    };
-
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    renderer_vulkan_create_compute_pipeline(context, &pipeline_create_info, &context->gradient_pipeline_handle),
-                    "Failed to create compute pipeline: %d", ret);
-
-    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_destroy_shader(context, compute_shader_handle),
-                    "Failed to destroy shader: %d", ret);
-
-    return 0;
-}
-
 // int32_t create_mesh_pipeline(RendererContext *context)
 // {
 //     assert(context != NULL);
@@ -359,10 +313,7 @@ int32_t init_pipelines(RendererContext *context)
 {
     assert(context != NULL);
 
-    int32_t ret;
-
-    RETURN_IF_ERROR(context->deps.logger, ret, create_background_pipelines(context),
-                    "Failed to initialize background pipelines: %d", ret);
+    // int32_t ret;
 
     // RETURN_IF_ERROR(context->deps.logger, ret, create_triangle_pipeline(context),
     //                 "Failed to create triangle pipeline: %d", ret);
@@ -543,7 +494,7 @@ int32_t renderer_vulkan_start_internal(RendererContext *context, RendererStartCo
     RV_TRY_INIT(context->deps.logger, ret, create_draw_image(context), context->main_destroy_queue,
                 "Failed to create draw image: %d", ret);
 
-    RV_TRY_INIT(context->deps.logger, ret, create_descriptor_sets(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, rv_create_descriptor_pools(context), context->main_destroy_queue,
                 "Failed to create draw image: %d", ret);
 
     RV_TRY_INIT(context->deps.logger, ret, init_pipelines(context), context->main_destroy_queue,
@@ -607,7 +558,7 @@ int32_t renderer_vulkan_start_recreate_swapchain(RendererContext *context)
     RETURN_IF_ERROR(context->deps.logger, ret, create_draw_image(context),
                     "Failed to recreate draw image: %d", ret);
 
-    renderer_vulkan_update_descriptor_set(context);
+    // renderer_vulkan_update_descriptor_set(context);
 
     context->resize_requested = false;
     return 0;

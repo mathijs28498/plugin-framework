@@ -42,11 +42,7 @@ plugin_generate_register_inc(renderer_vulkan
 )
 
 include("RendererShaderGenerator")
-target_embed_shader(renderer_vulkan
-    GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
-    SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/gradient.comp"
-    SHADER_STAGE "compute"
-)
+
 target_embed_shader(renderer_vulkan
     GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
     SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/colored_triangle.vert"

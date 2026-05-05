@@ -14,8 +14,11 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_descriptor_set, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan_register.h"
 
+TODO("Make these configs")
 #define MAX_DESCRIPTOR_POOL_SIZES_LEN 64
+#define MAX_RESOURCE_SET_BINDINGS 128
 
+TODO("Improve this, make one for each FrameData")
 int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDescriptorType *descriptor_types, VkDescriptorPool *out_descriptor_pool)
 {
     assert(context != NULL);
@@ -48,60 +51,75 @@ int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDe
     };
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateDescriptorPool(context->device, &descriptor_pool_create_info, NULL, out_descriptor_pool),
-                       -1, "Failed to allocate descriptor pool: %d", result);
+                       -1, "Failed to create descriptor pool: %d", result);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyDescriptorPool, context->device, context->global_descriptor_pool, NULL),
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyDescriptorPool, context->device, *out_descriptor_pool, NULL),
                     "Failed to push descriptor pool to swapchain destroy queue: %d", ret);
 
     return 0;
 }
 
-int32_t allocate_descriptor_set(RendererContext *context, VkDescriptorSetLayout descriptor_set_layout, VkDescriptorSet *out_descriptor_set)
+int32_t renderer_vulkan_allocate_transient_resource_set(RendererContext *context, RendererResourceSetLayoutHandle resource_set_layout_handle, RendererResourceSetHandle *out_resource_set_handle)
 {
     assert(context != NULL);
-    assert(descriptor_set_layout != VK_NULL_HANDLE);
-    assert(out_descriptor_set != NULL);
+    assert(out_resource_set_handle != NULL);
 
     VkResult result;
 
+    RendererFrameData *frame = context->active_frame_state.frame;
+    size_t new_decriptor_set_index = GET_ARRAY_LENGTH(frame->transient_descriptor_sets);
+    RETURN_IF_TRUE(context->deps.logger, new_decriptor_set_index >= GET_ARRAY_CAPACITY(frame->transient_descriptor_sets),
+                   -1, "Failed to allocate transient descriptor set, transient descriptor sets for current frame is full");
+
+    VkDescriptorSetLayout descriptor_set_layout;
+    RendererVulkanHandle rv_resource_set_layout_handle = {.raw = resource_set_layout_handle};
+    RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layouts, context->descriptor_set_layout_generations, rv_resource_set_layout_handle, descriptor_set_layout);
+
     VkDescriptorSetAllocateInfo descriptor_set_alloc_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-        .descriptorPool = context->global_descriptor_pool,
+        .descriptorPool = frame->transient_descriptor_pool,
         .pSetLayouts = &descriptor_set_layout,
         .descriptorSetCount = 1,
     };
 
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vkAllocateDescriptorSets(context->device, &descriptor_set_alloc_info, out_descriptor_set),
+    RV_RETURN_IF_ERROR(context->deps.logger, result,
+                       vkAllocateDescriptorSets(context->device, &descriptor_set_alloc_info, &frame->transient_descriptor_sets[new_decriptor_set_index]),
                        -1, "Failed to allocate descriptor sets: %d", result);
+    GET_ARRAY_LENGTH(frame->transient_descriptor_sets) += 1;
+    *out_resource_set_handle = (uint64_t)new_decriptor_set_index;
 
     return 0;
 }
 
-TODO("Find proper name for this shite")
-int32_t renderer_vulkan_create_descriptor_set(RendererContext *context, RendererDescriptorSetLayoutHandle *out_descriptor_set_layout_handle)
+int32_t renderer_vulkan_create_resource_set_layout(RendererContext *context, const RendererResourceSetLayoutCreateInfo *renderer_resource_set_layout_create_info, RendererResourceSetLayoutHandle *out_resource_set_layout_handle)
 {
     assert(context != NULL);
-    assert(out_descriptor_set_layout_handle != NULL);
+    assert(renderer_create_resource_set_layout != NULL);
 
     VkResult result;
     int32_t ret;
 
-    TODO("Use arena and dynamic allocation here")
-    TODO("Get data from arguments")
-    CREATE_INITIALIZED_ARRAY(
-        VkDescriptorSetLayoutBinding, descriptor_set_layout_bindings,
-        {(VkDescriptorSetLayoutBinding){
-            .binding = 0,
-            .descriptorCount = 1,
-            .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-            .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-        }});
+    RETURN_IF_TRUE(context->deps.logger, renderer_resource_set_layout_create_info->bindings_len > MAX_RESOURCE_SET_BINDINGS,
+                   -1, "Failed to resource set layout, too many bindings: %d (max %d)", renderer_resource_set_layout_create_info->bindings_len, MAX_RESOURCE_SET_BINDINGS);
+    CREATE_ARRAY_WITH_LEN(VkDescriptorSetLayoutBinding, descriptor_set_layout_bindings, MAX_RESOURCE_SET_BINDINGS, renderer_resource_set_layout_create_info->bindings_len);
+
+    TODO("Use arena allocator here")
+    ARRAY_FOR(descriptor_set_layout_bindings, i)
+    {
+        const RendererResourceSetLayoutBinding *renderer_binding = &renderer_resource_set_layout_create_info->bindings[i];
+        VkDescriptorSetLayoutBinding *vk_binding = &descriptor_set_layout_bindings[i];
+        vk_binding->binding = renderer_binding->binding;
+        vk_binding->descriptorCount = renderer_binding->resource_len;
+        vk_binding->descriptorType = rv_resource_type_to_vk_descriptor_type(renderer_binding->resource_type);
+        vk_binding->stageFlags = rv_shader_stage_to_vk_shader_stage(renderer_binding->stage_flags);
+        vk_binding->pImmutableSamplers = VK_NULL_HANDLE;
+    }
 
     VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .pBindings = descriptor_set_layout_bindings,
         .bindingCount = (uint32_t)GET_ARRAY_LENGTH(descriptor_set_layout_bindings),
+        .pBindings = descriptor_set_layout_bindings,
         .flags = 0,
     };
 
@@ -119,13 +137,12 @@ int32_t renderer_vulkan_create_descriptor_set(RendererContext *context, Renderer
     RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->descriptor_set_layouts, context->descriptor_set_layout_generations, descriptor_set_layout, rv_descriptor_set_layout_handle,
                                   vkDestroyDescriptorSetLayout(context->device, descriptor_set_layout, NULL));
 
-    *out_descriptor_set_layout_handle = rv_descriptor_set_layout_handle.raw;
+    *out_resource_set_layout_handle = rv_descriptor_set_layout_handle.raw;
 
     return 0;
 }
 
-TODO("Create methods for both")
-int32_t create_descriptor_pool_and_set_layouts(RendererContext *context)
+int32_t rv_create_descriptor_pools(RendererContext *context)
 {
     assert(context != NULL);
 
@@ -137,31 +154,35 @@ int32_t create_descriptor_pool_and_set_layouts(RendererContext *context)
     RETURN_IF_ERROR(context->deps.logger, ret, create_descriptor_pool(context, 10, descriptor_pool_sizes, &context->global_descriptor_pool),
                     "Failed to create global descriptor pool: %d", ret);
 
-    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_descriptor_set(context, &context->draw_image_descriptor_set_layout_handle),
-                    "Failed to create descriptor set: %d", ret);
+    for (size_t i = 0; i < ARRAY_SIZE(context->frames); i++)
+    {
+        RETURN_IF_ERROR(context->deps.logger, ret, create_descriptor_pool(context, 10, descriptor_pool_sizes, &context->frames[i].transient_descriptor_pool),
+                        "Failed to create transient descriptor pool: %d", ret);
+    }
 
     return 0;
 }
 
-TODO("Create a descriptor set handle for this, dont hardcode")
-int32_t renderer_vulkan_allocate_descriptor_set(RendererContext *context, RendererDescriptorSetLayoutHandle descriptor_set_layout_handle)
-{
-    assert(context != NULL);
+// TODO("Create a descriptor set handle for this, dont hardcode")
+// int32_t renderer_vulkan_allocate_descriptor_set(RendererContext *context, RendererResourceSetLayoutHandle descriptor_set_layout_handle)
+// {
+//     assert(context != NULL);
 
-    int32_t ret;
+//     int32_t ret;
 
-    VkDescriptorSetLayout descriptor_set_layout;
-    RendererVulkanHandle rv_descriptor_set_handle = {.raw = descriptor_set_layout_handle};
-    RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layouts, context->descriptor_set_layout_generations, rv_descriptor_set_handle, descriptor_set_layout);
+//     VkDescriptorSetLayout descriptor_set_layout;
+//     RendererVulkanHandle rv_descriptor_set_handle = {.raw = descriptor_set_layout_handle};
+//     RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layouts, context->descriptor_set_layout_generations, rv_descriptor_set_handle, descriptor_set_layout);
 
-    RETURN_IF_ERROR(context->deps.logger, ret, allocate_descriptor_set(context, descriptor_set_layout, &context->draw_image_descriptor_set),
-                    "Failed to allocate descriptor set: %d", ret);
+//     RETURN_IF_ERROR(context->deps.logger, ret, allocate_descriptor_set(context, descriptor_set_layout, &context->draw_image_descriptor_set),
+//                     "Failed to allocate descriptor set: %d", ret);
 
-    return 0;
-}
+//     return 0;
+// }
 
 TODO("Add arguments for the infos")
-void renderer_vulkan_update_descriptor_set(RendererContext *context)
+TODO("Make generation decide if it is a transient or global")
+void renderer_vulkan_update_transient_resource_set(RendererContext *context, RendererResourceSetHandle resource_set_handle)
 {
     assert(context != NULL);
 
@@ -170,10 +191,12 @@ void renderer_vulkan_update_descriptor_set(RendererContext *context)
         .imageView = context->draw_image.image_view,
     };
 
+    VkDescriptorSet descriptor_set = context->active_frame_state.frame->transient_descriptor_sets[(size_t)resource_set_handle];
+
     VkWriteDescriptorSet draw_image_write_descriptor_set = {
         .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
         .dstBinding = 0,
-        .dstSet = context->draw_image_descriptor_set,
+        .dstSet = descriptor_set,
         .descriptorCount = 1,
         .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
         .pImageInfo = &draw_image_descriptor_info,
@@ -182,19 +205,19 @@ void renderer_vulkan_update_descriptor_set(RendererContext *context)
     vkUpdateDescriptorSets(context->device, 1, &draw_image_write_descriptor_set, 0, NULL);
 }
 
-int32_t create_descriptor_sets(RendererContext *context)
-{
-    assert(context != NULL);
+// int32_t create_descriptor_sets(RendererContext *context)
+// {
+//     assert(context != NULL);
 
-    uint32_t ret;
+//     uint32_t ret;
 
-    RETURN_IF_ERROR(context->deps.logger, ret, create_descriptor_pool_and_set_layouts(context),
-                    "Failed to create descriptor pool and/or set layouts: %d", ret);
+//     RETURN_IF_ERROR(context->deps.logger, ret, create_descriptor_pool_and_set_layouts(context),
+//                     "Failed to create descriptor pool and/or set layouts: %d", ret);
 
-    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_allocate_descriptor_set(context, context->draw_image_descriptor_set_layout_handle),
-                    "Failed to allocate descriptor set: %d", ret);
+//     // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_allocate_descriptor_set(context, context->draw_image_descriptor_set_layout_handle),
+//     //                 "Failed to allocate descriptor set: %d", ret);
 
-    renderer_vulkan_update_descriptor_set(context);
+//     // renderer_vulkan_update_descriptor_set(context);
 
-    return 0;
-}
+//     return 0;
+// }

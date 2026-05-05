@@ -318,14 +318,14 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
         push_constant_ranges[i].size = push_constants_info->size;
     }
 
-    RETURN_IF_TRUE(context->deps.logger, renderer_pipeline_layout_create_info->descriptor_set_layout_handles_len > MAX_DESCRIPTOR_SET_LAYOUTS,
+    RETURN_IF_TRUE(context->deps.logger, renderer_pipeline_layout_create_info->resource_set_layout_handles_len > MAX_DESCRIPTOR_SET_LAYOUTS,
                    -1, "Failed to create pipeline layout, too many descriptor sets: %d (max %d)",
-                   renderer_pipeline_layout_create_info->descriptor_set_layout_handles_len, MAX_DESCRIPTOR_SET_LAYOUTS);
-    CREATE_ARRAY_WITH_LEN(VkDescriptorSetLayout, descriptor_set_layouts, MAX_DESCRIPTOR_SET_LAYOUTS, renderer_pipeline_layout_create_info->descriptor_set_layout_handles_len);
-    for (size_t i = 0; i < renderer_pipeline_layout_create_info->descriptor_set_layout_handles_len; i++)
+                   renderer_pipeline_layout_create_info->resource_set_layout_handles_len, MAX_DESCRIPTOR_SET_LAYOUTS);
+    CREATE_ARRAY_WITH_LEN(VkDescriptorSetLayout, descriptor_set_layouts, MAX_DESCRIPTOR_SET_LAYOUTS, renderer_pipeline_layout_create_info->resource_set_layout_handles_len);
+    for (size_t i = 0; i < renderer_pipeline_layout_create_info->resource_set_layout_handles_len; i++)
     {
         TODO("Make this behave properly");
-        RendererVulkanHandle descriptor_set_layout_handle = {.raw = renderer_pipeline_layout_create_info->descriptor_set_layout_handles[i]};
+        RendererVulkanHandle descriptor_set_layout_handle = {.raw = renderer_pipeline_layout_create_info->resource_set_layout_handles[i]};
         RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layouts, context->descriptor_set_layout_generations,
                                     descriptor_set_layout_handle, descriptor_set_layouts[i]);
     }

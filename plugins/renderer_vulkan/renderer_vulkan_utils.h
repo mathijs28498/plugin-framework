@@ -118,16 +118,16 @@ struct VkExtent2D extent_2d(struct RV_VkExtent2D *rv_extent);
     } while (0)
 
 #define RV_RES_HANDLE_ALLOC_OR_RETURN(logger, resource_pool, generations_pool, resource, out_resource_handle, destroy_func) \
-    do                                                                                                                            \
-    {                                                                                                                             \
-        bool UNIQUE_VAR(free_handle_found);                                                                                       \
-        RV_RES_HANDLE_ALLOC(resource_pool, generations_pool, resource, UNIQUE_VAR(free_handle_found), out_resource_handle);       \
-        if (!UNIQUE_VAR(free_handle_found))                                                                                       \
-        {                                                                                                                         \
-            LOG_ERR_TRACE(logger, "Failed to allocate handle, no ");                                                              \
-            destroy_func;                                                                                                         \
-            return -1;                                                                                                            \
-        }                                                                                                                         \
+    do                                                                                                                      \
+    {                                                                                                                       \
+        bool UNIQUE_VAR(free_handle_found);                                                                                 \
+        RV_RES_HANDLE_ALLOC(resource_pool, generations_pool, resource, UNIQUE_VAR(free_handle_found), out_resource_handle); \
+        if (!UNIQUE_VAR(free_handle_found))                                                                                 \
+        {                                                                                                                   \
+            LOG_ERR_TRACE(logger, "Failed to allocate handle, no ");                                                        \
+            destroy_func;                                                                                                   \
+            return -1;                                                                                                      \
+        }                                                                                                                   \
     } while (0)
 
 #define RV_RES_HANDLE_GET(resource_pool, generations_pool, handle, out_ret, out_resource) \
@@ -211,6 +211,9 @@ typedef uint32_t VkShaderStageFlags;
 
 enum RendererPipelineType;
 enum VkPipelineBindPoint;
+enum RendererResourceType;
+enum VkDescriptorType;
 
+enum VkDescriptorType rv_resource_type_to_vk_descriptor_type(enum RendererResourceType);
 VkShaderStageFlags rv_shader_stage_to_vk_shader_stage(RendererShaderStageFlags flags);
 enum VkPipelineBindPoint rv_pipeline_type_to_vk_pipeline_bind_point(enum RendererPipelineType pipeline_type);

@@ -91,6 +91,10 @@ typedef struct RendererFrameData
     VkSemaphore render_semaphore;
     VkFence render_fence;
 
+    VkDescriptorPool transient_descriptor_pool;
+    // uint32_t transient_descriptor_sets_len;
+    VkDescriptorSet *transient_descriptor_sets;
+
     RV_CallRecord *destroy_queue;
 } RendererFrameData;
 
@@ -158,6 +162,7 @@ typedef struct RendererContext
     VkSwapchainKHR old_swapchain;
     RV_CallRecord *swapchain_destroy_queue;
     TODO("Figure out what to do with the size/capacity here")
+    TODO("Make a struct holding the swapchain data")
     ARRAY_FIELD(VkImage, swapchain_images, MAX_SWAPCHAIN_IMAGES_LEN);
     ARRAY_FIELD(VkImageView, swapchain_image_views, MAX_SWAPCHAIN_IMAGES_LEN);
     RV_VkFormat swapchain_image_format;
@@ -191,15 +196,15 @@ typedef struct RendererContext
     VkDescriptorSetLayout *descriptor_set_layouts;
     uint32_t *descriptor_set_layout_generations;
 
+    VkDescriptorSet *descriptor_sets;
+    uint32_t *descriptor_set_generations;
+
     VkPipelineLayout *pipeline_layouts;
     uint32_t *pipeline_layout_generations;
 
     VkPipeline *pipelines;
     uint32_t *pipeline_generations;
 
-    // VkPipelineLayout gradient_pipeline_layout;
-    uint64_t gradient_pipeline_layout_handle;
-    uint64_t gradient_pipeline_handle;
     VkPipeline triangle_pipeline;
     VkPipelineLayout mesh_pipeline_layout;
     VkPipeline mesh_pipeline;

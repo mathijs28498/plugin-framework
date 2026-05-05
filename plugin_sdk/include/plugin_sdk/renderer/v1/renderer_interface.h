@@ -20,7 +20,8 @@ typedef struct RendererWindowConfig
 } RendererWindowConfig;
 
 typedef uint64_t RendererShaderHandle;
-typedef uint64_t RendererDescriptorSetLayoutHandle;
+typedef uint64_t RendererResourceSetLayoutHandle;
+typedef uint64_t RendererResourceSetHandle;
 typedef uint64_t RendererPipelineLayoutHandle;
 typedef uint64_t RendererGraphicsPipelineHandle;
 typedef uint64_t RendererComputePipelineHandle;
@@ -41,6 +42,28 @@ typedef enum RendererPipelineType
     RENDERER_PIPELINE_TYPE_COMPUTE,
 } RendererPipelineType;
 
+typedef enum RendererResourceType
+{
+    RENDERER_RESOURCE_TYPE_SAMPLER = 0,
+    RENDERER_RESOURCE_TYPE_COMBINED_IMAGE_SAMPLER = 1,
+    RENDERER_RESOURCE_TYPE_SAMPLED_IMAGE = 2,
+    RENDERER_RESOURCE_TYPE_STORAGE_IMAGE = 3,
+} RendererResourceType;
+
+typedef struct RendererResourceSetLayoutBinding
+{
+    uint32_t binding;
+    RendererResourceType resource_type;
+    uint32_t resource_len;
+    RendererShaderStageFlags stage_flags;
+} RendererResourceSetLayoutBinding;
+
+typedef struct RendererResourceSetLayoutCreateInfo
+{
+    uint32_t bindings_len;
+    RendererResourceSetLayoutBinding *bindings;
+} RendererResourceSetLayoutCreateInfo;
+
 typedef struct RendererPushConstantsInfo
 {
     RendererShaderStageFlags render_stage_flags;
@@ -49,13 +72,13 @@ typedef struct RendererPushConstantsInfo
 } RendererPushConstantsInfo;
 
 TODO("Allow for multiple push constants")
-TODO("Make this create info more complete with handles to descriptor sets")
+TODO("Make this create info more complete with handles to resource sets")
 typedef struct RendererPipelineLayoutCreateInfo
 {
     uint32_t push_constants_len;
     RendererPushConstantsInfo *push_constants;
-    uint32_t descriptor_set_layout_handles_len;
-    RendererDescriptorSetLayoutHandle *descriptor_set_layout_handles;
+    uint32_t resource_set_layout_handles_len;
+    RendererResourceSetLayoutHandle *resource_set_layout_handles;
 } RendererPipelineLayoutCreateInfo;
 
 typedef struct RendererGraphicsPipelineCreateInfo
@@ -86,16 +109,26 @@ typedef struct RendererVtable
     int32_t (*create_shader)(RendererContext *context, const uint32_t *shader_code_u32, size_t shader_code_bytes_len, RendererShaderHandle *out_shader_handle);
     int32_t (*destroy_shader)(RendererContext *context, RendererShaderHandle shader_handle);
 
+    int32_t (*create_resource_set_layout)(RendererContext *context, const RendererResourceSetLayoutCreateInfo *renderer_resource_set_layout_create_info, RendererResourceSetLayoutHandle *out_resource_set_layout_handle);
+    int32_t (*allocate_transient_resource_set)(RendererContext *context, RendererResourceSetLayoutHandle resource_set_layout_handle, RendererResourceSetHandle *out_resource_set_handle);
+    void (*update_transient_resource_set)(RendererContext *context, RendererResourceSetHandle resource_set_handle);
+
     int32_t (*create_pipeline_layout)(RendererContext *context, const RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle);
 
     int32_t (*create_graphics_pipeline)(RendererContext *context, const RendererGraphicsPipelineCreateInfo *pipeline_create_info, RendererGraphicsPipelineHandle *out_pipeline_handle);
     int32_t (*create_compute_pipeline)(RendererContext *context, const RendererComputePipelineCreateInfo *pipeline_create_info, RendererComputePipelineHandle *out_pipeline_handle);
+
+    void (*dummy_get_extent)(RendererContext *context, uint32_t extent[2]);
 
     void (*cmd_begin_render_pass)(RendererContext *context, RendererCommandList *command_list);
     void (*cmd_end_render_pass)(RendererContext *context, RendererCommandList *command_list);
     void (*cmd_bind_graphics_pipeline)(RendererContext *context, RendererCommandList *command_list, RendererGraphicsPipelineHandle pipeline_handle);
     void (*cmd_bind_compute_pipeline)(RendererContext *context, RendererCommandList *command_list, RendererComputePipelineHandle pipeline_handle);
     void (*cmd_draw)(RendererContext *context, RendererCommandList *command_list, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance);
+    void (*cmd_bind_resource_sets)(RendererContext *context, RendererCommandList *command_list, RendererPipelineType renderer_pipeline_type, RendererPipelineLayoutHandle pipeline_layout_handle, uint32_t first_set, uint32_t resource_set_len, const RendererResourceSetHandle *resource_set_handle, uint32_t dynamic_offset_len, const uint32_t *dynamic_offsets);
+
+    void (*cmd_push_constants)(RendererContext *context, RendererCommandList *command_list, RendererPipelineLayoutHandle pipeline_layout_handle, RendererShaderStageFlags shader_stage_flags, uint32_t offset, uint32_t push_constants_size, void *push_constants);
+    void (*cmd_dispatch)(RendererContext *context, RendererCommandList *command_list, uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z);
 } RendererVtable;
 
 typedef struct RendererInterface
@@ -103,6 +136,12 @@ typedef struct RendererInterface
     struct RendererContext *context;
     RendererVtable *vtable;
 } RendererInterface;
+
+TODO("Remove these")
+static inline void renderer_dummy_get_extent(RendererInterface *iface, uint32_t extent[2])
+{
+    iface->vtable->dummy_get_extent(iface->context, extent);
+}
 
 static inline int32_t renderer_start(RendererInterface *iface)
 {
@@ -132,6 +171,21 @@ static inline int32_t renderer_create_shader(RendererInterface *iface, const uin
 static inline int32_t renderer_destroy_shader(RendererInterface *iface, RendererShaderHandle shader_handle)
 {
     return iface->vtable->destroy_shader(iface->context, shader_handle);
+}
+
+static inline int32_t renderer_create_resource_set_layout(RendererInterface *iface, const RendererResourceSetLayoutCreateInfo *renderer_resource_set_layout_create_info, RendererResourceSetLayoutHandle *out_resource_set_layout_handle)
+{
+    return iface->vtable->create_resource_set_layout(iface->context, renderer_resource_set_layout_create_info, out_resource_set_layout_handle);
+}
+
+static inline int32_t renderer_allocate_transient_resource_set(RendererInterface *iface, RendererResourceSetLayoutHandle resource_set_layout_handle, RendererResourceSetHandle *out_resource_set_handle)
+{
+    return iface->vtable->allocate_transient_resource_set(iface->context, resource_set_layout_handle, out_resource_set_handle);
+}
+
+static inline void renderer_update_transient_resource_set(RendererInterface *iface, RendererResourceSetHandle resource_set_handle)
+{
+    iface->vtable->update_transient_resource_set(iface->context, resource_set_handle);
 }
 
 static inline int32_t renderer_create_pipeline_layout(RendererInterface *iface, const RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle)
@@ -167,6 +221,21 @@ static inline void renderer_cmd_bind_graphics_pipeline(RendererInterface *iface,
 static inline void renderer_cmd_bind_compute_pipeline(RendererInterface *iface, RendererCommandList *command_list, RendererComputePipelineHandle pipeline_handle)
 {
     iface->vtable->cmd_bind_compute_pipeline(iface->context, command_list, pipeline_handle);
+}
+
+static inline void renderer_cmd_bind_resource_sets(RendererInterface *iface, RendererCommandList *command_list, RendererPipelineType renderer_pipeline_type, RendererPipelineLayoutHandle pipeline_layout_handle, uint32_t first_set, uint32_t resource_set_len, const RendererResourceSetHandle *resource_set_handle, uint32_t dynamic_offset_len, const uint32_t *dynamic_offsets)
+{
+    iface->vtable->cmd_bind_resource_sets(iface->context, command_list, renderer_pipeline_type, pipeline_layout_handle, first_set, resource_set_len, resource_set_handle, dynamic_offset_len, dynamic_offsets);
+}
+
+static inline void renderer_cmd_push_constants(RendererInterface *iface, RendererCommandList *command_list, RendererPipelineLayoutHandle pipeline_layout_handle, RendererShaderStageFlags shader_stage_flags, uint32_t offset, uint32_t push_constants_size, void *push_constants)
+{
+    iface->vtable->cmd_push_constants(iface->context, command_list, pipeline_layout_handle, shader_stage_flags, offset, push_constants_size, push_constants);
+}
+
+static inline void renderer_cmd_dispatch(RendererInterface *iface, RendererCommandList *command_list, uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z)
+{
+    iface->vtable->cmd_dispatch(iface->context, command_list, group_count_x, group_count_y, group_count_z);
 }
 
 static inline void renderer_cmd_draw(RendererInterface *iface, RendererCommandList *command_list, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance)

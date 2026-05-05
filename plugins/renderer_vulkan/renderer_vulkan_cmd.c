@@ -13,7 +13,6 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_cmd, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_register.h"
 #include "renderer_vulkan_utils.h"
 
-
 void renderer_vulkan_cmd_begin_render_pass(RendererContext *context, RendererCommandList *command_list)
 {
     assert(context != NULL);
@@ -64,8 +63,7 @@ void renderer_vulkan_cmd_end_render_pass(RendererContext *context, RendererComma
     vkCmdEndRendering(command_list->command_buffer);
 }
 
-TODO("Create descriptor set handle")
-void renderer_vulkan_cmd_bind_descriptor_sets(RendererContext *context, RendererCommandList *command_list, RendererPipelineType renderer_pipeline_type, RendererPipelineLayoutHandle pipeline_layout_handle)
+void renderer_vulkan_cmd_bind_resource_sets(RendererContext *context, RendererCommandList *command_list, RendererPipelineType renderer_pipeline_type, RendererPipelineLayoutHandle pipeline_layout_handle, uint32_t first_set, uint32_t resource_set_len, const RendererResourceSetHandle *resource_set_handle, uint32_t dynamic_offset_len, const uint32_t *dynamic_offsets)
 {
     assert(context != NULL);
     assert(command_list != NULL);
@@ -74,7 +72,9 @@ void renderer_vulkan_cmd_bind_descriptor_sets(RendererContext *context, Renderer
     VkPipelineLayout pipeline_layout;
     RV_RES_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_layouts, context->pipeline_layout_generations, rv_pipeline_layout_handle, pipeline_layout);
 
-    vkCmdBindDescriptorSets(command_list->command_buffer, rv_pipeline_type_to_vk_pipeline_bind_point(renderer_pipeline_type), pipeline_layout, 0, 1, &context->draw_image_descriptor_set, 0, NULL);
+    TODO("Allow for multiple descriptor sets")
+    VkDescriptorSet descriptor_set = context->active_frame_state.frame->transient_descriptor_sets[(size_t)resource_set_handle[0]];
+    vkCmdBindDescriptorSets(command_list->command_buffer, rv_pipeline_type_to_vk_pipeline_bind_point(renderer_pipeline_type), pipeline_layout, first_set, resource_set_len, &descriptor_set, dynamic_offset_len, dynamic_offsets);
 }
 
 TODO("Find a backend agnostic thing for this as push constants are vulkan, maybe a feature flag or something")

@@ -15,8 +15,24 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_register, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_render.h"
 #include "renderer_vulkan_cmd.h"
 #include "renderer_vulkan_pipeline.h"
+#include "renderer_vulkan_descriptor_set.h"
+
+void renderer_vulkan_dummy_get_extent(RendererContext *context, uint32_t extent[2])
+{
+    assert(context != NULL);
+    assert(extent != NULL);
+
+    extent[0] = context->draw_extent.width;
+    extent[1] = context->draw_extent.height;
+}
+RendererResourceSetLayoutHandle renderer_vulkan_dummy_get_draw_image_ds_handle(RendererContext *context)
+{
+    return context->draw_image_descriptor_set_layout_handle;
+}
 
 static const RendererVtable plugin_vtable = {
+    .dummy_get_extent = renderer_vulkan_dummy_get_extent,
+
     .start = renderer_vulkan_start,
     .begin_frame = renderer_vulkan_render_begin_frame,
     .end_frame = renderer_vulkan_render_end_frame,
@@ -24,6 +40,10 @@ static const RendererVtable plugin_vtable = {
 
     .create_shader = renderer_vulkan_create_shader,
     .destroy_shader = renderer_vulkan_destroy_shader,
+
+    .create_resource_set_layout = renderer_vulkan_create_resource_set_layout,
+    .allocate_transient_resource_set = renderer_vulkan_allocate_transient_resource_set,
+    .update_transient_resource_set = renderer_vulkan_update_transient_resource_set,
 
     .create_pipeline_layout = renderer_vulkan_create_pipeline_layout,
 
@@ -35,6 +55,9 @@ static const RendererVtable plugin_vtable = {
     .cmd_bind_graphics_pipeline = renderer_vulkan_cmd_bind_graphics_pipeline,
     .cmd_bind_compute_pipeline = renderer_vulkan_cmd_bind_compute_pipeline,
     .cmd_draw = renderer_vulkan_cmd_draw,
+    .cmd_bind_resource_sets = renderer_vulkan_cmd_bind_resource_sets,
+    .cmd_push_constants = renderer_vulkan_cmd_push_constants,
+    .cmd_dispatch = renderer_vulkan_cmd_dispatch,
 };
 
 TODO("Figure out what these sizes should be");
@@ -44,6 +67,7 @@ TODO("Make these part of the configurations")
 #define FRAME_DESTROY_QUEUE_CAPACITY 32
 #define SHADER_MODULES_CAPACITY 128
 #define DESCRIPTOR_SET_LAYOUTS_CAPACITY 128
+#define TRANSIENT_DESCRIPTOR_SETS_CAPACITY 128
 #define PIPELINES_CAPACITY 128
 #define PIPELINE_LAYOUTS_CAPACITY 128
 
@@ -57,10 +81,13 @@ static int32_t plugin_init(RendererContext *context)
         INIT_ARRAY_MEMORY_FIELD(main_destroy_queue_mem, RV_CallRecord, MAIN_DESTROY_QUEUE_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(swapchain_destroy_queue_mem, RV_CallRecord, SWAPCHAIN_DESTROY_QUEUE_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(frame_destroy_queue_mem[ARRAY_SIZE(context->frames)], RV_CallRecord, FRAME_DESTROY_QUEUE_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(transient_descriptor_sets_mem[ARRAY_SIZE(context->frames)], VkDescriptorSet, TRANSIENT_DESCRIPTOR_SETS_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(shader_modules_mem, VkShaderModule, SHADER_MODULES_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(shader_module_generations_mem, uint32_t, SHADER_MODULES_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(descriptor_set_layouts_mem, VkDescriptorSetLayout, DESCRIPTOR_SET_LAYOUTS_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(descriptor_set_layout_generations_mem, uint32_t, DESCRIPTOR_SET_LAYOUTS_CAPACITY);
+        // INIT_ARRAY_MEMORY_FIELD(descriptor_sets_mem, VkDescriptorSet, DESCRIPTOR_SETS_CAPACITY);
+        // INIT_ARRAY_MEMORY_FIELD(descriptor_set_generations_mem, uint32_t, DESCRIPTOR_SETS_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(pipeline_layouts_mem, VkPipelineLayout, PIPELINE_LAYOUTS_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(pipeline_layout_generations_mem, uint32_t, PIPELINE_LAYOUTS_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(pipelines_mem, VkPipeline, PIPELINES_CAPACITY);
@@ -83,6 +110,11 @@ static int32_t plugin_init(RendererContext *context)
 
     BIND_ARRAY_FILLED(VkDescriptorSetLayout, arena->descriptor_set_layouts_mem, context->descriptor_set_layouts, DESCRIPTOR_SET_LAYOUTS_CAPACITY);
     BIND_ARRAY_FILLED(uint32_t, arena->descriptor_set_layout_generations_mem, context->descriptor_set_layout_generations, DESCRIPTOR_SET_LAYOUTS_CAPACITY);
+
+    for (size_t i = 0; i < ARRAY_SIZE(context->frames); i++)
+    {
+        BIND_ARRAY(VkDescriptorSet, arena->transient_descriptor_sets_mem[i], context->frames[i].transient_descriptor_sets, TRANSIENT_DESCRIPTOR_SETS_CAPACITY);
+    }
 
     BIND_ARRAY_FILLED(VkPipelineLayout, arena->pipeline_layouts_mem, context->pipeline_layouts, PIPELINE_LAYOUTS_CAPACITY);
     BIND_ARRAY_FILLED(uint32_t, arena->pipeline_layout_generations_mem, context->pipeline_layout_generations, PIPELINE_LAYOUTS_CAPACITY);

@@ -22,28 +22,6 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_render, LOG_LEVEL_DEBUG)
 
 #define SECOND_IN_NS 1000000000
 
-int32_t draw_background(RendererContext *context, VkCommandBuffer cmd)
-{
-    assert(context != NULL);
-    assert(cmd != VK_NULL_HANDLE);
-
-    ComputePushConstants push_constants = {
-        .top_left = {1, 0, 0, 1},
-        .top_right = {0, 0, 1, 1},
-        .bottom_left = {0, 1, 1, 1},
-        .bottom_right = {0, 1, 0, 1},
-    };
-
-    RendererCommandList command_list = {.command_buffer = cmd};
-    renderer_vulkan_cmd_bind_compute_pipeline(context, &command_list, context->gradient_pipeline_handle);
-    renderer_vulkan_cmd_bind_descriptor_sets(context, &command_list, RENDERER_PIPELINE_TYPE_COMPUTE, context->gradient_pipeline_layout_handle);
-    renderer_vulkan_cmd_push_constants(context, &command_list, context->gradient_pipeline_layout_handle, RENDERER_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(ComputePushConstants), &push_constants);
-
-    renderer_vulkan_cmd_dispatch(context, &command_list, (uint32_t)ceil(context->draw_extent.width / 16.0), (uint32_t)ceil(context->draw_extent.height / 16.0), 1);
-
-    return 0;
-}
-
 int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCommandList **out_command_list)
 {
     assert(context != NULL);
@@ -93,6 +71,10 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetCommandPool(context->device, frame->command_pool, 0),
                        -1, "Failed to reset frame command pool: %d", result);
 
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetDescriptorPool(context->device, frame->transient_descriptor_pool, 0),
+                       -1, "Failed to reset frame command pool: %d", result);
+    GET_ARRAY_LENGTH(frame->transient_descriptor_sets) = 0;
+
     VkCommandBufferBeginInfo cmd_begin_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
@@ -110,10 +92,6 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
 
     rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
-    draw_background(context, cmd);
-
-    rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-
     return 0;
 }
 
@@ -128,7 +106,10 @@ int32_t renderer_vulkan_render_end_frame(RendererContext *context)
     VkCommandBuffer cmd = frame->command_list.command_buffer;
     VkImage swapchain_image = context->swapchain_images[context->active_frame_state.swapchain_index];
 
-    rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    TODO("Remove this and add render passes");
+    // rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+
+    rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
     rv_transition_image(cmd, swapchain_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     rv_copy_image_to_image(cmd, context->draw_image.image, swapchain_image, extent_2d(&context->draw_extent), extent_2d(&context->swapchain_extent));

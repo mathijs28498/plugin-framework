@@ -319,6 +319,29 @@ VkExtent2D extent_2d(RV_VkExtent2D *rv_extent)
     };
 }
 
+VkDescriptorType rv_resource_type_to_vk_descriptor_type(RendererResourceType resource_type)
+{
+    switch (resource_type)
+    {
+    case RENDERER_RESOURCE_TYPE_SAMPLER:
+        return VK_DESCRIPTOR_TYPE_SAMPLER;
+        break;
+    case RENDERER_RESOURCE_TYPE_COMBINED_IMAGE_SAMPLER:
+        return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        break;
+    case RENDERER_RESOURCE_TYPE_SAMPLED_IMAGE:
+        return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        break;
+    case RENDERER_RESOURCE_TYPE_STORAGE_IMAGE:
+        return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        break;
+
+    default:
+        return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+        break;
+    }
+}
+
 VkShaderStageFlags rv_shader_stage_to_vk_shader_stage(RendererShaderStageFlags flags)
 {
     VkShaderStageFlags vk_flags = 0;
