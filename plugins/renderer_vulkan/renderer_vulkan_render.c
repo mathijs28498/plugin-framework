@@ -117,7 +117,6 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
     return 0;
 }
 
-TODO("Take a commandlist to finish rendering")
 int32_t renderer_vulkan_render_end_frame(RendererContext *context)
 {
     assert(context != NULL);

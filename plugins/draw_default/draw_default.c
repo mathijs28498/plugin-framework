@@ -41,8 +41,6 @@ int32_t draw_default_present(DrawContext *context)
 
     // renderer_cmd_begin_render_pass(renderer, command_list);
 
-    // TODO("Use proper pipeline handle");
-    // uint32_t pipeline_handle = 0;
     // renderer_cmd_bind_pipeline(renderer, command_list, pipeline_handle);
     // renderer_cmd_draw(renderer, command_list, 3, 1, 0, 0);
 
