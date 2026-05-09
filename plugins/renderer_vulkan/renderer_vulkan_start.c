@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include <vk_mem_alloc.h>
+#include <bump_arena.h>
 
 #include <plugin_sdk/plugin_utils.h>
 #include <plugin_sdk/logger/v1/logger_interface.h>
@@ -524,6 +525,7 @@ int32_t renderer_vulkan_start(RendererContext *context)
     TODO("Also wait for device idle here")
 
     rv_call_queue_flush(start_context.destroy_queue);
+    bump_arena_free(context->bump_arena_a, true);
 
     return ret;
 }

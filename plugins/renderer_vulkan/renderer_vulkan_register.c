@@ -70,6 +70,7 @@ TODO("Make these part of the configurations")
 #define TRANSIENT_DESCRIPTOR_SETS_CAPACITY 128
 #define PIPELINES_CAPACITY 128
 #define PIPELINE_LAYOUTS_CAPACITY 128
+#define BUMP_ARENA_CAPACITY (1024 * 128)
 
 static int32_t plugin_init(RendererContext *context)
 {
@@ -92,6 +93,7 @@ static int32_t plugin_init(RendererContext *context)
         INIT_ARRAY_MEMORY_FIELD(pipeline_layout_generations_mem, uint32_t, PIPELINE_LAYOUTS_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(pipelines_mem, VkPipeline, PIPELINES_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(pipeline_generations_mem, uint32_t, PIPELINES_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(bump_arena_mem, uint8_t, BUMP_ARENA_CAPACITY);
     } *arena;
 
     size_t alloc_size = sizeof(*arena);
@@ -121,6 +123,8 @@ static int32_t plugin_init(RendererContext *context)
 
     BIND_ARRAY_FILLED(VkPipeline, arena->pipelines_mem, context->pipelines, PIPELINES_CAPACITY);
     BIND_ARRAY_FILLED(uint32_t, arena->pipeline_generations_mem, context->pipeline_generations, PIPELINES_CAPACITY);
+
+    BIND_ARRAY(uint8_t, arena->bump_arena_mem, context->bump_arena_a, BUMP_ARENA_CAPACITY);
 
     return 0;
 }

@@ -58,6 +58,8 @@
 - [x] Get rid of all static, non relative paths
 
 ### 1
+- [ ] Change the name of the arena_allocator as that is not correct
+- [ ] Make all stretchy buffers have a _a suffix
 - [ ] Fix all todos
 - [ ] Make pre render loop command buffer mechanism to use for the program
 - [ ] Create proper renderer abstraction and draw plugins
@@ -73,7 +75,7 @@
     - [ ] Win + Ctrl + Shift + B forceful restart graphics driver
   - [ ] Make destroying set the handle to VK_NULL_HANDLE somehow
 - [ ] Add immediate execute where you begin, get a commandlist and id, then call commands, then end execute
-- [ ] Add generations to handles
+- [x] Add generations to handles
 - [ ] Add destruction of handles
   - [ ] Responsibility is owner (consumer plugin, so draw plugin)
   - [ ] Decouple cpu and gpu destruction. Free the label, then add destruction of it to queue
@@ -82,6 +84,12 @@
     - [ ] How about double frees?
 
 ### 2
+- [ ] Improve arena allocator plugin with safety and stuff
+  - [ ] Add analytics of the allocations in debug
+  - [ ] Add post freeze
+    - [ ] Buddy allocator vs the other one
+  - [ ] Add a free
+  - [ ] Add a handle or someting for the caller
 - [ ] Add compile error checking for semantics and syntax in shader generate script
 - [ ] Add interface and plugin configurations
   - [ ] Interface plugins at include folder next to header, toml file

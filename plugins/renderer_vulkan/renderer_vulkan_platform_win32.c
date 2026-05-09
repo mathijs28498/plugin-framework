@@ -34,6 +34,7 @@ int32_t renderer_vulkan_platform_create_surface(RendererContext *context, VkSurf
     return 0;
 }
 
+TODO("Make this have a length method so that it can be done with a bump allocator")
 void renderer_vulkan_platform_get_required_extensions(const char ***out_extensions)
 {
     assert(out_extensions != NULL);

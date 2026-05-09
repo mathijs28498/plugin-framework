@@ -33,6 +33,7 @@ target_link_libraries(renderer_vulkan
     vma
     plugin_sdk
     cglm
+    bump_arena
 )
 
 include("PluginSDK")

@@ -9,6 +9,8 @@ TODO("Remove this dependency")
 #include <stdlib.h>
 #include <stdbool.h>
 
+#include <bump_arena.h>
+
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_pipeline, LOG_LEVEL_DEBUG)
@@ -22,9 +24,6 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_pipeline, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan.h"
 
 #define MAX_SHADER_STAGES 2
-TODO("Make these plugin configurations")
-#define MAX_PUSH_CONSTANT_RANGES 4
-#define MAX_DESCRIPTOR_SET_LAYOUTS 16
 
 int32_t renderer_vulkan_create_shader(RendererContext *context, const uint32_t *shader_code_u32, size_t shader_code_bytes_len, RendererShaderHandle *out_shader_handle)
 {
@@ -46,7 +45,7 @@ int32_t renderer_vulkan_create_shader(RendererContext *context, const uint32_t *
 
     RendererVulkanHandle shader_handle = {0};
     RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->shader_modules, context->shader_module_generations, shader_module, shader_handle,
-                                        vkDestroyShaderModule(context->device, shader_module, NULL));
+                                  vkDestroyShaderModule(context->device, shader_module, NULL));
     *out_shader_handle = shader_handle.raw;
     return 0;
 }
@@ -306,11 +305,12 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
     VkResult result;
     int32_t ret;
 
-    RETURN_IF_TRUE(context->deps.logger, renderer_pipeline_layout_create_info->push_constants_len > MAX_PUSH_CONSTANT_RANGES,
-                   -1, "Failed to create pipeline, too many push constants: %d (max %d)", renderer_pipeline_layout_create_info->push_constants_len, MAX_PUSH_CONSTANT_RANGES);
-    CREATE_ARRAY_WITH_LEN(VkPushConstantRange, push_constant_ranges, MAX_PUSH_CONSTANT_RANGES, renderer_pipeline_layout_create_info->push_constants_len);
+    uint32_t push_constant_ranges_len = renderer_pipeline_layout_create_info->push_constants_len;
+    VkPushConstantRange *push_constant_ranges;
+    RETURN_IF_ERROR(context->deps.logger, ret, BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkPushConstantRange, push_constant_ranges_len, &push_constant_ranges),
+                    "Failed to allocate from bump arena: %d", ret);
 
-    for (size_t i = 0; i < renderer_pipeline_layout_create_info->push_constants_len; i++)
+    for (size_t i = 0; i < push_constant_ranges_len; i++)
     {
         RendererPushConstantsInfo *push_constants_info = &renderer_pipeline_layout_create_info->push_constants[i];
         push_constant_ranges[i].stageFlags = rv_shader_stage_to_vk_shader_stage(push_constants_info->render_stage_flags);
@@ -318,11 +318,11 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
         push_constant_ranges[i].size = push_constants_info->size;
     }
 
-    RETURN_IF_TRUE(context->deps.logger, renderer_pipeline_layout_create_info->resource_set_layout_handles_len > MAX_DESCRIPTOR_SET_LAYOUTS,
-                   -1, "Failed to create pipeline layout, too many descriptor sets: %d (max %d)",
-                   renderer_pipeline_layout_create_info->resource_set_layout_handles_len, MAX_DESCRIPTOR_SET_LAYOUTS);
-    CREATE_ARRAY_WITH_LEN(VkDescriptorSetLayout, descriptor_set_layouts, MAX_DESCRIPTOR_SET_LAYOUTS, renderer_pipeline_layout_create_info->resource_set_layout_handles_len);
-    for (size_t i = 0; i < renderer_pipeline_layout_create_info->resource_set_layout_handles_len; i++)
+    uint32_t descriptor_set_layouts_len = renderer_pipeline_layout_create_info->resource_set_layout_handles_len;
+    VkDescriptorSetLayout *descriptor_set_layouts;
+    RETURN_IF_ERROR(context->deps.logger, ret, BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkDescriptorSetLayout, descriptor_set_layouts_len, &descriptor_set_layouts),
+                    "Failed to allocate from bump arena: %d", ret);
+    for (size_t i = 0; i < descriptor_set_layouts_len; i++)
     {
         TODO("Make this behave properly");
         RendererVulkanHandle descriptor_set_layout_handle = {.raw = renderer_pipeline_layout_create_info->resource_set_layout_handles[i]};
@@ -332,9 +332,9 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
 
     VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-        .setLayoutCount = (uint32_t)GET_ARRAY_LENGTH(descriptor_set_layouts),
+        .setLayoutCount = descriptor_set_layouts_len,
         .pSetLayouts = descriptor_set_layouts,
-        .pushConstantRangeCount = (uint32_t)GET_ARRAY_LENGTH(push_constant_ranges),
+        .pushConstantRangeCount = push_constant_ranges_len,
         .pPushConstantRanges = push_constant_ranges,
     };
 
@@ -344,7 +344,7 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
 
     RendererVulkanHandle rv_pipeline_layout_handle = {0};
     RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->pipeline_layouts, context->pipeline_layout_generations, pipeline_layout, rv_pipeline_layout_handle,
-                                        vkDestroyPipelineLayout(context->device, pipeline_layout, NULL));
+                                  vkDestroyPipelineLayout(context->device, pipeline_layout, NULL));
 
     RETURN_IF_ERROR(context->deps.logger, ret,
                     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, pipeline_layout, NULL),
@@ -400,7 +400,7 @@ int32_t renderer_vulkan_create_compute_pipeline(RendererContext *context, const 
 
     RendererVulkanHandle pipeline_handle = {0};
     RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->pipelines, context->pipeline_generations, pipeline, pipeline_handle,
-                                        vkDestroyPipeline(context->device, pipeline, NULL));
+                                  vkDestroyPipeline(context->device, pipeline, NULL));
 
     TODO("Make owner responsible for destruction");
     RETURN_IF_ERROR(context->deps.logger, ret,

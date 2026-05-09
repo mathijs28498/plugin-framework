@@ -53,7 +53,7 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
         context->deps.logger, result, result < 0 && result != VK_ERROR_OUT_OF_DATE_KHR,
         vkAcquireNextImageKHR(context->device, context->swapchain, SECOND_IN_NS, frame->swapchain_semaphore, VK_NULL_HANDLE, &swapchain_image_index),
         -1, "Failed to acquire next image: %d", result);
-    assert(swapchain_image_index < GET_ARRAY_LENGTH(context->swapchain_images));
+    assert(swapchain_image_index < GET_ARRAY_LENGTH(context->swapchain_images_a));
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
@@ -104,7 +104,7 @@ int32_t renderer_vulkan_render_end_frame(RendererContext *context)
 
     RendererFrameData *frame = context->active_frame_state.frame;
     VkCommandBuffer cmd = frame->command_list.command_buffer;
-    VkImage swapchain_image = context->swapchain_images[context->active_frame_state.swapchain_index];
+    VkImage swapchain_image = context->swapchain_images_a[context->active_frame_state.swapchain_index];
 
     TODO("Remove this and add render passes");
     // rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);

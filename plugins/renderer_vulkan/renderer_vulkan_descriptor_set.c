@@ -5,6 +5,8 @@
 #include <plugin_sdk/plugin_utils.h>
 #include <assert.h>
 
+#include <bump_arena.h>
+
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_descriptor_set, LOG_LEVEL_DEBUG)
@@ -14,32 +16,23 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_descriptor_set, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan_register.h"
 
-TODO("Make these configs")
-#define MAX_DESCRIPTOR_POOL_SIZES_LEN 64
-#define MAX_RESOURCE_SET_BINDINGS 128
-
-TODO("Improve this, make one for each FrameData")
-int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDescriptorType *descriptor_types, VkDescriptorPool *out_descriptor_pool)
+int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDescriptorType *descriptor_types_a, VkDescriptorPool *out_descriptor_pool)
 {
     assert(context != NULL);
     assert(max_sets > 0);
-    assert(descriptor_types != NULL);
+    assert(descriptor_types_a != NULL);
 
     VkResult result;
     int32_t ret;
 
-    TODO("Use an arena allocator here, calculate the amount needed/ just add more at the end with a reference to the start maybe?");
-    CREATE_ARRAY(VkDescriptorPoolSize, descriptor_pool_sizes, MAX_DESCRIPTOR_POOL_SIZES_LEN);
+    VkDescriptorPoolSize *descriptor_pool_sizes;
+    RETURN_IF_ERROR(context->deps.logger, ret, BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkDescriptorPoolSize, GET_ARRAY_LENGTH(descriptor_types_a), &descriptor_pool_sizes),
+                    "Failed to allocate from bump arena:%d", ret);
 
-    ARRAY_FOR(descriptor_types, i)
+    ARRAY_FOR(descriptor_types_a, i)
     {
-        TODO("Check if the ratio from the tutorial for max_sets should be added");
-        VkDescriptorPoolSize pool_size = {
-            .type = descriptor_types[i],
-            .descriptorCount = max_sets,
-        };
-
-        ARRAY_PUSH_CHECKED_DEFAULT_RETURN(context->deps.logger, descriptor_pool_sizes, pool_size);
+        descriptor_pool_sizes[i].type = descriptor_types_a[i];
+        descriptor_pool_sizes[i].descriptorCount = max_sets;
     }
 
     VkDescriptorPoolCreateInfo descriptor_pool_create_info = {
@@ -47,7 +40,7 @@ int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDe
         .flags = 0,
         .maxSets = max_sets,
         .pPoolSizes = descriptor_pool_sizes,
-        .poolSizeCount = (uint32_t)GET_ARRAY_LENGTH(descriptor_pool_sizes),
+        .poolSizeCount = (uint32_t)GET_ARRAY_LENGTH(descriptor_types_a),
     };
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateDescriptorPool(context->device, &descriptor_pool_create_info, NULL, out_descriptor_pool),
@@ -100,12 +93,12 @@ int32_t renderer_vulkan_create_resource_set_layout(RendererContext *context, con
     VkResult result;
     int32_t ret;
 
-    RETURN_IF_TRUE(context->deps.logger, renderer_resource_set_layout_create_info->bindings_len > MAX_RESOURCE_SET_BINDINGS,
-                   -1, "Failed to resource set layout, too many bindings: %d (max %d)", renderer_resource_set_layout_create_info->bindings_len, MAX_RESOURCE_SET_BINDINGS);
-    CREATE_ARRAY_WITH_LEN(VkDescriptorSetLayoutBinding, descriptor_set_layout_bindings, MAX_RESOURCE_SET_BINDINGS, renderer_resource_set_layout_create_info->bindings_len);
+    VkDescriptorSetLayoutBinding *descriptor_set_layout_bindings;
+    uint32_t bindings_len = renderer_resource_set_layout_create_info->bindings_len;
+    RETURN_IF_ERROR(context->deps.logger, ret, BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkDescriptorSetLayoutBinding, bindings_len, &descriptor_set_layout_bindings),
+                    "Failed to allocate from bump arena: %d", ret);
 
-    TODO("Use arena allocator here")
-    ARRAY_FOR(descriptor_set_layout_bindings, i)
+    for (uint32_t i = 0; i < bindings_len; i++)
     {
         const RendererResourceSetLayoutBinding *renderer_binding = &renderer_resource_set_layout_create_info->bindings[i];
         VkDescriptorSetLayoutBinding *vk_binding = &descriptor_set_layout_bindings[i];
@@ -118,7 +111,7 @@ int32_t renderer_vulkan_create_resource_set_layout(RendererContext *context, con
 
     VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-        .bindingCount = (uint32_t)GET_ARRAY_LENGTH(descriptor_set_layout_bindings),
+        .bindingCount = bindings_len,
         .pBindings = descriptor_set_layout_bindings,
         .flags = 0,
     };

@@ -3,7 +3,11 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#define PLUGIN_CONTEXT_MEMORY_SLAB_SIZE 1024
+#ifndef MAX_ALIGN
+#define MAX_ALIGN 16 // safe for x86/x86-64; use 8 for 32-bit ARM
+#endif               // #ifndef MAX_ALIGN
+_Static_assert(MAX_ALIGN >= _Alignof(double), "MAX_ALIGN too small for double");
+_Static_assert(MAX_ALIGN >= _Alignof(void *), "MAX_ALIGN too small for pointer");
 
 #define STRINGIZE2(x) #x
 #define STRINGIZE(x) STRINGIZE2(x)
@@ -14,6 +18,9 @@
 #else // #if defined(_MSC_VER)
 #define TODO(msg) _Pragma("message(\"TODO: " msg "\")")
 #endif // #if defined(_MSC_VER)
+
+TODO("Add this somewhere else")
+#define PLUGIN_CONTEXT_MEMORY_SLAB_SIZE 1024
 
 #define ARRAY_SIZE(x) (sizeof(x) / sizeof((x)[0]))
 
@@ -69,16 +76,10 @@ static const bool IS_PLUGIN_BUILD_SHARED = false;
 
 #define CLAMP(value, low, high) ((value) < (low) ? (low) : ((high) < (value) ? (high) : (value)))
 
-typedef union
+typedef struct
 {
-    struct
-    {
-        size_t length;
-        size_t capacity;
-    };
-    long long align_ll_;
-    long double align_ld_;
-    void *align_ptr_;
+    _Alignas(MAX_ALIGN) size_t length;
+    size_t capacity;
 } ArrayHeader_;
 
 #define ARRAY_FIELD(type, var_name, cap) \
@@ -197,19 +198,28 @@ typedef union
         return -1;                                                                   \
     })
 
-#define ARRAY_PUSH_MULTI_CHECKED(arr_ptr, first_element, element_count, on_err)                               \
-    do                                                                                                        \
-    {                                                                                                         \
-        if (GET_ARRAY_CAPACITY(arr_ptr) < GET_ARRAY_LENGTH(arr_ptr) + (element_count))                        \
-        {                                                                                                     \
-            on_err                                                                                            \
-        }                                                                                                     \
-        memcpy(&(arr_ptr)[GET_ARRAY_LENGTH(arr_ptr)], (first_element), sizeof(*(arr_ptr)) * (element_count)); \
-        GET_ARRAY_LENGTH(arr_ptr) += (element_count);                                                         \
+#define ARRAY_PUSH_MULTI_CHECKED(arr_ptr, first_element, element_count, on_err)                                   \
+    do                                                                                                            \
+    {                                                                                                             \
+        if (GET_ARRAY_CAPACITY(arr_ptr) < GET_ARRAY_LENGTH(arr_ptr) + (element_count))                            \
+        {                                                                                                         \
+            on_err                                                                                                \
+        }                                                                                                         \
+        else                                                                                                      \
+        {                                                                                                         \
+            memcpy(&(arr_ptr)[GET_ARRAY_LENGTH(arr_ptr)], (first_element), sizeof(*(arr_ptr)) * (element_count)); \
+            GET_ARRAY_LENGTH(arr_ptr) += (element_count);                                                         \
+        }                                                                                                         \
     } while (0)
 
 #define ARRAY_PUSH_ARRAY_CHECKED(arr_ptr, other_arr_ptr, on_err) \
     ARRAY_PUSH_MULTI_CHECKED(arr_ptr, other_arr_ptr, GET_ARRAY_LENGTH(other_arr_ptr), on_err)
+
+#define ARRAY_PUSH_ARRAY_CHECKED_DEFAULT_RETURN(logger, arr_ptr, other_arr_ptr)            \
+    ARRAY_PUSH_ARRAY_CHECKED(arr_ptr, other_arr_ptr, {                                     \
+        LOG_ERR_TRACE(logger, "Unable to push array to " #arr_ptr ", exceeding capacity"); \
+        return -1;                                                                         \
+    })
 
 #define RETURN_IF_TRUE(logger, condition, err_ret_val, ...) \
     do                                                      \

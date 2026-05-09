@@ -10,6 +10,7 @@
 #include <string.h>
 #include <assert.h>
 
+#include <bump_arena.h>
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 // LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_DEBUG)
@@ -24,11 +25,11 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_WARNING)
 TODO("Change this array based on target (eg when using 1.1 for mobile, remove 1.3 features)")
 TODO("Or make them optional if theyre not there and propagate the options")
 CREATE_INITIALIZED_ARRAY_WITH_DECL(
-    static, const char *, plugin_required_extensions,
+    static, const char *, plugin_required_extensions_a,
     {VK_EXT_DEBUG_UTILS_EXTENSION_NAME});
 
 CREATE_INITIALIZED_ARRAY_WITH_DECL(
-    static, const char *, required_physical_device_extensions,
+    static, const char *, required_physical_device_extensions_a,
     {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
 
 static VkPhysicalDeviceVulkan12Features required_features_12 = {
@@ -47,7 +48,7 @@ static VkPhysicalDeviceVulkan13Features required_features_13 = {
 #if IS_DEBUG
 TODO("Make this a setting for the plugin")
 CREATE_INITIALIZED_ARRAY_WITH_DECL(
-    static, const char *, plugin_required_validation_layers,
+    static, const char *, plugin_required_validation_layers_a,
     {"VK_LAYER_KHRONOS_validation"});
 #endif // #if IS_DEBUG
 
@@ -75,28 +76,32 @@ TODO: Improve
 typedef struct SwapchainSupportDetails
 {
     VkSurfaceCapabilitiesKHR capabilities;
-    ARRAY_FIELD(VkSurfaceFormatKHR, surface_formats, MAX_SURFACE_FORMATS_LEN);
-    ARRAY_FIELD(VkPresentModeKHR, present_modes, MAX_PRESENT_MODES_LEN);
+    ARRAY_FIELD(VkSurfaceFormatKHR, surface_formats_a, MAX_SURFACE_FORMATS_LEN);
+    ARRAY_FIELD(VkPresentModeKHR, present_modes_a, MAX_PRESENT_MODES_LEN);
 } SwapchainSupportDetails;
 
 TODO("Make this file the bootstrap, only showing a bootstrap function")
 TODO("")
 
 #if IS_DEBUG
-bool check_validation_layer_support(const char **validation_layers)
+int32_t check_validation_layer_support(RendererContext *context, const char **validation_layers_a, bool *out_has_support)
 {
-    assert(validation_layers != NULL);
+    assert(context != NULL);
+    assert(validation_layers_a != NULL);
+    assert(out_has_support != NULL);
+    int32_t ret;
 
     uint32_t layers_len;
     vkEnumerateInstanceLayerProperties(&layers_len, NULL);
-    assert(layers_len <= MAX_INSTANCE_LAYER_PROPERTIES_LEN);
 
-    CREATE_ARRAY_WITH_LEN(VkLayerProperties, layers, MAX_INSTANCE_LAYER_PROPERTIES_LEN, layers_len);
+    VkLayerProperties *layers;
+    RETURN_IF_ERROR(context->deps.logger, ret, BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkLayerProperties, layers_len, &layers),
+                    "Failed to allocate from bump arena: %d", ret);
     vkEnumerateInstanceLayerProperties(&layers_len, layers);
 
-    for (size_t i = 0; i < GET_ARRAY_LENGTH(validation_layers); i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(validation_layers_a); i++)
     {
-        const char *requested_layer = validation_layers[i];
+        const char *requested_layer = validation_layers_a[i];
         bool layer_found = false;
 
         for (uint32_t j = 0; j < layers_len; j++)
@@ -111,11 +116,13 @@ bool check_validation_layer_support(const char **validation_layers)
 
         if (!layer_found)
         {
-            return false;
+            *out_has_support = false;
+            return 0;
         }
     }
 
-    return true;
+    *out_has_support = true;
+    return 0;
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
@@ -202,6 +209,8 @@ int32_t setup_debug_messenger(RendererContext *context)
 int32_t create_instance(RendererContext *context)
 {
     assert(context != NULL);
+    VkResult result;
+    int32_t ret;
 
     TODO("Use vkEnumerateInstanceVerison to find available versions and chose version accordingly")
     TODO("There are different versions for instance and device level version")
@@ -216,20 +225,17 @@ int32_t create_instance(RendererContext *context)
         .apiVersion = VK_API_VERSION_1_3,
     };
 
-    CREATE_ARRAY(const char *, required_extensions, MAX_EXTENSIONS_LEN);
-    ARRAY_PUSH_ARRAY_CHECKED(required_extensions, plugin_required_extensions,
-                     {
-                         LOG_ERR_TRACE(context->deps.logger, "Unable to add required extension, reached max capacity");
-                         return -1;
-                     });
+    TODO("Make this use the bump allocator")
+    CREATE_ARRAY(const char *, required_extensions_a, MAX_EXTENSIONS_LEN);
+    ARRAY_PUSH_ARRAY_CHECKED_DEFAULT_RETURN(context->deps.logger, required_extensions_a, plugin_required_extensions_a);
 
-    const char **platform_required_extensions = NULL;
-    renderer_vulkan_platform_get_required_extensions(&platform_required_extensions);
-    assert(platform_required_extensions != NULL);
-    TODO("Make the required_extensions allocated based on size of both extensions by arena allocator");
+    const char **platform_required_extensions_a = NULL;
+    renderer_vulkan_platform_get_required_extensions(&platform_required_extensions_a);
+    assert(platform_required_extensions_a != NULL);
+    TODO("Make the required_extensions_a allocated based on size of both extensions by arena allocator");
 
     ARRAY_PUSH_MULTI_CHECKED(
-        required_extensions, platform_required_extensions, GET_ARRAY_LENGTH(platform_required_extensions),
+        required_extensions_a, platform_required_extensions_a, GET_ARRAY_LENGTH(platform_required_extensions_a),
         {
             LOG_ERR_TRACE(context->deps.logger, "Unable to add platform extensions to required extensions, reached max capacity");
             return -1;
@@ -238,18 +244,21 @@ int32_t create_instance(RendererContext *context)
     VkInstanceCreateInfo instance_create_info = {
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo = &app_info,
-        .enabledExtensionCount = (uint32_t)GET_ARRAY_LENGTH(required_extensions),
-        .ppEnabledExtensionNames = required_extensions,
+        .enabledExtensionCount = (uint32_t)GET_ARRAY_LENGTH(required_extensions_a),
+        .ppEnabledExtensionNames = required_extensions_a,
     };
 
     // Validation layers
 #if IS_DEBUG
-    RETURN_IF_FALSE(context->deps.logger,
-                    check_validation_layer_support(plugin_required_validation_layers),
+    bool has_validation_layers_support = false;
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    check_validation_layer_support(context, plugin_required_validation_layers_a, &has_validation_layers_support),
+                    "Failed to check validation layer support: %d", ret);
+    RETURN_IF_ERROR(context->deps.logger, has_validation_layers_support,
                     -1, "Validation layers not supported");
 
-    instance_create_info.ppEnabledLayerNames = plugin_required_validation_layers;
-    instance_create_info.enabledLayerCount = (uint32_t)GET_ARRAY_LENGTH(plugin_required_validation_layers);
+    instance_create_info.ppEnabledLayerNames = plugin_required_validation_layers_a;
+    instance_create_info.enabledLayerCount = (uint32_t)GET_ARRAY_LENGTH(plugin_required_validation_layers_a);
 
     VkDebugUtilsMessengerCreateInfoEXT debug_create_info = {0};
     populate_debug_messenger_create_info(context, &debug_create_info);
@@ -258,9 +267,6 @@ int32_t create_instance(RendererContext *context)
 #else
     instance_create_info.enabledLayerCount = 0;
 #endif // #if IS_DEBUG
-
-    VkResult result;
-    int32_t ret;
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateInstance(&instance_create_info, NULL, &context->instance),
                        -1, "Failed to create vulkan instance!");
@@ -339,24 +345,22 @@ int32_t physical_device_extensions_are_supported(RendererContext *context, VkPhy
 
     uint32_t extensions_len;
     VkResult result;
+    int32_t ret;
     *out_result = false;
 
-    TODO("Find a location for this")
-
-    TODO("Create an arena allocator for the bootstrapping");
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_len, NULL),
                        -1, "Failed to enumerate physical device extensions", result);
     assert(extensions_len > 0);
 
-    assert(MAX_PHYSICAL_DEVICE_EXTENSIONS_LEN >= extensions_len);
-    CREATE_ARRAY_WITH_LEN(VkExtensionProperties, extensions, MAX_PHYSICAL_DEVICE_EXTENSIONS_LEN, extensions_len);
-    uint32_t extensions_cap = (uint32_t)GET_ARRAY_CAPACITY(extensions);
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_cap, extensions),
+    VkExtensionProperties *extensions;
+    RETURN_IF_ERROR(context->deps.logger, ret, BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkExtensionProperties, extensions_len, &extensions),
+                    "Failed to allocate from bump arena: %d", ret);
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_len, extensions),
                        -1, "Failed to enumerate physical device extensions: %d", result);
 
-    for (size_t i = 0; i < GET_ARRAY_LENGTH(required_physical_device_extensions); i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(required_physical_device_extensions_a); i++)
     {
-        const char *required_extension = required_physical_device_extensions[i];
+        const char *required_extension = required_physical_device_extensions_a[i];
 
         bool extension_found = false;
         for (size_t j = 0; j < extensions_len; j++)
@@ -397,11 +401,11 @@ int32_t query_swapchain_support_details(RendererContext *context, VkPhysicalDevi
                        -1, "Failed to get physical device formats: %d", result);
     assert(format_len > 0);
 
-    assert(format_len <= GET_ARRAY_CAPACITY(out_swapchain_support_details->surface_formats));
-    GET_ARRAY_LENGTH(out_swapchain_support_details->surface_formats) = (size_t)format_len;
+    assert(format_len <= GET_ARRAY_CAPACITY(out_swapchain_support_details->surface_formats_a));
+    GET_ARRAY_LENGTH(out_swapchain_support_details->surface_formats_a) = (size_t)format_len;
 
     RV_RETURN_IF_ERROR(context->deps.logger, result,
-                       vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, context->surface, &format_len, out_swapchain_support_details->surface_formats),
+                       vkGetPhysicalDeviceSurfaceFormatsKHR(physical_device, context->surface, &format_len, out_swapchain_support_details->surface_formats_a),
                        -1, "Failed to get physical device formats: %d", result);
 
     uint32_t present_mode_len;
@@ -409,11 +413,11 @@ int32_t query_swapchain_support_details(RendererContext *context, VkPhysicalDevi
                        -1, "Failed to get physical device present modes: %d", result);
     assert(present_mode_len > 0);
 
-    assert(present_mode_len <= GET_ARRAY_CAPACITY(out_swapchain_support_details->present_modes));
-    GET_ARRAY_LENGTH(out_swapchain_support_details->present_modes) = (size_t)present_mode_len;
+    assert(present_mode_len <= GET_ARRAY_CAPACITY(out_swapchain_support_details->present_modes_a));
+    GET_ARRAY_LENGTH(out_swapchain_support_details->present_modes_a) = (size_t)present_mode_len;
 
     RV_RETURN_IF_ERROR(context->deps.logger, result,
-                       vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, context->surface, &present_mode_len, out_swapchain_support_details->present_modes),
+                       vkGetPhysicalDeviceSurfacePresentModesKHR(physical_device, context->surface, &present_mode_len, out_swapchain_support_details->present_modes_a),
                        -1, "Failed to get physical device present modes: %d", result);
     return 0;
 }
@@ -421,8 +425,8 @@ int32_t query_swapchain_support_details(RendererContext *context, VkPhysicalDevi
 bool is_swapchain_adequate(const SwapchainSupportDetails *swapchain_support_details)
 {
     assert(swapchain_support_details != NULL);
-    return GET_ARRAY_LENGTH(swapchain_support_details->surface_formats) > 0 &&
-           GET_ARRAY_LENGTH(swapchain_support_details->present_modes) > 0;
+    return GET_ARRAY_LENGTH(swapchain_support_details->surface_formats_a) > 0 &&
+           GET_ARRAY_LENGTH(swapchain_support_details->present_modes_a) > 0;
 }
 
 // This function requires:
@@ -498,8 +502,8 @@ bool is_device_suitable(RendererContext *context, VkPhysicalDevice physical_devi
                               false, "Failed to check physical device extensions: %d", ret);
 
     SwapchainSupportDetails swapchain_support_details;
-    SET_ARRAY_FIELD_CAPACITY(swapchain_support_details.surface_formats);
-    SET_ARRAY_FIELD_CAPACITY(swapchain_support_details.present_modes);
+    SET_ARRAY_FIELD_CAPACITY(swapchain_support_details.surface_formats_a);
+    SET_ARRAY_FIELD_CAPACITY(swapchain_support_details.present_modes_a);
 
     RETURN_IF_ERROR_RET_VALUE(context->deps.logger, ret, query_swapchain_support_details(context, physical_device, &swapchain_support_details),
                               false, "Failed to query swapchain support details: %d", ret);
@@ -549,17 +553,18 @@ int32_t pick_physical_device(RendererContext *context)
 {
     assert(context != NULL);
 
+    int32_t ret;
     uint32_t physical_devices_len = 0;
     VkResult result;
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, NULL),
                        -1, "Unable to get physical device count");
 
-    assert(physical_devices_len != 0);
     RETURN_IF_TRUE(context->deps.logger, physical_devices_len == 0,
                    -1, "Cannot find a GPU with vulkan support");
 
-    assert(MAX_PHYSICAL_DEVICES_LEN >= physical_devices_len);
-    CREATE_ARRAY_WITH_LEN(VkPhysicalDevice, physical_devices, MAX_PHYSICAL_DEVICES_LEN, physical_devices_len);
+    VkPhysicalDevice *physical_devices;
+    RETURN_IF_ERROR(context->deps.logger, ret, BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkPhysicalDevice, physical_devices_len, (void **)&physical_devices),
+                    "Failed to allocate from bump arena: %d", ret);
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, physical_devices),
                        -1, "Unable to get physical devices");
 
@@ -583,32 +588,34 @@ int32_t pick_physical_device(RendererContext *context)
     return 0;
 }
 
+TODO("Make this use the bump allocator")
 int32_t push_queue_family_indices_to_create_info_arr(
     RendererContext *context,
     QueueFamilyIndices *queue_family_indices,
-    VkDeviceQueueCreateInfo *queue_create_info_arr)
+    VkDeviceQueueCreateInfo *queue_create_info_arr_a)
 {
     assert(context != NULL);
     assert(queue_family_indices != NULL);
-    assert(queue_create_info_arr != NULL);
+    assert(queue_create_info_arr_a != NULL);
 
     float queue_priority = 1;
 
+    TODO("Make this use a bump allocator")
     CREATE_INITIALIZED_ARRAY(
-        uint32_t, queue_family_uint32_indices,
+        uint32_t, queue_family_uint32_indices_a,
         {
             queue_family_indices->graphics_family,
             queue_family_indices->present_family,
         });
 
-    for (size_t i = 0; i < GET_ARRAY_LENGTH(queue_family_uint32_indices); i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(queue_family_uint32_indices_a); i++)
     {
-        uint32_t family_index = queue_family_uint32_indices[i];
+        uint32_t family_index = queue_family_uint32_indices_a[i];
         bool duplicate_index = false;
 
         for (size_t j = 0; j < i; j++)
         {
-            uint32_t prev_family_index = queue_family_uint32_indices[j];
+            uint32_t prev_family_index = queue_family_uint32_indices_a[j];
             if (prev_family_index == family_index)
             {
                 duplicate_index = true;
@@ -628,7 +635,7 @@ int32_t push_queue_family_indices_to_create_info_arr(
             .pQueuePriorities = &queue_priority,
         };
 
-        ARRAY_PUSH_CHECKED(queue_create_info_arr, queue_create_info, {
+        ARRAY_PUSH_CHECKED(queue_create_info_arr_a, queue_create_info, {
             LOG_ERR_TRACE(context->deps.logger, "Reached max capacity when adding queue create info");
             return -1;
         });
@@ -651,9 +658,9 @@ int32_t create_logical_device(RendererContext *context)
     RETURN_IF_FALSE(context->deps.logger, queue_family_indices_is_complete(&queue_family_indices),
                     -1, "Chosen physical device does not all necessary queue families");
 
-    CREATE_ARRAY(VkDeviceQueueCreateInfo, queue_create_info_arr, MAX_QUEUE_CREATE_INFO_ARR_LEN);
+    CREATE_ARRAY(VkDeviceQueueCreateInfo, queue_create_info_arr_a, MAX_QUEUE_CREATE_INFO_ARR_LEN);
 
-    RETURN_IF_ERROR(context->deps.logger, ret, push_queue_family_indices_to_create_info_arr(context, &queue_family_indices, queue_create_info_arr),
+    RETURN_IF_ERROR(context->deps.logger, ret, push_queue_family_indices_to_create_info_arr(context, &queue_family_indices, queue_create_info_arr_a),
                     "Failed to push family indices to create_info_arr: %d", ret);
 
     VkPhysicalDeviceFeatures physical_device_features = {0};
@@ -661,12 +668,12 @@ int32_t create_logical_device(RendererContext *context)
     VkDeviceCreateInfo device_create_info = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .pNext = &required_features_13,
-        .pQueueCreateInfos = queue_create_info_arr,
-        .queueCreateInfoCount = (uint32_t)GET_ARRAY_LENGTH(queue_create_info_arr),
+        .pQueueCreateInfos = queue_create_info_arr_a,
+        .queueCreateInfoCount = (uint32_t)GET_ARRAY_LENGTH(queue_create_info_arr_a),
         .pEnabledFeatures = &physical_device_features,
 
-        .enabledExtensionCount = (uint32_t)GET_ARRAY_LENGTH(required_physical_device_extensions),
-        .ppEnabledExtensionNames = required_physical_device_extensions,
+        .enabledExtensionCount = (uint32_t)GET_ARRAY_LENGTH(required_physical_device_extensions_a),
+        .ppEnabledExtensionNames = required_physical_device_extensions_a,
         // NOTE: We set these to 0 as this was only used in legacy, modern versions do not use it anymore
         //       Add the validation layers if it is ever build for such a legacy system
         .enabledLayerCount = 0,
@@ -690,15 +697,15 @@ int32_t create_logical_device(RendererContext *context)
     return 0;
 }
 
-VkSurfaceFormatKHR choose_swap_surface_format(VkSurfaceFormatKHR *available_formats)
+VkSurfaceFormatKHR choose_swap_surface_format(VkSurfaceFormatKHR *available_formats_a)
 {
     TODO("Add better error handling and stuff");
-    assert(available_formats != NULL);
-    assert(GET_ARRAY_LENGTH(available_formats) > 0);
+    assert(available_formats_a != NULL);
+    assert(GET_ARRAY_LENGTH(available_formats_a) > 0);
 
-    for (size_t i = 0; i < GET_ARRAY_LENGTH(available_formats); i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(available_formats_a); i++)
     {
-        VkSurfaceFormatKHR available_format = available_formats[i];
+        VkSurfaceFormatKHR available_format = available_formats_a[i];
         if (available_format.format == VK_FORMAT_B8G8R8A8_UNORM &&
             available_format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
         {
@@ -706,18 +713,18 @@ VkSurfaceFormatKHR choose_swap_surface_format(VkSurfaceFormatKHR *available_form
         }
     }
 
-    return available_formats[0];
+    return available_formats_a[0];
 }
 
-VkPresentModeKHR choose_swap_present_mode(VkPresentModeKHR *available_present_modes)
+VkPresentModeKHR choose_swap_present_mode(VkPresentModeKHR *available_present_modes_a)
 {
     TODO("Add better error handling and stuff");
-    assert(available_present_modes != NULL);
-    assert(GET_ARRAY_LENGTH(available_present_modes) > 0);
+    assert(available_present_modes_a != NULL);
+    assert(GET_ARRAY_LENGTH(available_present_modes_a) > 0);
 
-    for (size_t i = 0; i < GET_ARRAY_LENGTH(available_present_modes); i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(available_present_modes_a); i++)
     {
-        VkPresentModeKHR available_present_mode = available_present_modes[i];
+        VkPresentModeKHR available_present_mode = available_present_modes_a[i];
         // if (available_present_mode == VK_PRESENT_MODE_MAILBOX_KHR)
         TODO("Look into correct setting here");
         if (available_present_mode == VK_PRESENT_MODE_FIFO_KHR)
@@ -772,14 +779,14 @@ int32_t create_swapchain(RendererContext *context)
     VkResult result;
 
     SwapchainSupportDetails swapchain_support_details;
-    SET_ARRAY_FIELD_CAPACITY(swapchain_support_details.surface_formats);
-    SET_ARRAY_FIELD_CAPACITY(swapchain_support_details.present_modes);
+    SET_ARRAY_FIELD_CAPACITY(swapchain_support_details.surface_formats_a);
+    SET_ARRAY_FIELD_CAPACITY(swapchain_support_details.present_modes_a);
 
     RETURN_IF_ERROR_RET_VALUE(context->deps.logger, ret, query_swapchain_support_details(context, context->physical_device, &swapchain_support_details),
                               false, "Failed to query swapchain support details: %d", ret);
 
-    VkSurfaceFormatKHR surface_format = choose_swap_surface_format(swapchain_support_details.surface_formats);
-    VkPresentModeKHR present_mode = choose_swap_present_mode(swapchain_support_details.present_modes);
+    VkSurfaceFormatKHR surface_format = choose_swap_surface_format(swapchain_support_details.surface_formats_a);
+    VkPresentModeKHR present_mode = choose_swap_present_mode(swapchain_support_details.present_modes_a);
     VkExtent2D surface_extent;
     RETURN_IF_ERROR(context->deps.logger, ret,
                     choose_swap_extent(context->deps.logger, context->deps.window, &swapchain_support_details.capabilities, &surface_extent),
@@ -853,10 +860,10 @@ int32_t create_swapchain(RendererContext *context)
         vkDestroySwapchainKHR(context->device, context->old_swapchain, NULL);
     }
 
-    SET_ARRAY_FIELD_CAPACITY(context->swapchain_images);
-    assert(GET_ARRAY_CAPACITY(context->swapchain_images) >= swapchain_images_len);
-    GET_ARRAY_LENGTH(context->swapchain_images) = (size_t)swapchain_images_len;
-    vkGetSwapchainImagesKHR(context->device, context->swapchain, &swapchain_images_len, context->swapchain_images);
+    SET_ARRAY_FIELD_CAPACITY(context->swapchain_images_a);
+    assert(GET_ARRAY_CAPACITY(context->swapchain_images_a) >= swapchain_images_len);
+    GET_ARRAY_LENGTH(context->swapchain_images_a) = (size_t)swapchain_images_len;
+    vkGetSwapchainImagesKHR(context->device, context->swapchain, &swapchain_images_len, context->swapchain_images_a);
 
     context->swapchain_image_format = (RV_VkFormat)surface_format.format;
     context->swapchain_extent.width = surface_extent.width;
@@ -869,9 +876,9 @@ int32_t create_swapchain(RendererContext *context)
 int32_t create_image_views(RendererContext *context)
 {
     assert(context != NULL);
-    SET_ARRAY_FIELD_CAPACITY(context->swapchain_image_views);
-    assert(GET_ARRAY_CAPACITY(context->swapchain_image_views) == GET_ARRAY_CAPACITY(context->swapchain_images));
-    GET_ARRAY_LENGTH(context->swapchain_image_views) = GET_ARRAY_LENGTH(context->swapchain_images);
+    SET_ARRAY_FIELD_CAPACITY(context->swapchain_image_views_a);
+    assert(GET_ARRAY_CAPACITY(context->swapchain_image_views_a) == GET_ARRAY_CAPACITY(context->swapchain_images_a));
+    GET_ARRAY_LENGTH(context->swapchain_image_views_a) = GET_ARRAY_LENGTH(context->swapchain_images_a);
 
     VkResult result;
     int32_t ret;
@@ -894,15 +901,15 @@ int32_t create_image_views(RendererContext *context)
         .subresourceRange.layerCount = 1,
     };
 
-    for (size_t i = 0; i < GET_ARRAY_LENGTH(context->swapchain_images); i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(context->swapchain_images_a); i++)
     {
-        image_view_create_info.image = context->swapchain_images[i];
+        image_view_create_info.image = context->swapchain_images_a[i];
 
-        RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateImageView(context->device, &image_view_create_info, NULL, &context->swapchain_image_views[i]),
+        RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateImageView(context->device, &image_view_create_info, NULL, &context->swapchain_image_views_a[i]),
                            -1, "Failed to create image view %d: %d", i, result);
 
         RETURN_IF_ERROR(context->deps.logger, ret,
-                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->swapchain_destroy_queue, vkDestroyImageView, context->device, context->swapchain_image_views[i], NULL),
+                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->swapchain_destroy_queue, vkDestroyImageView, context->device, context->swapchain_image_views_a[i], NULL),
                         "Failed to push image view destroy data to destroy queue: %d", ret);
     }
 

@@ -163,8 +163,8 @@ typedef struct RendererContext
     RV_CallRecord *swapchain_destroy_queue;
     TODO("Figure out what to do with the size/capacity here")
     TODO("Make a struct holding the swapchain data")
-    ARRAY_FIELD(VkImage, swapchain_images, MAX_SWAPCHAIN_IMAGES_LEN);
-    ARRAY_FIELD(VkImageView, swapchain_image_views, MAX_SWAPCHAIN_IMAGES_LEN);
+    ARRAY_FIELD(VkImage, swapchain_images_a, MAX_SWAPCHAIN_IMAGES_LEN);
+    ARRAY_FIELD(VkImageView, swapchain_image_views_a, MAX_SWAPCHAIN_IMAGES_LEN);
     RV_VkFormat swapchain_image_format;
     RV_VkExtent2D swapchain_extent;
     VmaAllocator vma_allocator;
@@ -204,6 +204,8 @@ typedef struct RendererContext
 
     VkPipeline *pipelines;
     uint32_t *pipeline_generations;
+
+    uint8_t *bump_arena_a;
 
     VkPipeline triangle_pipeline;
     VkPipelineLayout mesh_pipeline_layout;
