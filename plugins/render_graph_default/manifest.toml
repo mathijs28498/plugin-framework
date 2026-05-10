@@ -1,10 +1,9 @@
-interface_name = "draw"
+interface_name = "render_graph"
 interface_version = "1"
 plugin_name = "default"
-module_path = "${build_dir}/draw_default.dll"
+module_path = "${build_dir}/render_graph_default.dll"
 supported_lifetimes = ["singleton"]
 
 [dependencies]
 logger = {}
 renderer = {}
-render_graph = {}
