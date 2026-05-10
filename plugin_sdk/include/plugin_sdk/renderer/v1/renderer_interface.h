@@ -133,7 +133,7 @@ typedef struct RendererVtable
 
 typedef struct RendererInterface
 {
-    struct RendererContext *context;
+    RendererContext *context;
     RendererVtable *vtable;
 } RendererInterface;
 

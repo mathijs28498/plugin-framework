@@ -25,6 +25,8 @@ int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDe
     VkResult result;
     int32_t ret;
 
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+
     VkDescriptorPoolSize *descriptor_pool_sizes;
     RETURN_IF_ERROR(context->deps.logger, ret, BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkDescriptorPoolSize, GET_ARRAY_LENGTH(descriptor_types_a), &descriptor_pool_sizes),
                     "Failed to allocate from bump arena:%d", ret);
@@ -50,6 +52,7 @@ int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDe
                     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyDescriptorPool, context->device, *out_descriptor_pool, NULL),
                     "Failed to push descriptor pool to swapchain destroy queue: %d", ret);
 
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     return 0;
 }
 
@@ -93,6 +96,8 @@ int32_t renderer_vulkan_create_resource_set_layout(RendererContext *context, con
     VkResult result;
     int32_t ret;
 
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+
     VkDescriptorSetLayoutBinding *descriptor_set_layout_bindings;
     uint32_t bindings_len = renderer_resource_set_layout_create_info->bindings_len;
     RETURN_IF_ERROR(context->deps.logger, ret, BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkDescriptorSetLayoutBinding, bindings_len, &descriptor_set_layout_bindings),
@@ -132,6 +137,7 @@ int32_t renderer_vulkan_create_resource_set_layout(RendererContext *context, con
 
     *out_resource_set_layout_handle = rv_descriptor_set_layout_handle.raw;
 
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     return 0;
 }
 

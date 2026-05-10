@@ -305,6 +305,8 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
     VkResult result;
     int32_t ret;
 
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+
     uint32_t push_constant_ranges_len = renderer_pipeline_layout_create_info->push_constants_len;
     VkPushConstantRange *push_constant_ranges;
     RETURN_IF_ERROR(context->deps.logger, ret, BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkPushConstantRange, push_constant_ranges_len, &push_constant_ranges),
@@ -352,6 +354,7 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
 
     *out_pipeline_layout_handle = rv_pipeline_layout_handle.raw;
 
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     return 0;
 }
 

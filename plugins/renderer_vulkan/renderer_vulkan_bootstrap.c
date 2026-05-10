@@ -91,6 +91,8 @@ int32_t check_validation_layer_support(RendererContext *context, const char **va
     assert(out_has_support != NULL);
     int32_t ret;
 
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+
     uint32_t layers_len;
     vkEnumerateInstanceLayerProperties(&layers_len, NULL);
 
@@ -117,10 +119,12 @@ int32_t check_validation_layer_support(RendererContext *context, const char **va
         if (!layer_found)
         {
             *out_has_support = false;
+            bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
             return 0;
         }
     }
 
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     *out_has_support = true;
     return 0;
 }
@@ -346,7 +350,9 @@ int32_t physical_device_extensions_are_supported(RendererContext *context, VkPhy
     uint32_t extensions_len;
     VkResult result;
     int32_t ret;
+
     *out_result = false;
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_len, NULL),
                        -1, "Failed to enumerate physical device extensions", result);
@@ -376,10 +382,12 @@ int32_t physical_device_extensions_are_supported(RendererContext *context, VkPhy
         if (!extension_found)
         {
             *out_result = false;
+            bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
             return 0;
         }
     }
 
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     *out_result = true;
     return 0;
 }
@@ -556,6 +564,9 @@ int32_t pick_physical_device(RendererContext *context)
     int32_t ret;
     uint32_t physical_devices_len = 0;
     VkResult result;
+
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, NULL),
                        -1, "Unable to get physical device count");
 
@@ -585,6 +596,7 @@ int32_t pick_physical_device(RendererContext *context)
 
     context->physical_device = physical_devices[chosen_physical_device_index];
 
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     return 0;
 }
 

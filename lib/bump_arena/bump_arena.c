@@ -42,3 +42,22 @@ void bump_arena_free(uint8_t *arena_a, bool set_zero)
     }
     GET_ARRAY_LENGTH(arena_a) = 0;
 }
+
+BumpArenaCheckpoint bump_arena_create_checkpoint(uint8_t *arena_a)
+{
+    assert(arena_a != NULL);
+
+    return (BumpArenaCheckpoint){.offset = GET_ARRAY_LENGTH(arena_a)};
+}
+
+void bump_arena_restore_checkpoint(uint8_t *arena_a, BumpArenaCheckpoint checkpoint, bool set_zero)
+{
+    assert(arena_a != NULL);
+    assert(checkpoint.offset <= GET_ARRAY_LENGTH(arena_a));
+
+    if (set_zero)
+    {
+        memset(arena_a + checkpoint.offset, 0, GET_ARRAY_LENGTH(arena_a) - checkpoint.offset);
+    }
+    GET_ARRAY_LENGTH(arena_a) = checkpoint.offset;
+}
