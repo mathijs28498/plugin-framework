@@ -374,3 +374,81 @@ VkPipelineBindPoint rv_pipeline_type_to_vk_pipeline_bind_point(RendererPipelineT
         return VK_PIPELINE_BIND_POINT_MAX_ENUM;
     }
 }
+
+VkFormat rv_image_format_to_vk_format(RendererImageFormat format)
+{
+    switch (format)
+    {
+    case RENDERER_IMAGE_FORMAT_R8G8B8A8_UNORM:
+        return VK_FORMAT_R8G8B8A8_UNORM;
+    case RENDERER_IMAGE_FORMAT_R8G8B8A8_SRGB:
+        return VK_FORMAT_R8G8B8A8_SRGB;
+    case RENDERER_IMAGE_FORMAT_R16G16B16A16_SFLOAT:
+        return VK_FORMAT_R16G16B16A16_SFLOAT;
+    case RENDERER_IMAGE_FORMAT_R32G32B32A32_SFLOAT:
+        return VK_FORMAT_R32G32B32A32_SFLOAT;
+    case RENDERER_IMAGE_FORMAT_D32_SFLOAT:
+        return VK_FORMAT_D32_SFLOAT;
+    case RENDERER_IMAGE_FORMAT_D24_UNORM_S8_UINT:
+        return VK_FORMAT_D24_UNORM_S8_UINT;
+    default:
+        return VK_FORMAT_UNDEFINED;
+    }
+}
+
+VkImageUsageFlags rv_image_usage_to_vk_image_usage(RendererImageUsageFlags flags)
+{
+    VkImageUsageFlags vk_flags = 0;
+    if (flags & RENDERER_IMAGE_USAGE_TRANSFER_SRC_BIT)
+        vk_flags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    if (flags & RENDERER_IMAGE_USAGE_TRANSFER_DST_BIT)
+        vk_flags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    if (flags & RENDERER_IMAGE_USAGE_SAMPLED_BIT)
+        vk_flags |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (flags & RENDERER_IMAGE_USAGE_STORAGE_BIT)
+        vk_flags |= VK_IMAGE_USAGE_STORAGE_BIT;
+    if (flags & RENDERER_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+        vk_flags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    if (flags & RENDERER_IMAGE_USAGE_DEPTH_ATTACHMENT_BIT)
+        vk_flags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    return vk_flags;
+}
+
+VkImageAspectFlags rv_vk_format_to_image_aspect(VkFormat format)
+{
+    switch (format)
+    {
+    case VK_FORMAT_D32_SFLOAT:
+    case VK_FORMAT_D16_UNORM:
+        return VK_IMAGE_ASPECT_DEPTH_BIT;
+    case VK_FORMAT_D24_UNORM_S8_UINT:
+    case VK_FORMAT_D32_SFLOAT_S8_UINT:
+        return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    default:
+        return VK_IMAGE_ASPECT_COLOR_BIT;
+    }
+}
+
+VmaMemoryUsage rv_image_memory_usage_to_vma_memory_usage(RendererImageMemoryUsage memory_usage)
+{
+    switch (memory_usage)
+    {
+    case RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY:
+        return VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+    default:
+        return VMA_MEMORY_USAGE_AUTO;
+    }
+}
+
+VkMemoryPropertyFlags rv_image_memory_usage_to_vk_memory_usage(RendererImageMemoryUsage memory_usage)
+{
+    switch (memory_usage)
+    {
+    case RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY:
+        return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    default:
+
+        return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    }
+}
+

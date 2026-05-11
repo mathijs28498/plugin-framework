@@ -70,7 +70,7 @@ int32_t renderer_vulkan_allocate_transient_resource_set(RendererContext *context
 
     VkDescriptorSetLayout descriptor_set_layout;
     RendererVulkanHandle rv_resource_set_layout_handle = {.raw = resource_set_layout_handle};
-    RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layouts, context->descriptor_set_layout_generations, rv_resource_set_layout_handle, descriptor_set_layout);
+    RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layout_generations_a, context->descriptor_set_layouts_a, rv_resource_set_layout_handle, descriptor_set_layout);
 
     VkDescriptorSetAllocateInfo descriptor_set_alloc_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -132,7 +132,7 @@ int32_t renderer_vulkan_create_resource_set_layout(RendererContext *context, con
                     "Failed to push descriptor set layout to swapchain destroy queue: %d", ret);
 
     RendererVulkanHandle rv_descriptor_set_layout_handle = {0};
-    RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->descriptor_set_layouts, context->descriptor_set_layout_generations, descriptor_set_layout, rv_descriptor_set_layout_handle,
+    RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->descriptor_set_layout_occupied_a, context->descriptor_set_layout_generations_a, context->descriptor_set_layouts_a, descriptor_set_layout, rv_descriptor_set_layout_handle,
                                   vkDestroyDescriptorSetLayout(context->device, descriptor_set_layout, NULL));
 
     *out_resource_set_layout_handle = rv_descriptor_set_layout_handle.raw;
@@ -171,7 +171,7 @@ int32_t rv_create_descriptor_pools(RendererContext *context)
 
 //     VkDescriptorSetLayout descriptor_set_layout;
 //     RendererVulkanHandle rv_descriptor_set_handle = {.raw = descriptor_set_layout_handle};
-//     RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layouts, context->descriptor_set_layout_generations, rv_descriptor_set_handle, descriptor_set_layout);
+//     RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layout_generations_a, context->descriptor_set_layouts, rv_descriptor_set_handle, descriptor_set_layout);
 
 //     RETURN_IF_ERROR(context->deps.logger, ret, allocate_descriptor_set(context, descriptor_set_layout, &context->draw_image_descriptor_set),
 //                     "Failed to allocate descriptor set: %d", ret);

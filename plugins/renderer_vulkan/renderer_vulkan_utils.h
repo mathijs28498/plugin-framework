@@ -99,121 +99,151 @@ int32_t rv_create_buffer(struct RendererContext *context, size_t alloc_size, VkB
 void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation allocation);
 struct VkExtent2D extent_2d(struct RV_VkExtent2D *rv_extent);
 
-#define RV_RES_HANDLE_ALLOC(resource_pool, generations_pool, resource, out_free_handle_found, out_handle) \
-    do                                                                                                    \
-    {                                                                                                     \
-        (out_free_handle_found) = false;                                                                  \
-        ARRAY_FOR(resource_pool, UNIQUE_VAR(i))                                                           \
-        {                                                                                                 \
-            if ((resource_pool)[UNIQUE_VAR(i)] != VK_NULL_HANDLE)                                         \
-            {                                                                                             \
-                continue;                                                                                 \
-            }                                                                                             \
-            (resource_pool)[UNIQUE_VAR(i)] = (resource);                                                  \
-            (out_free_handle_found) = true;                                                               \
-            (out_handle).generation = (generations_pool)[UNIQUE_VAR(i)];                                  \
-            (out_handle).index = (uint32_t)UNIQUE_VAR(i);                                                 \
-            break;                                                                                        \
-        }                                                                                                 \
+#define RV_RES_HANDLE_ALLOC(occupied_pool_a, generations_pool_a, resource_pool_a, resource, out_free_handle_found, out_handle) \
+    do                                                                                                                         \
+    {                                                                                                                          \
+        (out_free_handle_found) = false;                                                                                       \
+        ARRAY_FOR(resource_pool_a, UNIQUE_VAR(i))                                                                              \
+        {                                                                                                                      \
+            if ((occupied_pool_a)[UNIQUE_VAR(i)])                                                                              \
+            {                                                                                                                  \
+                continue;                                                                                                      \
+            }                                                                                                                  \
+            (out_free_handle_found) = true;                                                                                    \
+            (occupied_pool_a)[UNIQUE_VAR(i)] = true;                                                                           \
+            (resource_pool_a)[UNIQUE_VAR(i)] = (resource);                                                                     \
+                                                                                                                               \
+            (out_handle).generation = (generations_pool_a)[UNIQUE_VAR(i)];                                                     \
+            (out_handle).index = (uint32_t)UNIQUE_VAR(i);                                                                      \
+            break;                                                                                                             \
+        }                                                                                                                      \
     } while (0)
 
-#define RV_RES_HANDLE_ALLOC_OR_RETURN(logger, resource_pool, generations_pool, resource, out_resource_handle, destroy_func) \
-    do                                                                                                                      \
-    {                                                                                                                       \
-        bool UNIQUE_VAR(free_handle_found);                                                                                 \
-        RV_RES_HANDLE_ALLOC(resource_pool, generations_pool, resource, UNIQUE_VAR(free_handle_found), out_resource_handle); \
-        if (!UNIQUE_VAR(free_handle_found))                                                                                 \
-        {                                                                                                                   \
-            LOG_ERR_TRACE(logger, "Failed to allocate handle, no ");                                                        \
-            destroy_func;                                                                                                   \
-            return -1;                                                                                                      \
-        }                                                                                                                   \
+#define RV_RES_HANDLE_ALLOC_OR_RETURN(logger, occupied_pool_a, generations_pool_a, resource_pool_a, resource, out_resource_handle, destroy_func) \
+    do                                                                                                                                           \
+    {                                                                                                                                            \
+        bool UNIQUE_VAR(free_handle_found);                                                                                                      \
+        RV_RES_HANDLE_ALLOC(occupied_pool_a, generations_pool_a, resource_pool_a, resource, UNIQUE_VAR(free_handle_found), out_resource_handle); \
+        if (!UNIQUE_VAR(free_handle_found))                                                                                                      \
+        {                                                                                                                                        \
+            LOG_ERR_TRACE(logger, "Failed to allocate handle, no ");                                                                             \
+            destroy_func;                                                                                                                        \
+            return -1;                                                                                                                           \
+        }                                                                                                                                        \
     } while (0)
 
-#define RV_RES_HANDLE_GET(resource_pool, generations_pool, handle, out_ret, out_resource) \
-    do                                                                                    \
-    {                                                                                     \
-        if ((handle).index >= GET_ARRAY_CAPACITY(resource_pool))                          \
-        {                                                                                 \
-            (out_resource) = VK_NULL_HANDLE;                                              \
-            (out_ret) = -1;                                                               \
-            break;                                                                        \
-        }                                                                                 \
-        uint32_t UNIQUE_VAR(current_generation) = (generations_pool)[(handle).index];     \
-        if (UNIQUE_VAR(current_generation) != (handle).generation)                        \
-        {                                                                                 \
-            (out_resource) = VK_NULL_HANDLE;                                              \
-            (out_ret) = -2;                                                               \
-            break;                                                                        \
-        }                                                                                 \
-        (out_resource) = (resource_pool)[(handle).index];                                 \
-        (out_ret) = 0;                                                                    \
+#define RV_RES_HANDLE_GET(generations_pool_a, resource_pool_a, handle, out_ret, out_resource) \
+    do                                                                                        \
+    {                                                                                         \
+        if ((handle).index >= GET_ARRAY_CAPACITY(resource_pool_a))                            \
+        {                                                                                     \
+            (out_resource) = VK_NULL_HANDLE;                                                  \
+            (out_ret) = -1;                                                                   \
+            break;                                                                            \
+        }                                                                                     \
+        uint32_t UNIQUE_VAR(current_generation) = (generations_pool_a)[(handle).index];       \
+        if (UNIQUE_VAR(current_generation) != (handle).generation)                            \
+        {                                                                                     \
+            (out_resource) = VK_NULL_HANDLE;                                                  \
+            (out_ret) = -2;                                                                   \
+            break;                                                                            \
+        }                                                                                     \
+        (out_resource) = (resource_pool_a)[(handle).index];                                   \
+        (out_ret) = 0;                                                                        \
     } while (0)
 
-#define RV_RES_HANDLE_GET_OR_RETURN(logger, resource_pool, generations_pool, handle, out_resource) \
-    do                                                                                             \
-    {                                                                                              \
-        int32_t UNIQUE_VAR(ret);                                                                   \
-        RV_RES_HANDLE_GET(resource_pool, generations_pool, handle, UNIQUE_VAR(ret), out_resource); \
-        if (UNIQUE_VAR(ret) < 0)                                                                   \
-        {                                                                                          \
-            LOG_ERR_TRACE(logger, "Failed to get resource, invalid handle: %d", UNIQUE_VAR(ret));  \
-            return UNIQUE_VAR(ret);                                                                \
-        }                                                                                          \
+#define RV_RES_HANDLE_GET_OR_RETURN(logger, generations_pool_a, resource_pool_a, handle, out_resource) \
+    do                                                                                                 \
+    {                                                                                                  \
+        int32_t UNIQUE_VAR(ret);                                                                       \
+        RV_RES_HANDLE_GET(generations_pool_a, resource_pool_a, handle, UNIQUE_VAR(ret), out_resource); \
+        if (UNIQUE_VAR(ret) < 0)                                                                       \
+        {                                                                                              \
+            LOG_ERR_TRACE(logger, "Failed to get resource, invalid handle: %d", UNIQUE_VAR(ret));      \
+            return UNIQUE_VAR(ret);                                                                    \
+        }                                                                                              \
     } while (0)
 
-#define RV_RES_HANDLE_GET_OR_RETURN_VOID(logger, resource_pool, generations_pool, handle, out_resource) \
-    do                                                                                                  \
-    {                                                                                                   \
-        int32_t UNIQUE_VAR(ret);                                                                        \
-        RV_RES_HANDLE_GET(resource_pool, generations_pool, handle, UNIQUE_VAR(ret), out_resource);      \
-        if (UNIQUE_VAR(ret) < 0)                                                                        \
-        {                                                                                               \
-            LOG_ERR_TRACE(logger, "Failed to get resource, invalid handle: %d", UNIQUE_VAR(ret));       \
-            return;                                                                                     \
-        }                                                                                               \
+#define RV_RES_HANDLE_GET_OR_RETURN_VOID(logger, generations_pool_a, resource_pool_a, handle, out_resource) \
+    do                                                                                                      \
+    {                                                                                                       \
+        int32_t UNIQUE_VAR(ret);                                                                            \
+        RV_RES_HANDLE_GET(generations_pool_a, resource_pool_a, handle, UNIQUE_VAR(ret), out_resource);      \
+        if (UNIQUE_VAR(ret) < 0)                                                                            \
+        {                                                                                                   \
+            LOG_ERR_TRACE(logger, "Failed to get resource, invalid handle: %d", UNIQUE_VAR(ret));           \
+            return;                                                                                         \
+        }                                                                                                   \
     } while (0)
 
-#define RV_RES_HANDLE_FREE(resource_pool, generations_pool, handle, out_ret)          \
-    do                                                                                \
-    {                                                                                 \
-        if ((handle).index >= GET_ARRAY_CAPACITY(resource_pool))                      \
-        {                                                                             \
-            (out_ret) = -1;                                                           \
-            break;                                                                    \
-        }                                                                             \
-        uint32_t UNIQUE_VAR(current_generation) = (generations_pool)[(handle).index]; \
-        if (UNIQUE_VAR(current_generation) != (handle).generation)                    \
-        {                                                                             \
-            (out_ret) = -2;                                                           \
-            break;                                                                    \
-        }                                                                             \
-                                                                                      \
-        (resource_pool)[(handle).index] = VK_NULL_HANDLE;                             \
-        (generations_pool)[(handle).index]++;                                         \
-        (out_ret) = 0;                                                                \
+#define RV_RES_HANDLE_FREE(occupied_pool_a, generations_pool_a, resource_pool_a, handle, out_ret) \
+    do                                                                                            \
+    {                                                                                             \
+        if ((handle).index >= GET_ARRAY_CAPACITY(resource_pool_a))                                \
+        {                                                                                         \
+            (out_ret) = -1;                                                                       \
+            break;                                                                                \
+        }                                                                                         \
+        uint32_t UNIQUE_VAR(current_generation) = (generations_pool_a)[(handle).index];           \
+        if (UNIQUE_VAR(current_generation) != (handle).generation)                                \
+        {                                                                                         \
+            (out_ret) = -2;                                                                       \
+            break;                                                                                \
+        }                                                                                         \
+                                                                                                  \
+        (occupied_pool_a)[(handle).index] = false;                                                \
+        (generations_pool_a)[(handle).index]++;                                                   \
+        (out_ret) = 0;                                                                            \
     } while (0)
 
-#define RV_RES_HANDLE_FREE_RETURN_IF_ERROR(logger, resource_pool, generations_pool, handle)        \
-    do                                                                                             \
-    {                                                                                              \
-        int32_t UNIQUE_VAR(ret);                                                                   \
-        RV_RES_HANDLE_FREE(resource_pool, generations_pool, handle, UNIQUE_VAR(ret));              \
-        if (UNIQUE_VAR(ret) < 0)                                                                   \
-        {                                                                                          \
-            LOG_ERR_TRACE(logger, "Failed to free resource, invalid handle: %d", UNIQUE_VAR(ret)); \
-            return UNIQUE_VAR(ret);                                                                \
-        }                                                                                          \
+#define RV_RES_HANDLE_FREE_RETURN_IF_ERROR(logger, occupied_pool_a, generations_pool_a, resource_pool_a, handle) \
+    do                                                                                                           \
+    {                                                                                                            \
+        int32_t UNIQUE_VAR(ret);                                                                                 \
+        RV_RES_HANDLE_FREE(occupied_pool_a, generations_pool_a, resource_pool_a, handle, UNIQUE_VAR(ret));       \
+        if (UNIQUE_VAR(ret) < 0)                                                                                 \
+        {                                                                                                        \
+            LOG_ERR_TRACE(logger, "Failed to free resource, invalid handle: %d", UNIQUE_VAR(ret));               \
+            return UNIQUE_VAR(ret);                                                                              \
+        }                                                                                                        \
     } while (0)
 
 typedef uint32_t RendererShaderStageFlags;
 typedef uint32_t VkShaderStageFlags;
+typedef uint32_t VkImageUsageFlags;
+typedef uint32_t RendererImageUsageFlags;
+typedef uint32_t VmaMemoryUsage;
+typedef uint32_t VkMemoryPropertyFlags;
 
 enum RendererPipelineType;
 enum VkPipelineBindPoint;
 enum RendererResourceType;
 enum VkDescriptorType;
+enum RendererImageFormat;
+enum VkImageUsageFlags;
+enum VkFormat;
+enum RendererImageMemoryUsage;
 
 enum VkDescriptorType rv_resource_type_to_vk_descriptor_type(enum RendererResourceType);
 VkShaderStageFlags rv_shader_stage_to_vk_shader_stage(RendererShaderStageFlags flags);
 enum VkPipelineBindPoint rv_pipeline_type_to_vk_pipeline_bind_point(enum RendererPipelineType pipeline_type);
+enum VkFormat rv_image_format_to_vk_format(enum RendererImageFormat format);
+VkImageUsageFlags rv_image_usage_to_vk_image_usage(RendererImageUsageFlags flags);
+VkImageAspectFlags rv_vk_format_to_image_aspect(enum VkFormat format);
+VmaMemoryUsage rv_image_memory_usage_to_vma_memory_usage(enum RendererImageMemoryUsage memory_usage);
+VkMemoryPropertyFlags rv_image_memory_usage_to_vk_memory_usage(enum RendererImageMemoryUsage memory_usage);
+
+#define EXTENT_3D_RENDERER_TO_RV(renderer_extent) \
+    (RV_VkExtent3D) { .width = (renderer_extent).width, .height = (renderer_extent).height, .depth = (renderer_extent).depth }
+
+#define EXTENT_3D_RENDERER_TO_VK(renderer_extent) \
+    (VkExtent3D) { .width = (renderer_extent).width, .height = (renderer_extent).height, .depth = (renderer_extent).depth }
+
+#define EXTENT_3D_VK_TO_RENDERER(renderer_extent) \
+    (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height, .depth = (vk_extent).depth }
+
+#define EXTENT_2D_RENDERER_TO_VK(renderer_extent) \
+    (VkExtent2D) { .width = (renderer_extent).width, .height = (renderer_extent).height }
+
+#define EXTENT_2D_VK_TO_RENDERER(vk_extent) \
+    (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height }

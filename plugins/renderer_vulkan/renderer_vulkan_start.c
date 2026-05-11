@@ -240,7 +240,7 @@ int32_t create_draw_image(RendererContext *context)
                     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->swapchain_destroy_queue, vkDestroyImageView, context->device, context->draw_image.image_view, NULL),
                     "Failed to push image view to destroy queue: %d", ret);
 
-    context->draw_image.image_format = (RV_VkFormat)draw_image_format;
+    context->draw_image.image_format = (RendererVkFormat)draw_image_format;
     context->draw_image.image_extent.width = draw_image_extent.width;
     context->draw_image.image_extent.height = draw_image_extent.height;
     context->draw_image.image_extent.depth = draw_image_extent.depth;

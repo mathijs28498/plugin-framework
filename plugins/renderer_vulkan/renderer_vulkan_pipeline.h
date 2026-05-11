@@ -45,7 +45,7 @@ typedef enum RV_VkFrontFace
 } RV_VkFrontFace;
 
 typedef uint32_t RV_VkCullModeFlags;
-typedef uint32_t RV_VkFormat;
+typedef uint32_t RendererVkFormat;
 typedef uint32_t RV_VkShaderStageFlagBits;
 
 int32_t rv_pipeline_create_pipeline_builder(RV_PipelineBuilder **out_pipeline_builder);
@@ -60,8 +60,8 @@ void rv_pipeline_set_multisampling_none(RV_PipelineBuilder *pipeline_builder);
 void rv_pipeline_disable_blending(RV_PipelineBuilder *pipeline_builder);
 void rv_pipeline_enable_blending_additive(RV_PipelineBuilder *pipeline_builder);
 void rv_pipeline_enable_blending_alphablend(RV_PipelineBuilder *pipeline_builder);
-void rv_pipeline_set_color_attachment_format(RV_PipelineBuilder *pipeline_builder, RV_VkFormat format);
-void rv_pipeline_set_depth_format(RV_PipelineBuilder *pipeline_builder, RV_VkFormat format);
+void rv_pipeline_set_color_attachment_format(RV_PipelineBuilder *pipeline_builder, RendererVkFormat format);
+void rv_pipeline_set_depth_format(RV_PipelineBuilder *pipeline_builder, RendererVkFormat format);
 void rv_pipeline_disable_depthtest(RV_PipelineBuilder *pipeline_builder);
 
 struct VkPipelineShaderStageCreateInfo rv_pipeline_create_shader_stage_ci(RV_VkShaderStageFlagBits shader_stage, VkShaderModule shader_module);

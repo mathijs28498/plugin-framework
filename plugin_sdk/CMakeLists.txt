@@ -30,6 +30,7 @@ target_sources(plugin_sdk
 
     "${INTERFACE_DIR_PATH}/plugin_sdk_types/v1/plugin_sdk_types.h"
     "${INTERFACE_DIR_PATH}/plugin_utils.h"
+    "${INTERFACE_DIR_PATH}/plugin_utils_arrays.h"
 )
 
 if(WIN32 AND PLUGIN_MANAGER_GUI)

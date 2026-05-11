@@ -5,12 +5,10 @@
 
 #include "render_graph_default.h"
 
-void dummy(void)
-{
-}
 
 static const RenderGraphVtable plugin_vtable = {
-    .dummy = dummy,
+    .register_pass = render_graph_default_register_pass,
+    .render= render_graph_default_render,
 };
 
 #include "plugin_register.c.inc"

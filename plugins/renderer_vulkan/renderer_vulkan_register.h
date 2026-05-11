@@ -38,7 +38,7 @@ RV_CREATE_HANDLE_DEFINITION(VkShaderModule);
 RV_CREATE_HANDLE_DEFINITION(VmaAllocator);
 RV_CREATE_HANDLE_DEFINITION(VmaAllocation);
 
-typedef uint32_t RV_VkFormat;
+typedef uint32_t RendererImageFormat;
 
 typedef struct RV_VkExtent2D
 {
@@ -103,8 +103,10 @@ typedef struct RV_AllocatedImage
     VkImage image;
     VkImageView image_view;
     VmaAllocation allocation;
+    TODO("Add this")
+    // VkImageLayout current_layout;
+    RendererImageFormat image_format;
     RV_VkExtent3D image_extent;
-    RV_VkFormat image_format;
 } RV_AllocatedImage;
 
 typedef struct AllocatedBuffer
@@ -165,7 +167,7 @@ typedef struct RendererContext
     TODO("Make a struct holding the swapchain data")
     ARRAY_FIELD(VkImage, swapchain_images_a, MAX_SWAPCHAIN_IMAGES_LEN);
     ARRAY_FIELD(VkImageView, swapchain_image_views_a, MAX_SWAPCHAIN_IMAGES_LEN);
-    RV_VkFormat swapchain_image_format;
+    RendererImageFormat swapchain_image_format;
     RV_VkExtent2D swapchain_extent;
     VmaAllocator vma_allocator;
     RV_CallRecord *main_destroy_queue;
@@ -188,22 +190,30 @@ typedef struct RendererContext
     VkDescriptorPool global_descriptor_pool;
 
     uint64_t draw_image_descriptor_set_layout_handle;
-    VkDescriptorSet draw_image_descriptor_set;
 
-    VkShaderModule *shader_modules;
-    uint32_t *shader_module_generations;
+    bool *shader_module_occupied_a;
+    uint32_t *shader_module_generations_a;
+    VkShaderModule *shader_modules_a;
 
-    VkDescriptorSetLayout *descriptor_set_layouts;
-    uint32_t *descriptor_set_layout_generations;
+    bool *descriptor_set_layout_occupied_a;
+    uint32_t *descriptor_set_layout_generations_a;
+    VkDescriptorSetLayout *descriptor_set_layouts_a;
 
-    VkDescriptorSet *descriptor_sets;
-    uint32_t *descriptor_set_generations;
+    bool *descriptor_set_occupied_a;
+    uint32_t *descriptor_set_generations_a;
+    VkDescriptorSet *descriptor_sets_a;
 
-    VkPipelineLayout *pipeline_layouts;
-    uint32_t *pipeline_layout_generations;
+    bool *pipeline_layout_occupied_a;
+    uint32_t *pipeline_layout_generations_a;
+    VkPipelineLayout *pipeline_layouts_a;
 
-    VkPipeline *pipelines;
-    uint32_t *pipeline_generations;
+    bool *pipeline_occupied_a;
+    uint32_t *pipeline_generations_a;
+    VkPipeline *pipelines_a;
+
+    bool *allocated_image_occupied_a;
+    uint32_t *allocated_image_generations_a;
+    RV_AllocatedImage *allocated_images_a;
 
     uint8_t *bump_arena_a;
 

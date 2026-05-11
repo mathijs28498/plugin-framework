@@ -16,6 +16,7 @@ target_sources(renderer_vulkan
     renderer_vulkan.c
     renderer_vulkan_cmd.c
     renderer_vulkan_pipeline.c
+    renderer_vulkan_image.c
 
 
     PUBLIC

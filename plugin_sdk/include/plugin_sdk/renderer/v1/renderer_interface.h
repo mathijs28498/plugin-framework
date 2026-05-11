@@ -19,6 +19,19 @@ typedef struct RendererWindowConfig
     bool enable_vsync;
 } RendererWindowConfig;
 
+typedef struct RendererExtent3D
+{
+    uint32_t width;
+    uint32_t height;
+    uint32_t depth;
+} RendererExtent3D;
+
+typedef struct RendererExtent2D
+{
+    uint32_t width;
+    uint32_t heigth;
+} RendererExtent2D;
+
 typedef uint64_t RendererShaderHandle;
 typedef uint64_t RendererResourceSetLayoutHandle;
 typedef uint64_t RendererResourceSetHandle;
@@ -26,6 +39,19 @@ typedef uint64_t RendererPipelineLayoutHandle;
 typedef uint64_t RendererGraphicsPipelineHandle;
 typedef uint64_t RendererComputePipelineHandle;
 typedef uint64_t RendererCommandListHandle;
+typedef uint64_t RendererImageHandle;
+
+typedef enum RendererImageUsageBits
+{
+    RENDERER_IMAGE_USAGE_TRANSFER_SRC_BIT = 0x00000001,
+    RENDERER_IMAGE_USAGE_TRANSFER_DST_BIT = 0x00000002,
+    RENDERER_IMAGE_USAGE_SAMPLED_BIT = 0x00000004,
+    RENDERER_IMAGE_USAGE_STORAGE_BIT = 0x00000008,
+    RENDERER_IMAGE_USAGE_COLOR_ATTACHMENT_BIT = 0x00000010,
+    RENDERER_IMAGE_USAGE_DEPTH_ATTACHMENT_BIT = 0x00000020,
+} RendererImageUsageBits;
+
+typedef uint32_t RendererImageUsageFlags;
 
 typedef enum RendererShaderStageBits
 {
@@ -35,6 +61,29 @@ typedef enum RendererShaderStageBits
 } RendererShaderStageBits;
 
 typedef uint32_t RendererShaderStageFlags;
+
+typedef enum RendererImageFormat
+{
+    RENDERER_IMAGE_FORMAT_R8G8B8A8_UNORM,
+    RENDERER_IMAGE_FORMAT_R8G8B8A8_SRGB,
+    RENDERER_IMAGE_FORMAT_R16G16B16A16_SFLOAT,
+    RENDERER_IMAGE_FORMAT_R32G32B32A32_SFLOAT,
+    RENDERER_IMAGE_FORMAT_D32_SFLOAT,
+    RENDERER_IMAGE_FORMAT_D24_UNORM_S8_UINT,
+} RendererImageFormat;
+
+typedef enum RendererImageMemoryUsage
+{
+    RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY,
+} RendererImageMemoryUsage;
+
+typedef struct RendererImageCreateInfo
+{
+    RendererImageFormat format;
+    RendererImageUsageFlags usage_flags;
+    RendererImageMemoryUsage memory_usage;
+    RendererExtent3D extent;
+} RendererImageCreateInfo;
 
 typedef enum RendererPipelineType
 {

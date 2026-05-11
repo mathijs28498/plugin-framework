@@ -877,7 +877,7 @@ int32_t create_swapchain(RendererContext *context)
     GET_ARRAY_LENGTH(context->swapchain_images_a) = (size_t)swapchain_images_len;
     vkGetSwapchainImagesKHR(context->device, context->swapchain, &swapchain_images_len, context->swapchain_images_a);
 
-    context->swapchain_image_format = (RV_VkFormat)surface_format.format;
+    context->swapchain_image_format = (RendererImageFormat)surface_format.format;
     context->swapchain_extent.width = surface_extent.width;
     context->swapchain_extent.height = surface_extent.height;
     context->old_swapchain = context->swapchain;
