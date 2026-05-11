@@ -182,8 +182,11 @@
 interface inline regex creator:
 .* ([a-z].*) \(\*(.*)\)\(.* (.*)context \*context(.*);/static inline \1 _\2(\3 *iface \4\n{\n\treturn iface->\2(iface->context\4;\n}\n
 
+
+
+
 calculate lines of code:
 Get-ChildItem -Path . -Recurse -File | Where-Object {
 ($_.Extension -in @('.md', '.c', '.h', '.txt', '.cmake', '.py', '.vert', '.frag', '.comp', '.in')) -and
-($_.FullName -notmatch '\\lib\\' -or $_.FullName -match '\\lib\\plugin_manager_bootloader\\' -or $_.FullName -match '\\lib\\bump_arena\\')
+(($_.FullName -notmatch '\\build\\' -and $_.FullName -notmatch '\\lib\\') -or $_.FullName -match '\\lib\\plugin_manager_bootloader\\' -or $_.FullName -match '\\lib\\bump_arena\\')
 } | Get-Content | Measure-Object -Line
