@@ -22,6 +22,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_WARNING)
 #include "renderer_vulkan_register.h"
 #include "renderer_vulkan_descriptor_set.h"
 #include "renderer_vulkan_pipeline.h"
+#include "renderer_vulkan_image.h"
 #include "renderer_vulkan.h"
 
 #define START_DESTROY_QUEUE_CAPACITY 64
@@ -196,56 +197,26 @@ int32_t create_draw_image(RendererContext *context)
 {
     assert(context != NULL);
 
-    VkResult result;
     uint32_t ret;
 
-    VkExtent3D draw_image_extent = {
+    RendererExtent3D image_extent = {
         .width = context->swapchain_extent.width,
         .height = context->swapchain_extent.height,
         .depth = 1,
     };
 
-    VkFormat draw_image_format = VK_FORMAT_R16G16B16A16_SFLOAT;
+    RendererImageCreateInfo renderer_image_create_info = {
+        .extent = image_extent,
+        .format = RENDERER_IMAGE_FORMAT_R16G16B16A16_SFLOAT,
+        .usage_flags = RENDERER_IMAGE_USAGE_TRANSFER_SRC_BIT | RENDERER_IMAGE_USAGE_TRANSFER_DST_BIT | RENDERER_IMAGE_USAGE_STORAGE_BIT | RENDERER_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .memory_usage = RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY,
+    };
 
-    VkImageUsageFlags draw_image_usage_flags =
-        VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
-        VK_IMAGE_USAGE_TRANSFER_DST_BIT |
-        VK_IMAGE_USAGE_STORAGE_BIT |
-        VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_image(context, &renderer_image_create_info, &context->draw_image_handle),
+                    "Failed to create draw image: %d", ret);
 
-    VkImageCreateInfo draw_image_create_info = rv_create_image_info(
-        draw_image_format, draw_image_usage_flags, draw_image_extent);
-
-    VmaAllocationCreateInfo allocation_create_info = {
-        .usage = VMA_MEMORY_USAGE_GPU_ONLY,
-        .requiredFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT};
-
-    RV_RETURN_IF_ERROR(
-        context->deps.logger, result,
-        vmaCreateImage(context->vma_allocator, &draw_image_create_info, &allocation_create_info, &context->draw_image.image, &context->draw_image.allocation, NULL),
-        -1, "Failed to create draw image: %d", result);
-
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->swapchain_destroy_queue, vmaDestroyImage, context->vma_allocator, context->draw_image.image, context->draw_image.allocation),
-                    "Failed to push image to destroy queue: %d", ret);
-
-    VkImageViewCreateInfo draw_image_view_create_info = rv_create_image_view_info(draw_image_format, context->draw_image.image, VK_IMAGE_ASPECT_COLOR_BIT);
-
-    RV_RETURN_IF_ERROR(
-        context->deps.logger, result,
-        vkCreateImageView(context->device, &draw_image_view_create_info, NULL, &context->draw_image.image_view),
-        -1, "Failed to create draw image: %d", result);
-
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->swapchain_destroy_queue, vkDestroyImageView, context->device, context->draw_image.image_view, NULL),
-                    "Failed to push image view to destroy queue: %d", ret);
-
-    context->draw_image.image_format = (RendererVkFormat)draw_image_format;
-    context->draw_image.image_extent.width = draw_image_extent.width;
-    context->draw_image.image_extent.height = draw_image_extent.height;
-    context->draw_image.image_extent.depth = draw_image_extent.depth;
-    context->draw_extent.width = draw_image_extent.width;
-    context->draw_extent.height = draw_image_extent.height;
+    context->draw_extent.width = image_extent.width;
+    context->draw_extent.height = image_extent.height;
 
     return 0;
 }

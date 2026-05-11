@@ -90,7 +90,10 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
 
     TODO("Also abstract this away somehow, possibly with different passes");
 
-    rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+    RV_AllocatedImage allocated_image = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
+                                         context->draw_image_handle, allocated_image);
+    rv_transition_image(cmd, allocated_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
     return 0;
 }
@@ -108,11 +111,14 @@ int32_t renderer_vulkan_render_end_frame(RendererContext *context)
 
     TODO("Remove this and add render passes");
     // rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
+    RV_AllocatedImage allocated_image = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
+                                              context->draw_image_handle, allocated_image);
 
-    rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    rv_transition_image(cmd, allocated_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
     rv_transition_image(cmd, swapchain_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-    rv_copy_image_to_image(cmd, context->draw_image.image, swapchain_image, extent_2d(&context->draw_extent), extent_2d(&context->swapchain_extent));
+    rv_copy_image_to_image(cmd, allocated_image.image, swapchain_image, extent_2d(&context->draw_extent), extent_2d(&context->swapchain_extent));
 
     rv_transition_image(cmd, swapchain_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 

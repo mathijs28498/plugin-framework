@@ -44,8 +44,8 @@ int32_t renderer_vulkan_create_shader(RendererContext *context, const uint32_t *
         -1, "Failed to create shader module: %d", result);
 
     RendererVulkanHandle shader_handle = {0};
-    RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->shader_module_occupied_a, context->shader_module_generations_a, context->shader_modules_a, shader_module, shader_handle,
-                                  vkDestroyShaderModule(context->device, shader_module, NULL));
+    RV_RES_RV_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->shader_module_occupied_a, context->shader_module_generations_a, context->shader_modules_a, shader_module, shader_handle,
+                                     vkDestroyShaderModule(context->device, shader_module, NULL));
     *out_shader_handle = shader_handle.raw;
     return 0;
 }
@@ -54,11 +54,9 @@ int32_t renderer_vulkan_destroy_shader(RendererContext *context, RendererShaderH
 {
     assert(context != NULL);
 
-    RendererVulkanHandle vulkan_shader_handle = {.raw = shader_handle};
-
-    VkShaderModule shader_module;
-    RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->shader_module_generations_a, context->shader_modules_a, vulkan_shader_handle, shader_module);
-    RV_RES_HANDLE_FREE_RETURN_IF_ERROR(context->deps.logger, context->shader_module_occupied_a, context->shader_module_generations_a, context->shader_modules_a, vulkan_shader_handle);
+    VkShaderModule shader_module = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->shader_module_generations_a, context->shader_modules_a, shader_handle, shader_module);
+    RV_RES_RENDERER_HANDLE_FREE_RETURN_IF_ERROR(context->deps.logger, context->shader_module_occupied_a, context->shader_module_generations_a, context->shader_modules_a, shader_handle);
 
     vkDestroyShaderModule(context->device, shader_module, NULL);
 
@@ -327,9 +325,8 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
     for (size_t i = 0; i < descriptor_set_layouts_len; i++)
     {
         TODO("Make this behave properly");
-        RendererVulkanHandle descriptor_set_layout_handle = {.raw = renderer_pipeline_layout_create_info->resource_set_layout_handles[i]};
-        RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layout_generations_a, context->descriptor_set_layouts_a,
-                                    descriptor_set_layout_handle, descriptor_set_layouts[i]);
+        RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layout_generations_a, context->descriptor_set_layouts_a,
+                                             renderer_pipeline_layout_create_info->resource_set_layout_handles[i], descriptor_set_layouts[i]);
     }
 
     VkPipelineLayoutCreateInfo pipeline_layout_create_info = {
@@ -345,8 +342,8 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
                        -1, "Failed to create pipeline layout: %d", result);
 
     RendererVulkanHandle rv_pipeline_layout_handle = {0};
-    RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->pipeline_layout_occupied_a, context->pipeline_layout_generations_a, context->pipeline_layouts_a, pipeline_layout, rv_pipeline_layout_handle,
-                                  vkDestroyPipelineLayout(context->device, pipeline_layout, NULL));
+    RV_RES_RV_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->pipeline_layout_occupied_a, context->pipeline_layout_generations_a, context->pipeline_layouts_a, pipeline_layout, rv_pipeline_layout_handle,
+                                     vkDestroyPipelineLayout(context->device, pipeline_layout, NULL));
 
     RETURN_IF_ERROR(context->deps.logger, ret,
                     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, pipeline_layout, NULL),
@@ -375,9 +372,9 @@ int32_t renderer_vulkan_create_compute_pipeline(RendererContext *context, const 
     VkResult result;
     int32_t ret;
 
-    VkShaderModule compute_shader_module;
-    RendererVulkanHandle rv_compute_shader_handle = {.raw = renderer_pipeline_create_info->compute_shader_handle};
-    RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->shader_module_generations_a, context->shader_modules_a, rv_compute_shader_handle, compute_shader_module);
+    VkShaderModule compute_shader_module = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->shader_module_generations_a, context->shader_modules_a,
+                                         renderer_pipeline_create_info->compute_shader_handle, compute_shader_module);
 
     VkPipelineShaderStageCreateInfo stage_create_info = {
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
@@ -386,9 +383,9 @@ int32_t renderer_vulkan_create_compute_pipeline(RendererContext *context, const 
         .pName = renderer_pipeline_create_info->compute_shader_entry_point,
     };
 
-    VkPipelineLayout pipeline_layout;
-    RendererVulkanHandle rv_pipeline_layout_handle = {.raw = renderer_pipeline_create_info->layout_handle};
-    RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->pipeline_layout_generations_a, context->pipeline_layouts_a, rv_pipeline_layout_handle, pipeline_layout);
+    VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->pipeline_layout_generations_a, context->pipeline_layouts_a,
+                                         renderer_pipeline_create_info->layout_handle, pipeline_layout);
 
     VkComputePipelineCreateInfo compute_pipeline_create_info = {
         .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
@@ -402,8 +399,8 @@ int32_t renderer_vulkan_create_compute_pipeline(RendererContext *context, const 
                        -1, "Failed to create compute pipeline: %d", result);
 
     RendererVulkanHandle pipeline_handle = {0};
-    RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->pipeline_occupied_a, context->pipeline_generations_a, context->pipelines_a, pipeline, pipeline_handle,
-                                  vkDestroyPipeline(context->device, pipeline, NULL));
+    RV_RES_RV_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->pipeline_occupied_a, context->pipeline_generations_a, context->pipelines_a, pipeline, pipeline_handle,
+                                     vkDestroyPipeline(context->device, pipeline, NULL));
 
     TODO("Make owner responsible for destruction");
     RETURN_IF_ERROR(context->deps.logger, ret,
@@ -455,7 +452,10 @@ int32_t create_triangle_pipeline(RendererContext *context)
     // rv_pipeline_enable_blending_alphablend(pipeline_builder);
     rv_pipeline_disable_depthtest(pipeline_builder);
 
-    rv_pipeline_set_color_attachment_format(pipeline_builder, context->draw_image.image_format);
+    RV_AllocatedImage allocated_image = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
+                                              context->draw_image_handle, allocated_image);
+    rv_pipeline_set_color_attachment_format(pipeline_builder, allocated_image.image_format);
     rv_pipeline_set_depth_format(pipeline_builder, VK_FORMAT_UNDEFINED);
 
     RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_builder_build(context, pipeline_builder, &context->triangle_pipeline),

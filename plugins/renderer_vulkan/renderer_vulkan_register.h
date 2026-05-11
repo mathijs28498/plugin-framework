@@ -148,6 +148,8 @@ typedef struct ActiveFrameState
     bool is_active;
 } ActiveFrameState;
 
+typedef uint64_t RendererImageHandle;
+
 TODO("Maybe split up the struct into smaller structs, like a queue/logical device struct")
 TODO("The smaller struct could also be one for the bootstrap and one for runtime")
 typedef struct RendererContext
@@ -172,7 +174,7 @@ typedef struct RendererContext
     VmaAllocator vma_allocator;
     RV_CallRecord *main_destroy_queue;
 
-    RV_AllocatedImage draw_image;
+    RendererImageHandle draw_image_handle;
     RV_VkExtent2D draw_extent;
 
     bool resize_requested;

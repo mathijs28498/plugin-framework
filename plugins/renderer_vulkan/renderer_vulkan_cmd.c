@@ -18,22 +18,26 @@ void renderer_vulkan_cmd_begin_render_pass(RendererContext *context, RendererCom
     assert(context != NULL);
     assert(command_list != NULL);
 
-    VkRenderingAttachmentInfo colorAttachment = {
+    RV_AllocatedImage allocated_image = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
+                                              context->draw_image_handle, allocated_image);
+
+    VkRenderingAttachmentInfo color_attachment = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .imageView = context->draw_image.image_view,
+        .imageView = allocated_image.image_view,
         .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
         .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
         .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
     };
 
-    VkRenderingInfo renderInfo = {
+    VkRenderingInfo rendering_info = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
         .renderArea = {
             .extent = extent_2d(&context->draw_extent),
         },
         .layerCount = 1,
         .colorAttachmentCount = 1,
-        .pColorAttachments = &colorAttachment,
+        .pColorAttachments = &color_attachment,
     };
 
     VkViewport viewport = {
@@ -50,7 +54,7 @@ void renderer_vulkan_cmd_begin_render_pass(RendererContext *context, RendererCom
 
     VkCommandBuffer cmd = command_list->command_buffer;
 
-    vkCmdBeginRendering(cmd, &renderInfo);
+    vkCmdBeginRendering(cmd, &rendering_info);
     vkCmdSetViewport(cmd, 0, 1, &viewport);
     vkCmdSetScissor(cmd, 0, 1, &scissor);
 }
@@ -68,9 +72,8 @@ void renderer_vulkan_cmd_bind_resource_sets(RendererContext *context, RendererCo
     assert(context != NULL);
     assert(command_list != NULL);
 
-    RendererVulkanHandle rv_pipeline_layout_handle = {.raw = pipeline_layout_handle};
-    VkPipelineLayout pipeline_layout;
-    RV_RES_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_layout_generations_a, context->pipeline_layouts_a, rv_pipeline_layout_handle, pipeline_layout);
+    VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_layout_generations_a, context->pipeline_layouts_a, pipeline_layout_handle, pipeline_layout);
 
     TODO("Allow for multiple descriptor sets")
     VkDescriptorSet descriptor_set = context->active_frame_state.frame->transient_descriptor_sets[(size_t)resource_set_handle[0]];
@@ -83,9 +86,8 @@ void renderer_vulkan_cmd_push_constants(RendererContext *context, RendererComman
     assert(context != NULL);
     assert(command_list != NULL);
 
-    RendererVulkanHandle rv_pipeline_layout_handle = {.raw = pipeline_layout_handle};
-    VkPipelineLayout pipeline_layout;
-    RV_RES_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_layout_generations_a, context->pipeline_layouts_a, rv_pipeline_layout_handle, pipeline_layout);
+    VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_layout_generations_a, context->pipeline_layouts_a, pipeline_layout_handle, pipeline_layout);
 
     vkCmdPushConstants(command_list->command_buffer, pipeline_layout, rv_shader_stage_to_vk_shader_stage(renderer_shader_stage_flags), offset, push_constants_size, push_constants);
 }
@@ -102,9 +104,8 @@ void renderer_vulkan_cmd_bind_graphics_pipeline(RendererContext *context, Render
 {
     assert(context != NULL);
     assert(command_list != NULL);
-    RendererVulkanHandle renderer_pipeline_handle = {.raw = pipeline_handle};
-    VkPipeline pipeline;
-    RV_RES_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_generations_a, context->pipelines_a, renderer_pipeline_handle, pipeline);
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_generations_a, context->pipelines_a, pipeline_handle, pipeline);
     vkCmdBindPipeline(command_list->command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 }
 
@@ -112,9 +113,8 @@ void renderer_vulkan_cmd_bind_compute_pipeline(RendererContext *context, Rendere
 {
     assert(context != NULL);
     assert(command_list != NULL);
-    RendererVulkanHandle renderer_pipeline_handle = {.raw = pipeline_handle};
-    VkPipeline pipeline;
-    RV_RES_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_generations_a, context->pipelines_a, renderer_pipeline_handle, pipeline);
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_generations_a, context->pipelines_a, pipeline_handle, pipeline);
     vkCmdBindPipeline(command_list->command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
 }
 

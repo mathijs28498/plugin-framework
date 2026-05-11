@@ -69,8 +69,7 @@ int32_t renderer_vulkan_allocate_transient_resource_set(RendererContext *context
                    -1, "Failed to allocate transient descriptor set, transient descriptor sets for current frame is full");
 
     VkDescriptorSetLayout descriptor_set_layout;
-    RendererVulkanHandle rv_resource_set_layout_handle = {.raw = resource_set_layout_handle};
-    RV_RES_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layout_generations_a, context->descriptor_set_layouts_a, rv_resource_set_layout_handle, descriptor_set_layout);
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layout_generations_a, context->descriptor_set_layouts_a, resource_set_layout_handle, descriptor_set_layout);
 
     VkDescriptorSetAllocateInfo descriptor_set_alloc_info = {
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
@@ -132,8 +131,8 @@ int32_t renderer_vulkan_create_resource_set_layout(RendererContext *context, con
                     "Failed to push descriptor set layout to swapchain destroy queue: %d", ret);
 
     RendererVulkanHandle rv_descriptor_set_layout_handle = {0};
-    RV_RES_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->descriptor_set_layout_occupied_a, context->descriptor_set_layout_generations_a, context->descriptor_set_layouts_a, descriptor_set_layout, rv_descriptor_set_layout_handle,
-                                  vkDestroyDescriptorSetLayout(context->device, descriptor_set_layout, NULL));
+    RV_RES_RV_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->descriptor_set_layout_occupied_a, context->descriptor_set_layout_generations_a, context->descriptor_set_layouts_a, descriptor_set_layout, rv_descriptor_set_layout_handle,
+                                     vkDestroyDescriptorSetLayout(context->device, descriptor_set_layout, NULL));
 
     *out_resource_set_layout_handle = rv_descriptor_set_layout_handle.raw;
 
@@ -185,9 +184,13 @@ void renderer_vulkan_update_transient_resource_set(RendererContext *context, Ren
 {
     assert(context != NULL);
 
+    RV_AllocatedImage allocated_image = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
+                                              context->draw_image_handle, allocated_image);
+
     VkDescriptorImageInfo draw_image_descriptor_info = {
         .imageLayout = VK_IMAGE_LAYOUT_GENERAL,
-        .imageView = context->draw_image.image_view,
+        .imageView = allocated_image.image_view,
     };
 
     VkDescriptorSet descriptor_set = context->active_frame_state.frame->transient_descriptor_sets[(size_t)resource_set_handle];

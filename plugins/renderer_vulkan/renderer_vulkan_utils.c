@@ -196,40 +196,6 @@ VkSubmitInfo2 rv_create_submit_info(VkCommandBufferSubmitInfo *cmd, VkSemaphoreS
     };
 }
 
-VkImageCreateInfo rv_create_image_info(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent)
-{
-    return (VkImageCreateInfo){
-        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .imageType = VK_IMAGE_TYPE_2D,
-        .format = format,
-        .extent = extent,
-        .mipLevels = 1,
-        .arrayLayers = 1,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = usage_flags,
-    };
-}
-
-VkImageViewCreateInfo rv_create_image_view_info(VkFormat format, VkImage image, VkImageAspectFlags aspect_mask)
-{
-    VkImageSubresourceRange rv_image_subresource_range = {
-        .aspectMask = aspect_mask,
-        .baseMipLevel = 0,
-        .levelCount = 1,
-        .baseArrayLayer = 0,
-        .layerCount = 1,
-    };
-
-    return (VkImageViewCreateInfo){
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .image = image,
-        .format = format,
-        .subresourceRange = rv_image_subresource_range,
-    };
-}
-
 void rv_copy_image_to_image(VkCommandBuffer cmd, VkImage source, VkImage destination, VkExtent2D src_size, VkExtent2D dst_size)
 {
     VkOffset3D src_offset_max = {
