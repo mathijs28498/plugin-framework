@@ -508,31 +508,31 @@ int32_t renderer_vulkan_start_recreate_swapchain(RendererContext *context)
     assert(context->device != VK_NULL_HANDLE);
     assert(context->swapchain != VK_NULL_HANDLE);
 
-    int32_t ret;
-    VkResult result;
+    // int32_t ret;
+    // VkResult result;
 
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vkDeviceWaitIdle(context->device),
-                       -1, "Failed to wait for device to idle: %d", result);
+    // RV_RETURN_IF_ERROR(context->deps.logger, result, vkDeviceWaitIdle(context->device),
+    //                    -1, "Failed to wait for device to idle: %d", result);
 
-    rv_call_queue_flush(context->swapchain_destroy_queue);
+    // rv_call_queue_flush(context->swapchain_destroy_queue);
 
-    if (context->resize_extent.width == 0 || context->resize_extent.height == 0)
-    {
-        context->resize_requested = false;
-        context->halt_render = true;
-        return 0;
-    }
+    // if (context->resize_extent.width == 0 || context->resize_extent.height == 0)
+    // {
+    //     context->resize_requested = false;
+    //     context->halt_render = true;
+    //     return 0;
+    // }
 
-    context->halt_render = false;
+    // context->halt_render = false;
 
-    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_bootstrap_recreate_swapchain(context),
-                    "Failed to bootstrap recreate swapchain: %d", ret);
+    // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_bootstrap_recreate_swapchain(context),
+    //                 "Failed to bootstrap recreate swapchain: %d", ret);
 
-    RETURN_IF_ERROR(context->deps.logger, ret, create_draw_image(context),
-                    "Failed to recreate draw image: %d", ret);
+    // RETURN_IF_ERROR(context->deps.logger, ret, create_draw_image(context),
+    //                 "Failed to recreate draw image: %d", ret);
 
-    // renderer_vulkan_update_descriptor_set(context);
+    // // renderer_vulkan_update_descriptor_set(context);
 
-    context->resize_requested = false;
+    // context->resize_requested = false;
     return 0;
 }

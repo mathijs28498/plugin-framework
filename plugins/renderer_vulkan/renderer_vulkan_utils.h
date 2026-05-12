@@ -86,16 +86,12 @@ struct VkExtent2D;
 struct RV_VkExtent2D;
 
 struct VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mask);
-// ways to improve this efficiency: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples
-void rv_transition_image(VkCommandBuffer cmd, VkImage image, enum VkImageLayout current_layout, enum VkImageLayout new_layout);
 struct VkSemaphoreSubmitInfo rv_create_semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore);
 struct VkCommandBufferSubmitInfo rv_create_command_buffer_submit_info(VkCommandBuffer cmd);
 struct VkSubmitInfo2 rv_create_submit_info(struct VkCommandBufferSubmitInfo *cmd, struct VkSemaphoreSubmitInfo *signal_semaphore_info, struct VkSemaphoreSubmitInfo *wait_semaphore_info);
 
-void rv_copy_image_to_image(VkCommandBuffer cmd, VkImage source, VkImage destination, struct VkExtent2D src_size, struct VkExtent2D dst_size);
 int32_t rv_create_buffer(struct RendererContext *context, size_t alloc_size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage, struct AllocatedBuffer *out_buffer);
 void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation allocation);
-struct VkExtent2D extent_2d(struct RV_VkExtent2D *rv_extent);
 
 #define RV_RES_RV_HANDLE_ALLOC(occupied_pool_a, generations_pool_a, resource_pool_a, resource, out_free_handle_found, out_handle) \
     do                                                                                                                            \

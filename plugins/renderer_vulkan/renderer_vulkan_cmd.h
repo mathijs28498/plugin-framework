@@ -2,15 +2,26 @@
 
 #include <stdint.h>
 
+#include <plugin_sdk/plugin_utils.h>
+
+TODO("Remoce this dependency")
+#include <renderer_vulkan_utils.h>
+
+TODO("Remove these")
+RV_CREATE_HANDLE_DEFINITION(VkCommandBuffer);
+enum VkImageLayout;
+
 struct RendererContext;
 struct RendererCommandList;
 typedef uint64_t RendererGraphicsPipelineHandle;
 typedef uint64_t RendererComputePipelineHandle;
 typedef uint64_t RendererPipelineLayoutHandle;
 typedef uint64_t RendererResourceSetHandle;
+typedef uint64_t RendererImageHandle;
 
 typedef uint32_t RendererShaderStageFlags;
 enum RendererPipelineType;
+struct RendererExtent2D;
 
 void renderer_vulkan_cmd_begin_render_pass(struct RendererContext *context, struct RendererCommandList *command_list);
 void renderer_vulkan_cmd_end_render_pass(struct RendererContext *context, struct RendererCommandList *command_list);
@@ -22,3 +33,8 @@ void renderer_vulkan_cmd_push_constants(struct RendererContext *context, struct 
 void renderer_vulkan_cmd_dispatch(struct RendererContext *context, struct RendererCommandList *command_list, uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z);
 
 void renderer_vulkan_cmd_draw(struct RendererContext *context, struct RendererCommandList *command_list, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance);
+
+TODO("Make platform agnostic")
+// ways to improve this efficiency: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples
+void renderer_vulkan_cmd_transition_image(struct RendererContext *context, VkCommandBuffer cmd, RendererImageHandle image_handle, enum VkImageLayout current_layout, enum VkImageLayout new_layout);
+void renderer_vulkan_cmd_blit_image_to_image(struct RendererContext *context, VkCommandBuffer cmd, RendererImageHandle image_handle_source, RendererImageHandle image_handle_destination, struct RendererExtent2D extent_source, struct RendererExtent2D extent_destination);

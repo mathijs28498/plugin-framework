@@ -133,33 +133,6 @@ VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mas
     };
 }
 
-// ways to improve this efficiency: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples
-void rv_transition_image(VkCommandBuffer cmd, VkImage image, VkImageLayout current_layout, VkImageLayout new_layout)
-{
-    VkImageAspectFlags aspect_mask = (new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
-
-    VkImageMemoryBarrier2 image_barrier = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-        .srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-        .srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-        .dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT,
-        .oldLayout = current_layout,
-        .newLayout = new_layout,
-
-        .subresourceRange = rv_image_subresource_range(aspect_mask),
-        .image = image,
-    };
-
-    VkDependencyInfo dependency_info = {
-        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-        .imageMemoryBarrierCount = 1,
-        .pImageMemoryBarriers = &image_barrier,
-    };
-
-    vkCmdPipelineBarrier2(cmd, &dependency_info);
-}
-
 VkSemaphoreSubmitInfo rv_create_semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore)
 {
     return (VkSemaphoreSubmitInfo){
@@ -196,55 +169,6 @@ VkSubmitInfo2 rv_create_submit_info(VkCommandBufferSubmitInfo *cmd, VkSemaphoreS
     };
 }
 
-void rv_copy_image_to_image(VkCommandBuffer cmd, VkImage source, VkImage destination, VkExtent2D src_size, VkExtent2D dst_size)
-{
-    VkOffset3D src_offset_max = {
-        .x = src_size.width,
-        .y = src_size.height,
-        .z = 1,
-    };
-
-    VkOffset3D dst_offset_max = {
-        .x = dst_size.width,
-        .y = dst_size.height,
-        .z = 1,
-    };
-
-    VkImageSubresourceLayers subresource = {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .baseArrayLayer = 0,
-        .layerCount = 1,
-        .mipLevel = 0,
-    };
-
-    VkImageBlit2 blit_region = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2,
-        .srcOffsets = {
-            {.x = 0, .y = 0, .z = 0},
-            src_offset_max,
-        },
-        .dstOffsets = {
-            {.x = 0, .y = 0, .z = 0},
-            dst_offset_max,
-        },
-        .srcSubresource = subresource,
-        .dstSubresource = subresource,
-    };
-
-    VkBlitImageInfo2 blit_image_info = {
-        .sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2,
-        .dstImage = destination,
-        .dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        .srcImage = source,
-        .srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-        .filter = VK_FILTER_LINEAR,
-        .regionCount = 1,
-        .pRegions = &blit_region,
-    };
-
-    vkCmdBlitImage2(cmd, &blit_image_info);
-}
-
 int32_t rv_create_buffer(RendererContext *context, size_t alloc_size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage, AllocatedBuffer *out_buffer)
 {
     assert(alloc_size > 0);
@@ -275,14 +199,6 @@ void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation al
     assert(allocator != VK_NULL_HANDLE);
     assert(buffer != NULL);
     vmaDestroyBuffer(allocator, buffer, allocation);
-}
-
-VkExtent2D extent_2d(RV_VkExtent2D *rv_extent)
-{
-    return (VkExtent2D){
-        .width = rv_extent->width,
-        .height = rv_extent->height,
-    };
 }
 
 VkDescriptorType rv_resource_type_to_vk_descriptor_type(RendererResourceType resource_type)
@@ -417,4 +333,3 @@ VkMemoryPropertyFlags rv_image_memory_usage_to_vk_memory_usage(RendererImageMemo
         return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     }
 }
-

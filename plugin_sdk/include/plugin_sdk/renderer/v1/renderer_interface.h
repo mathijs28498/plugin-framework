@@ -29,7 +29,7 @@ typedef struct RendererExtent3D
 typedef struct RendererExtent2D
 {
     uint32_t width;
-    uint32_t heigth;
+    uint32_t height;
 } RendererExtent2D;
 
 typedef uint64_t RendererShaderHandle;

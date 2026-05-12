@@ -33,8 +33,10 @@ void renderer_vulkan_cmd_begin_render_pass(RendererContext *context, RendererCom
     VkRenderingInfo rendering_info = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
         .renderArea = {
-            .extent = extent_2d(&context->draw_extent),
-        },
+            .extent = {
+                .width = context->draw_extent.width,
+                .height = context->draw_extent.height,
+            }},
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &color_attachment,
@@ -49,8 +51,10 @@ void renderer_vulkan_cmd_begin_render_pass(RendererContext *context, RendererCom
     VkRect2D scissor = {
         .offset.x = 0,
         .offset.y = 0,
-        .extent = extent_2d(&context->draw_extent),
-    };
+        .extent = {
+            .width = context->draw_extent.width,
+            .height = context->draw_extent.height,
+        }};
 
     VkCommandBuffer cmd = command_list->command_buffer;
 
@@ -125,8 +129,14 @@ void renderer_vulkan_cmd_draw(RendererContext *context, RendererCommandList *com
     vkCmdDraw(command_list->command_buffer, vertex_count, instance_count, first_vertex, first_instance);
 }
 
-void renderer_vulkan_cmd_transition_image(VkCommandBuffer cmd, VkImage image, VkImageLayout current_layout, VkImageLayout new_layout)
+// ways to improve this efficiency: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples
+void renderer_vulkan_cmd_transition_image(RendererContext *context, VkCommandBuffer cmd, RendererImageHandle image_handle, VkImageLayout current_layout, VkImageLayout new_layout)
 {
+    assert(context != NULL);
+
+    RV_AllocatedImage allocated_image = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a, image_handle, allocated_image);
+
     VkImageAspectFlags aspect_mask = (new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 
     VkImageMemoryBarrier2 image_barrier = {
@@ -139,7 +149,7 @@ void renderer_vulkan_cmd_transition_image(VkCommandBuffer cmd, VkImage image, Vk
         .newLayout = new_layout,
 
         .subresourceRange = rv_image_subresource_range(aspect_mask),
-        .image = image,
+        .image = allocated_image.image,
     };
 
     VkDependencyInfo dependency_info = {
@@ -149,4 +159,61 @@ void renderer_vulkan_cmd_transition_image(VkCommandBuffer cmd, VkImage image, Vk
     };
 
     vkCmdPipelineBarrier2(cmd, &dependency_info);
+}
+
+void renderer_vulkan_cmd_blit_image_to_image(RendererContext *context, VkCommandBuffer cmd, RendererImageHandle image_handle_source, RendererImageHandle image_handle_destination, RendererExtent2D extent_source, RendererExtent2D extent_destination)
+{
+    assert(context != NULL);
+
+    RV_AllocatedImage allocated_image_source = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a, image_handle_source, allocated_image_source);
+
+    RV_AllocatedImage allocated_image_destination = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a, image_handle_destination, allocated_image_destination);
+
+    VkOffset3D src_offset_max = {
+        .x = extent_source.width,
+        .y = extent_source.height,
+        .z = 1,
+    };
+
+    VkOffset3D dst_offset_max = {
+        .x = extent_destination.width,
+        .y = extent_destination.height,
+        .z = 1,
+    };
+
+    VkImageSubresourceLayers subresource = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .baseArrayLayer = 0,
+        .layerCount = 1,
+        .mipLevel = 0,
+    };
+
+    VkImageBlit2 blit_region = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2,
+        .srcOffsets = {
+            {.x = 0, .y = 0, .z = 0},
+            src_offset_max,
+        },
+        .dstOffsets = {
+            {.x = 0, .y = 0, .z = 0},
+            dst_offset_max,
+        },
+        .srcSubresource = subresource,
+        .dstSubresource = subresource,
+    };
+
+    VkBlitImageInfo2 blit_image_info = {
+        .sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2,
+        .srcImage = allocated_image_source.image,
+        .srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+        .dstImage = allocated_image_destination.image,
+        .dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        .filter = VK_FILTER_LINEAR,
+        .regionCount = 1,
+        .pRegions = &blit_region,
+    };
+
+    vkCmdBlitImage2(cmd, &blit_image_info);
 }

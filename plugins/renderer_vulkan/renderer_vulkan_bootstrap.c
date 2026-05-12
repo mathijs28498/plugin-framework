@@ -784,6 +784,62 @@ void destroy_main_swapchain(RendererContext *context)
     vkDestroySwapchainKHR(context->device, context->swapchain, NULL);
 }
 
+int32_t create_image_views(RendererContext *context, VkImage *swapchain_images_a)
+{
+    assert(context != NULL);
+
+    VkResult result;
+    int32_t ret;
+
+    VkImageViewCreateInfo image_view_create_info = {
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = (VkFormat)context->swapchain_image_format,
+
+        .components.r = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .components.g = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .components.b = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .components.a = VK_COMPONENT_SWIZZLE_IDENTITY,
+
+        .subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .subresourceRange.baseMipLevel = 0,
+        .subresourceRange.levelCount = 1,
+        .subresourceRange.baseArrayLayer = 0,
+        .subresourceRange.layerCount = 1,
+    };
+
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(swapchain_images_a); i++)
+    {
+
+        image_view_create_info.image = swapchain_images_a[i];
+
+        VkImageView image_view;
+        RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateImageView(context->device, &image_view_create_info, NULL, &image_view),
+                           -1, "Failed to create image view %d: %d", i, result);
+
+        RV_AllocatedImage allocated_image = {
+            .allocation = NULL,
+            .image = swapchain_images_a[i],
+            .image_extent.width = context->swapchain_extent.width,
+            .image_extent.height = context->swapchain_extent.height,
+            .image_extent.depth = 1,
+            .image_view = image_view,
+        };
+
+        RendererVulkanHandle rv_allocated_image_handle = {0};
+        RV_RES_RV_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->allocated_image_occupied_a, context->allocated_image_generations_a, context->allocated_images_a,
+                                         allocated_image, rv_allocated_image_handle, vkDestroyImageView(context->device, allocated_image.image_view, NULL));
+        context->swapchain_image_handles[i] = rv_allocated_image_handle.raw;
+
+        RETURN_IF_ERROR(context->deps.logger, ret,
+                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->swapchain_destroy_queue, vkDestroyImageView, context->device, image_view, NULL),
+                        "Failed to push image view destroy data to destroy queue: %d", ret);
+    }
+
+    return 0;
+}
+
 int32_t create_swapchain(RendererContext *context)
 {
     assert(context != NULL);
@@ -872,58 +928,17 @@ int32_t create_swapchain(RendererContext *context)
         vkDestroySwapchainKHR(context->device, context->old_swapchain, NULL);
     }
 
-    SET_ARRAY_FIELD_CAPACITY(context->swapchain_images_a);
-    assert(GET_ARRAY_CAPACITY(context->swapchain_images_a) >= swapchain_images_len);
-    GET_ARRAY_LENGTH(context->swapchain_images_a) = (size_t)swapchain_images_len;
-    vkGetSwapchainImagesKHR(context->device, context->swapchain, &swapchain_images_len, context->swapchain_images_a);
+    assert(swapchain_images_len <= MAX_SWAPCHAIN_IMAGES_LEN);
+    CREATE_ARRAY_WITH_LEN(VkImage, swapchain_images_a, MAX_SWAPCHAIN_IMAGES_LEN, (size_t)swapchain_images_len);
+    vkGetSwapchainImagesKHR(context->device, context->swapchain, &swapchain_images_len, swapchain_images_a);
 
     context->swapchain_image_format = (RendererImageFormat)surface_format.format;
     context->swapchain_extent.width = surface_extent.width;
     context->swapchain_extent.height = surface_extent.height;
     context->old_swapchain = context->swapchain;
 
-    return 0;
-}
-
-int32_t create_image_views(RendererContext *context)
-{
-    assert(context != NULL);
-    SET_ARRAY_FIELD_CAPACITY(context->swapchain_image_views_a);
-    assert(GET_ARRAY_CAPACITY(context->swapchain_image_views_a) == GET_ARRAY_CAPACITY(context->swapchain_images_a));
-    GET_ARRAY_LENGTH(context->swapchain_image_views_a) = GET_ARRAY_LENGTH(context->swapchain_images_a);
-
-    VkResult result;
-    int32_t ret;
-
-    VkImageViewCreateInfo image_view_create_info = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .format = (VkFormat)context->swapchain_image_format,
-
-        .components.r = VK_COMPONENT_SWIZZLE_IDENTITY,
-        .components.g = VK_COMPONENT_SWIZZLE_IDENTITY,
-        .components.b = VK_COMPONENT_SWIZZLE_IDENTITY,
-        .components.a = VK_COMPONENT_SWIZZLE_IDENTITY,
-
-        .subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .subresourceRange.baseMipLevel = 0,
-        .subresourceRange.levelCount = 1,
-        .subresourceRange.baseArrayLayer = 0,
-        .subresourceRange.layerCount = 1,
-    };
-
-    for (size_t i = 0; i < GET_ARRAY_LENGTH(context->swapchain_images_a); i++)
-    {
-        image_view_create_info.image = context->swapchain_images_a[i];
-
-        RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateImageView(context->device, &image_view_create_info, NULL, &context->swapchain_image_views_a[i]),
-                           -1, "Failed to create image view %d: %d", i, result);
-
-        RETURN_IF_ERROR(context->deps.logger, ret,
-                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->swapchain_destroy_queue, vkDestroyImageView, context->device, context->swapchain_image_views_a[i], NULL),
-                        "Failed to push image view destroy data to destroy queue: %d", ret);
-    }
+    RETURN_IF_ERROR(context->deps.logger, ret, create_image_views(context, swapchain_images_a),
+                    "Failed to create swapchain images: %d", ret);
 
     return 0;
 }
@@ -954,22 +969,23 @@ int32_t renderer_vulkan_bootstrap(RendererContext *context)
                 "Failed to create logical device: %d", ret);
     RV_TRY_INIT(context->deps.logger, ret, create_swapchain(context), context->main_destroy_queue,
                 "failed to create swapchain, %d", ret);
-    RV_TRY_INIT(context->deps.logger, ret, create_image_views(context), context->main_destroy_queue,
-                "Failed to create image views: %d", ret);
+    // RV_TRY_INIT(context->deps.logger, ret, create_image_views(context), context->main_destroy_queue,
+    //             "Failed to create image views: %d", ret);
 
     return 0;
 }
 
+TODO("Make this working again");
 int32_t renderer_vulkan_bootstrap_recreate_swapchain(RendererContext *context)
 {
     TODO("Figure out if need to use RV_TRY_INIT or not");
     assert(context != NULL);
-    int32_t ret;
+    // int32_t ret;
 
-    RV_TRY_INIT(context->deps.logger, ret, create_swapchain(context), context->main_destroy_queue,
-                "failed to recreate swapchain, %d", ret);
-    RV_TRY_INIT(context->deps.logger, ret, create_image_views(context), context->main_destroy_queue,
-                "Failed to recreate image views: %d", ret);
+    // RV_TRY_INIT(context->deps.logger, ret, create_swapchain(context), context->main_destroy_queue,
+    //             "failed to recreate swapchain, %d", ret);
+    // RV_TRY_INIT(context->deps.logger, ret, create_image_views(context), context->main_destroy_queue,
+    //             "Failed to recreate image views: %d", ret);
 
     return 0;
 }

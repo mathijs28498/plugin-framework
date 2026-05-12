@@ -53,7 +53,7 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
         context->deps.logger, result, result < 0 && result != VK_ERROR_OUT_OF_DATE_KHR,
         vkAcquireNextImageKHR(context->device, context->swapchain, SECOND_IN_NS, frame->swapchain_semaphore, VK_NULL_HANDLE, &swapchain_image_index),
         -1, "Failed to acquire next image: %d", result);
-    assert(swapchain_image_index < GET_ARRAY_LENGTH(context->swapchain_images_a));
+    assert(swapchain_image_index < ARRAY_SIZE(context->swapchain_image_handles));
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
     {
@@ -90,10 +90,7 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
 
     TODO("Also abstract this away somehow, possibly with different passes");
 
-    RV_AllocatedImage allocated_image = {0};
-    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
-                                         context->draw_image_handle, allocated_image);
-    rv_transition_image(cmd, allocated_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+    renderer_vulkan_cmd_transition_image(context, cmd, context->draw_image_handle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
 
     return 0;
 }
@@ -107,20 +104,25 @@ int32_t renderer_vulkan_render_end_frame(RendererContext *context)
 
     RendererFrameData *frame = context->active_frame_state.frame;
     VkCommandBuffer cmd = frame->command_list.command_buffer;
-    VkImage swapchain_image = context->swapchain_images_a[context->active_frame_state.swapchain_index];
+    RendererImageHandle swapchain_image_handle = context->swapchain_image_handles[context->active_frame_state.swapchain_index];
 
     TODO("Remove this and add render passes");
-    // rv_transition_image(cmd, context->draw_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
-    RV_AllocatedImage allocated_image = {0};
-    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
-                                              context->draw_image_handle, allocated_image);
+    TODO("Make a renderer method for getting the extent")
+    TODO("Make this method platform agnostic")
+    renderer_vulkan_cmd_transition_image(context, cmd, context->draw_image_handle, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
+    renderer_vulkan_cmd_transition_image(context, cmd, swapchain_image_handle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-    rv_transition_image(cmd, allocated_image.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-    rv_transition_image(cmd, swapchain_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    renderer_vulkan_cmd_blit_image_to_image(context, cmd, context->draw_image_handle, swapchain_image_handle,
+                                            (RendererExtent2D){
+                                                .width = context->draw_extent.width,
+                                                .height = context->draw_extent.height,
+                                            },
+                                            (RendererExtent2D){
+                                                .width = context->swapchain_extent.width,
+                                                .height = context->swapchain_extent.height,
+                                            });
 
-    rv_copy_image_to_image(cmd, allocated_image.image, swapchain_image, extent_2d(&context->draw_extent), extent_2d(&context->swapchain_extent));
-
-    rv_transition_image(cmd, swapchain_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    renderer_vulkan_cmd_transition_image(context, cmd, swapchain_image_handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkEndCommandBuffer(cmd),
                        -1, "Failed to end buffer: %d", result);
