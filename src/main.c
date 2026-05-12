@@ -11,6 +11,7 @@ int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager)
 {
     int ret;
 
+
     LoggerInterface *logger;
     ret = PLUGIN_MANAGER_GET_SINGLETON(plugin_manager, "logger", &logger);
     if (ret < 0)

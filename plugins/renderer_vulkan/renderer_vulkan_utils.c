@@ -11,6 +11,7 @@
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_utils, LOG_LEVEL_DEBUG)
+#include <plugin_sdk/renderer/v1/renderer_interface.h>
 
 #include "renderer_vulkan_register.h"
 
@@ -132,33 +133,6 @@ VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mas
     };
 }
 
-// ways to improve this efficiency: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples
-void rv_transition_image(VkCommandBuffer cmd, VkImage image, VkImageLayout current_layout, VkImageLayout new_layout)
-{
-    VkImageAspectFlags aspect_mask = (new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
-
-    VkImageMemoryBarrier2 image_barrier = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2,
-        .srcStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-        .srcAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_2_ALL_COMMANDS_BIT,
-        .dstAccessMask = VK_ACCESS_2_MEMORY_WRITE_BIT | VK_ACCESS_2_MEMORY_READ_BIT,
-        .oldLayout = current_layout,
-        .newLayout = new_layout,
-
-        .subresourceRange = rv_image_subresource_range(aspect_mask),
-        .image = image,
-    };
-
-    VkDependencyInfo dependency_info = {
-        .sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO,
-        .imageMemoryBarrierCount = 1,
-        .pImageMemoryBarriers = &image_barrier,
-    };
-
-    vkCmdPipelineBarrier2(cmd, &dependency_info);
-}
-
 VkSemaphoreSubmitInfo rv_create_semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore)
 {
     return (VkSemaphoreSubmitInfo){
@@ -195,89 +169,6 @@ VkSubmitInfo2 rv_create_submit_info(VkCommandBufferSubmitInfo *cmd, VkSemaphoreS
     };
 }
 
-VkImageCreateInfo rv_create_image_info(VkFormat format, VkImageUsageFlags usage_flags, VkExtent3D extent)
-{
-    return (VkImageCreateInfo){
-        .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .imageType = VK_IMAGE_TYPE_2D,
-        .format = format,
-        .extent = extent,
-        .mipLevels = 1,
-        .arrayLayers = 1,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .tiling = VK_IMAGE_TILING_OPTIMAL,
-        .usage = usage_flags,
-    };
-}
-
-VkImageViewCreateInfo rv_create_image_view_info(VkFormat format, VkImage image, VkImageAspectFlags aspect_mask)
-{
-    VkImageSubresourceRange rv_image_subresource_range = {
-        .aspectMask = aspect_mask,
-        .baseMipLevel = 0,
-        .levelCount = 1,
-        .baseArrayLayer = 0,
-        .layerCount = 1,
-    };
-
-    return (VkImageViewCreateInfo){
-        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-        .viewType = VK_IMAGE_VIEW_TYPE_2D,
-        .image = image,
-        .format = format,
-        .subresourceRange = rv_image_subresource_range,
-    };
-}
-
-void rv_copy_image_to_image(VkCommandBuffer cmd, VkImage source, VkImage destination, VkExtent2D src_size, VkExtent2D dst_size)
-{
-    VkOffset3D src_offset_max = {
-        .x = src_size.width,
-        .y = src_size.height,
-        .z = 1,
-    };
-
-    VkOffset3D dst_offset_max = {
-        .x = dst_size.width,
-        .y = dst_size.height,
-        .z = 1,
-    };
-
-    VkImageSubresourceLayers subresource = {
-        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-        .baseArrayLayer = 0,
-        .layerCount = 1,
-        .mipLevel = 0,
-    };
-
-    VkImageBlit2 blit_region = {
-        .sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2,
-        .srcOffsets = {
-            {.x = 0, .y = 0, .z = 0},
-            src_offset_max,
-        },
-        .dstOffsets = {
-            {.x = 0, .y = 0, .z = 0},
-            dst_offset_max,
-        },
-        .srcSubresource = subresource,
-        .dstSubresource = subresource,
-    };
-
-    VkBlitImageInfo2 blit_image_info = {
-        .sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2,
-        .dstImage = destination,
-        .dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-        .srcImage = source,
-        .srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-        .filter = VK_FILTER_LINEAR,
-        .regionCount = 1,
-        .pRegions = &blit_region,
-    };
-
-    vkCmdBlitImage2(cmd, &blit_image_info);
-}
-
 int32_t rv_create_buffer(RendererContext *context, size_t alloc_size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage, AllocatedBuffer *out_buffer)
 {
     assert(alloc_size > 0);
@@ -297,7 +188,7 @@ int32_t rv_create_buffer(RendererContext *context, size_t alloc_size, VkBufferUs
     };
 
     VmaAllocationInfo allocation_info;
-    VK_RETURN_IF_ERROR(context->deps.logger, result, vmaCreateBuffer(context->vma_allocator, &buffer_create_info, &alloc_create_info, &out_buffer->buffer, &out_buffer->allocation, &allocation_info),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vmaCreateBuffer(context->vma_allocator, &buffer_create_info, &alloc_create_info, &out_buffer->buffer, &out_buffer->allocation, &allocation_info),
                        -1, "Failed to create buffer: %d", result);
 
     return 0;
@@ -308,4 +199,137 @@ void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation al
     assert(allocator != VK_NULL_HANDLE);
     assert(buffer != NULL);
     vmaDestroyBuffer(allocator, buffer, allocation);
+}
+
+VkDescriptorType rv_resource_type_to_vk_descriptor_type(RendererResourceType resource_type)
+{
+    switch (resource_type)
+    {
+    case RENDERER_RESOURCE_TYPE_SAMPLER:
+        return VK_DESCRIPTOR_TYPE_SAMPLER;
+        break;
+    case RENDERER_RESOURCE_TYPE_COMBINED_IMAGE_SAMPLER:
+        return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        break;
+    case RENDERER_RESOURCE_TYPE_SAMPLED_IMAGE:
+        return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+        break;
+    case RENDERER_RESOURCE_TYPE_STORAGE_IMAGE:
+        return VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+        break;
+
+    default:
+        return VK_DESCRIPTOR_TYPE_MAX_ENUM;
+        break;
+    }
+}
+
+VkShaderStageFlags rv_shader_stage_to_vk_shader_stage(RendererShaderStageFlags flags)
+{
+    VkShaderStageFlags vk_flags = 0;
+
+    if (flags & RENDERER_SHADER_STAGE_VERTEX_BIT)
+    {
+        vk_flags |= VK_SHADER_STAGE_VERTEX_BIT;
+    }
+    if (flags & RENDERER_SHADER_STAGE_FRAGMENT_BIT)
+    {
+        vk_flags |= VK_SHADER_STAGE_FRAGMENT_BIT;
+    }
+    if (flags & RENDERER_SHADER_STAGE_COMPUTE_BIT)
+    {
+        vk_flags |= VK_SHADER_STAGE_COMPUTE_BIT;
+    }
+
+    return vk_flags;
+}
+
+VkPipelineBindPoint rv_pipeline_type_to_vk_pipeline_bind_point(RendererPipelineType pipeline_type)
+{
+    switch (pipeline_type)
+    {
+    case RENDERER_PIPELINE_TYPE_GRAPHICS:
+        return VK_PIPELINE_BIND_POINT_GRAPHICS;
+    case RENDERER_PIPELINE_TYPE_COMPUTE:
+        return VK_PIPELINE_BIND_POINT_COMPUTE;
+    default:
+        return VK_PIPELINE_BIND_POINT_MAX_ENUM;
+    }
+}
+
+VkFormat rv_image_format_to_vk_format(RendererImageFormat format)
+{
+    switch (format)
+    {
+    case RENDERER_IMAGE_FORMAT_R8G8B8A8_UNORM:
+        return VK_FORMAT_R8G8B8A8_UNORM;
+    case RENDERER_IMAGE_FORMAT_R8G8B8A8_SRGB:
+        return VK_FORMAT_R8G8B8A8_SRGB;
+    case RENDERER_IMAGE_FORMAT_R16G16B16A16_SFLOAT:
+        return VK_FORMAT_R16G16B16A16_SFLOAT;
+    case RENDERER_IMAGE_FORMAT_R32G32B32A32_SFLOAT:
+        return VK_FORMAT_R32G32B32A32_SFLOAT;
+    case RENDERER_IMAGE_FORMAT_D32_SFLOAT:
+        return VK_FORMAT_D32_SFLOAT;
+    case RENDERER_IMAGE_FORMAT_D24_UNORM_S8_UINT:
+        return VK_FORMAT_D24_UNORM_S8_UINT;
+    default:
+        return VK_FORMAT_UNDEFINED;
+    }
+}
+
+VkImageUsageFlags rv_image_usage_to_vk_image_usage(RendererImageUsageFlags flags)
+{
+    VkImageUsageFlags vk_flags = 0;
+    if (flags & RENDERER_IMAGE_USAGE_TRANSFER_SRC_BIT)
+        vk_flags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    if (flags & RENDERER_IMAGE_USAGE_TRANSFER_DST_BIT)
+        vk_flags |= VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    if (flags & RENDERER_IMAGE_USAGE_SAMPLED_BIT)
+        vk_flags |= VK_IMAGE_USAGE_SAMPLED_BIT;
+    if (flags & RENDERER_IMAGE_USAGE_STORAGE_BIT)
+        vk_flags |= VK_IMAGE_USAGE_STORAGE_BIT;
+    if (flags & RENDERER_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
+        vk_flags |= VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    if (flags & RENDERER_IMAGE_USAGE_DEPTH_ATTACHMENT_BIT)
+        vk_flags |= VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    return vk_flags;
+}
+
+VkImageAspectFlags rv_vk_format_to_image_aspect(VkFormat format)
+{
+    switch (format)
+    {
+    case VK_FORMAT_D32_SFLOAT:
+    case VK_FORMAT_D16_UNORM:
+        return VK_IMAGE_ASPECT_DEPTH_BIT;
+    case VK_FORMAT_D24_UNORM_S8_UINT:
+    case VK_FORMAT_D32_SFLOAT_S8_UINT:
+        return VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+    default:
+        return VK_IMAGE_ASPECT_COLOR_BIT;
+    }
+}
+
+VmaMemoryUsage rv_image_memory_usage_to_vma_memory_usage(RendererImageMemoryUsage memory_usage)
+{
+    switch (memory_usage)
+    {
+    case RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY:
+        return VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
+    default:
+        return VMA_MEMORY_USAGE_AUTO;
+    }
+}
+
+VkMemoryPropertyFlags rv_image_memory_usage_to_vk_memory_usage(RendererImageMemoryUsage memory_usage)
+{
+    switch (memory_usage)
+    {
+    case RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY:
+        return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    default:
+
+        return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+    }
 }

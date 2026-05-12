@@ -3,5 +3,10 @@
 #include <stdint.h>
 
 struct RendererContext;
-
-int32_t create_descriptor_sets(struct RendererContext *context);
+struct RendererResourceSetLayoutCreateInfo;
+typedef uint64_t RendererResourceSetLayoutHandle;
+typedef uint64_t RendererResourceSetHandle;
+int32_t rv_create_descriptor_pools(struct RendererContext *context);
+int32_t renderer_vulkan_create_resource_set_layout(struct RendererContext *context, const struct RendererResourceSetLayoutCreateInfo *renderer_resource_set_layout_create_info, RendererResourceSetLayoutHandle *out_resource_set_layout_handle);
+int32_t renderer_vulkan_allocate_transient_resource_set(struct RendererContext *context, RendererResourceSetLayoutHandle resource_set_layout_handle, RendererResourceSetHandle *out_resource_set_handle);
+void renderer_vulkan_update_transient_resource_set(struct RendererContext *context, RendererResourceSetHandle resource_set_handle);

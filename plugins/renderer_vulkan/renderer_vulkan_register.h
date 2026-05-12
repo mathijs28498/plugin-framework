@@ -14,30 +14,31 @@
 #define FRAMES_LEN 2
 #define MAX_SWAPCHAIN_IMAGES_LEN 4
 
-CREATE_VK_HANDLE_DEFINITION(VkDebugUtilsMessengerEXT);
-CREATE_VK_HANDLE_DEFINITION(VkInstance);
-CREATE_VK_HANDLE_DEFINITION(VkSurfaceKHR);
-CREATE_VK_HANDLE_DEFINITION(VkPhysicalDevice);
-CREATE_VK_HANDLE_DEFINITION(VkDevice);
-CREATE_VK_HANDLE_DEFINITION(VkQueue);
-CREATE_VK_HANDLE_DEFINITION(VkSwapchainKHR);
-CREATE_VK_HANDLE_DEFINITION(VkImage);
-CREATE_VK_HANDLE_DEFINITION(VkImageView);
-CREATE_VK_HANDLE_DEFINITION(VkCommandPool);
-CREATE_VK_HANDLE_DEFINITION(VkCommandBuffer);
-CREATE_VK_HANDLE_DEFINITION(VkSemaphore);
-CREATE_VK_HANDLE_DEFINITION(VkFence);
-CREATE_VK_HANDLE_DEFINITION(VkDescriptorPool);
-CREATE_VK_HANDLE_DEFINITION(VkDescriptorSetLayout);
-CREATE_VK_HANDLE_DEFINITION(VkDescriptorSet);
-CREATE_VK_HANDLE_DEFINITION(VkPipelineLayout);
-CREATE_VK_HANDLE_DEFINITION(VkPipeline);
-CREATE_VK_HANDLE_DEFINITION(VkBuffer);
+RV_CREATE_HANDLE_DEFINITION(VkDebugUtilsMessengerEXT);
+RV_CREATE_HANDLE_DEFINITION(VkInstance);
+RV_CREATE_HANDLE_DEFINITION(VkSurfaceKHR);
+RV_CREATE_HANDLE_DEFINITION(VkPhysicalDevice);
+RV_CREATE_HANDLE_DEFINITION(VkDevice);
+RV_CREATE_HANDLE_DEFINITION(VkQueue);
+RV_CREATE_HANDLE_DEFINITION(VkSwapchainKHR);
+RV_CREATE_HANDLE_DEFINITION(VkImage);
+RV_CREATE_HANDLE_DEFINITION(VkImageView);
+RV_CREATE_HANDLE_DEFINITION(VkCommandPool);
+RV_CREATE_HANDLE_DEFINITION(VkCommandBuffer);
+RV_CREATE_HANDLE_DEFINITION(VkSemaphore);
+RV_CREATE_HANDLE_DEFINITION(VkFence);
+RV_CREATE_HANDLE_DEFINITION(VkDescriptorPool);
+RV_CREATE_HANDLE_DEFINITION(VkDescriptorSetLayout);
+RV_CREATE_HANDLE_DEFINITION(VkDescriptorSet);
+RV_CREATE_HANDLE_DEFINITION(VkPipelineLayout);
+RV_CREATE_HANDLE_DEFINITION(VkPipeline);
+RV_CREATE_HANDLE_DEFINITION(VkBuffer);
+RV_CREATE_HANDLE_DEFINITION(VkShaderModule);
 
-CREATE_VK_HANDLE_DEFINITION(VmaAllocator);
-CREATE_VK_HANDLE_DEFINITION(VmaAllocation);
+RV_CREATE_HANDLE_DEFINITION(VmaAllocator);
+RV_CREATE_HANDLE_DEFINITION(VmaAllocation);
 
-typedef uint32_t RV_VkFormat;
+typedef uint32_t RendererImageFormat;
 
 typedef struct RV_VkExtent2D
 {
@@ -77,13 +78,22 @@ typedef struct RV_CallRecord
     rv_call_fn_any fn;
 } RV_CallRecord;
 
+typedef struct RendererCommandList
+{
+    VkCommandBuffer command_buffer;
+} RendererCommandList;
+
 typedef struct RendererFrameData
 {
     VkCommandPool command_pool;
-    VkCommandBuffer main_command_buffer;
+    RendererCommandList command_list;
     VkSemaphore swapchain_semaphore;
     VkSemaphore render_semaphore;
     VkFence render_fence;
+
+    VkDescriptorPool transient_descriptor_pool;
+    // uint32_t transient_descriptor_sets_len;
+    VkDescriptorSet *transient_descriptor_sets;
 
     RV_CallRecord *destroy_queue;
 } RendererFrameData;
@@ -93,8 +103,10 @@ typedef struct RV_AllocatedImage
     VkImage image;
     VkImageView image_view;
     VmaAllocation allocation;
+    TODO("Add this")
+    // VkImageLayout current_layout;
+    RendererImageFormat image_format;
     RV_VkExtent3D image_extent;
-    RV_VkFormat image_format;
 } RV_AllocatedImage;
 
 typedef struct AllocatedBuffer
@@ -136,6 +148,8 @@ typedef struct ActiveFrameState
     bool is_active;
 } ActiveFrameState;
 
+typedef uint64_t RendererImageHandle;
+
 TODO("Maybe split up the struct into smaller structs, like a queue/logical device struct")
 TODO("The smaller struct could also be one for the bootstrap and one for runtime")
 typedef struct RendererContext
@@ -148,40 +162,63 @@ typedef struct RendererContext
     VkPhysicalDevice physical_device;
 
     VkDevice device;
+    VkSwapchainKHR swapchain;
+    VkSwapchainKHR old_swapchain;
+    RV_CallRecord *swapchain_destroy_queue;
+    TODO("Figure out what to do with the size/capacity here")
+    TODO("Make a struct holding the swapchain data")
+    TODO("Make this an _a array")
+    RendererImageHandle swapchain_image_handles[MAX_SWAPCHAIN_IMAGES_LEN];
+    RendererImageFormat swapchain_image_format;
+    RV_VkExtent2D swapchain_extent;
+    VmaAllocator vma_allocator;
+    RV_CallRecord *main_destroy_queue;
+
+    RendererImageHandle draw_image_handle;
+    RV_VkExtent2D draw_extent;
+
+    bool resize_requested;
+    bool halt_render;
+    RV_VkExtent2D resize_extent;
+
     VkQueue graphics_queue;
     uint32_t graphics_queue_family;
     VkQueue present_queue;
     uint32_t present_queue_family;
-    VkSwapchainKHR swapchain;
-    VkSwapchainKHR old_swapchain;
-    bool resize_requested;
-    bool halt_render;
-    RV_VkExtent2D resize_extent;
-    TODO("Figure out what to do with the size/capacity here")
-    ARRAY_FIELD(VkImage, swapchain_images, MAX_SWAPCHAIN_IMAGES_LEN);
-    ARRAY_FIELD(VkImageView, swapchain_image_views, MAX_SWAPCHAIN_IMAGES_LEN);
-    RV_VkFormat swapchain_image_format;
-    RV_VkExtent2D swapchain_extent;
-
     uint32_t frame_number;
     RendererFrameData frames[FRAMES_LEN];
     ActiveFrameState active_frame_state;
 
-    VmaAllocator vma_allocator;
-
-    RV_AllocatedImage draw_image;
-    RV_VkExtent2D draw_extent;
-
-    RV_CallRecord *main_destroy_queue;
-    RV_CallRecord *swapchain_destroy_queue;
-
     VkDescriptorPool global_descriptor_pool;
 
-    VkDescriptorSetLayout draw_image_descriptor_set_layout;
-    VkDescriptorSet draw_image_descriptor_set;
+    uint64_t draw_image_descriptor_set_layout_handle;
 
-    VkPipelineLayout gradient_pipeline_layout;
-    VkPipeline gradient_pipeline;
+    bool *shader_module_occupied_a;
+    uint32_t *shader_module_generations_a;
+    VkShaderModule *shader_modules_a;
+
+    bool *descriptor_set_layout_occupied_a;
+    uint32_t *descriptor_set_layout_generations_a;
+    VkDescriptorSetLayout *descriptor_set_layouts_a;
+
+    bool *descriptor_set_occupied_a;
+    uint32_t *descriptor_set_generations_a;
+    VkDescriptorSet *descriptor_sets_a;
+
+    bool *pipeline_layout_occupied_a;
+    uint32_t *pipeline_layout_generations_a;
+    VkPipelineLayout *pipeline_layouts_a;
+
+    bool *pipeline_occupied_a;
+    uint32_t *pipeline_generations_a;
+    VkPipeline *pipelines_a;
+
+    bool *allocated_image_occupied_a;
+    uint32_t *allocated_image_generations_a;
+    RV_AllocatedImage *allocated_images_a;
+
+    uint8_t *bump_arena_a;
+
     VkPipeline triangle_pipeline;
     VkPipelineLayout mesh_pipeline_layout;
     VkPipeline mesh_pipeline;

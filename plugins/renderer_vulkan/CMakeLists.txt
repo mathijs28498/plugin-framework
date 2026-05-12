@@ -14,7 +14,10 @@ target_sources(renderer_vulkan
     renderer_vulkan_render.c
     renderer_vulkan_descriptor_set.c
     renderer_vulkan.c
+    renderer_vulkan_cmd.c
     renderer_vulkan_pipeline.c
+    renderer_vulkan_image.c
+
 
     PUBLIC
     FILE_SET HEADERS
@@ -31,6 +34,7 @@ target_link_libraries(renderer_vulkan
     vma
     plugin_sdk
     cglm
+    bump_arena
 )
 
 include("PluginSDK")
@@ -40,11 +44,7 @@ plugin_generate_register_inc(renderer_vulkan
 )
 
 include("RendererShaderGenerator")
-target_embed_shader(renderer_vulkan
-    GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
-    SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/gradient.comp"
-    SHADER_STAGE "compute"
-)
+
 target_embed_shader(renderer_vulkan
     GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
     SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/colored_triangle.vert"

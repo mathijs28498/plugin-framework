@@ -1,5 +1,7 @@
 add_library(plugin_sdk INTERFACE)
 
+target_compile_options(plugin_sdk INTERFACE ${MY_STRICT_WARNINGS})
+
 set(INTERFACE_DIR_PATH "include/plugin_sdk")
 
 target_sources(plugin_sdk
@@ -24,9 +26,11 @@ target_sources(plugin_sdk
     "${INTERFACE_DIR_PATH}/time/v1/time_interface.h"
     "${INTERFACE_DIR_PATH}/arena_allocator/v1/arena_allocator_interface.h"
     "${INTERFACE_DIR_PATH}/arena_allocator/v1/arena_allocator_pm_interface.h"
+    "${INTERFACE_DIR_PATH}/render_graph/v1/render_graph_interface.h"
 
     "${INTERFACE_DIR_PATH}/plugin_sdk_types/v1/plugin_sdk_types.h"
     "${INTERFACE_DIR_PATH}/plugin_utils.h"
+    "${INTERFACE_DIR_PATH}/plugin_utils_arrays.h"
 )
 
 if(WIN32 AND PLUGIN_MANAGER_GUI)

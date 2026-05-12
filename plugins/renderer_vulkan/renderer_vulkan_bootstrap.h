@@ -8,13 +8,11 @@
 TODO("Use an arena allocator of 4MB for the startup")
 #define MAX_EXTENSIONS_LEN 512
 #define MAX_QUEUE_CREATE_INFO_ARR_LEN 64
-#define MAX_PHYSICAL_DEVICES_LEN 64
 #define MAX_QUEUE_FAMILIES_LEN 64
-#define MAX_PHYSICAL_DEVICE_EXTENSIONS_LEN 512
 
 #if IS_DEBUG
 TODO("Make this a setting for plugin")
-#define MAX_INSTANCE_LAYER_PROPERTIES_LEN 64
+// #define MAX_INSTANCE_LAYER_PROPERTIES_LEN 64
 #endif // #if IS_DEBUG
 
 typedef struct QueueFamilyIndices

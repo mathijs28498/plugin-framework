@@ -1,5 +1,5 @@
 max_plugin_amount=64
-memory_arena_size="100*KiB"
+memory_arena_size="256*KiB"
 
 [requested_plugins]
 # plugin_manager = {plugin_name = "default"}
