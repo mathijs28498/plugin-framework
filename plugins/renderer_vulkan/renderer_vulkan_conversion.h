@@ -1,0 +1,79 @@
+#pragma once
+
+#include <stdint.h>
+
+#include "renderer_vulkan_utils.h"
+
+typedef enum RendererAttachmentType
+{
+    RENDERER_ATTACHMENT_TYPE_COLOR,
+    RENDERER_ATTACHMENT_TYPE_DEPTH,
+} RendererAttachmentType;
+
+
+RV_CREATE_HANDLE_DEFINITION(VkSemaphore);
+RV_CREATE_HANDLE_DEFINITION(VkCommandBuffer);
+RV_CREATE_HANDLE_DEFINITION(VkImage);
+RV_CREATE_HANDLE_DEFINITION(VkBuffer);
+
+
+struct VkImageSubresourceRange;
+enum VkImageLayout;
+struct VkSemaphoreSubmitInfo;
+struct VkSubmitInfo2;
+struct VkCommandBufferSubmitInfo;
+struct VkSemaphoreSubmitInfo;
+struct VkExtent2D;
+struct VkExtent3D;
+struct VkImageViewCreateInfo;
+struct VkRenderingAttachmentInfo;
+enum VkFormat;
+
+typedef uint32_t VkImageAspectFlags;
+typedef uint64_t VkPipelineStageFlags2;
+typedef uint32_t VmaMemoryUsage;
+struct VkExtent2D;
+struct RV_VkExtent2D;
+
+typedef uint32_t RendererShaderStageFlags;
+typedef uint32_t VkShaderStageFlags;
+typedef uint32_t VkImageUsageFlags;
+typedef uint32_t RendererImageUsageFlags;
+typedef uint32_t VkMemoryPropertyFlags;
+
+
+enum RendererPipelineType;
+enum VkPipelineBindPoint;
+enum RendererResourceType;
+enum VkDescriptorType;
+enum RendererImageFormat;
+enum VkImageUsageFlags;
+enum VkFormat;
+enum RendererImageMemoryUsage;
+enum VkImageLayout;
+enum RendererImageLayout;
+enum VkAttachmentLoadOp;
+enum RendererAttachmentLoadOp;
+enum VkAttachmentStoreOp;
+enum RendererAttachmentStoreOp;
+struct RendererAttachmentInfo;
+struct RV_AllocatedImage;
+
+struct VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mask);
+struct VkSemaphoreSubmitInfo rv_create_semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore);
+struct VkCommandBufferSubmitInfo rv_create_command_buffer_submit_info(VkCommandBuffer cmd);
+struct VkSubmitInfo2 rv_create_submit_info(struct VkCommandBufferSubmitInfo *cmd, struct VkSemaphoreSubmitInfo *signal_semaphore_info, struct VkSemaphoreSubmitInfo *wait_semaphore_info);
+
+enum VkDescriptorType rv_resource_type_to_vk_descriptor_type(enum RendererResourceType);
+VkShaderStageFlags rv_shader_stage_to_vk_shader_stage(RendererShaderStageFlags flags);
+enum VkPipelineBindPoint rv_pipeline_type_to_vk_pipeline_bind_point(enum RendererPipelineType pipeline_type);
+enum VkImageLayout rv_image_layout_to_vk_image_layout(enum RendererImageLayout image_layout);
+enum VkFormat rv_image_format_to_vk_format(enum RendererImageFormat format);
+VkImageUsageFlags rv_image_usage_to_vk_image_usage(RendererImageUsageFlags flags);
+VkImageAspectFlags rv_vk_format_to_image_aspect(enum VkFormat format);
+VmaMemoryUsage rv_image_memory_usage_to_vma_memory_usage(enum RendererImageMemoryUsage memory_usage);
+VkMemoryPropertyFlags rv_image_memory_usage_to_vk_memory_usage(enum RendererImageMemoryUsage memory_usage);
+enum VkImageLayout rv_attachment_type_to_vk_image_layout(RendererAttachmentType attachment_type);
+enum VkAttachmentLoadOp rv_attachment_load_op_to_vk_attachment_load_op(enum RendererAttachmentLoadOp renderer_attachment_load_op);
+enum VkAttachmentStoreOp rv_attachment_store_op_to_vk_attachment_store_op(enum RendererAttachmentStoreOp renderer_attachment_store_op);
+struct VkRenderingAttachmentInfo rv_attachment_info_to_vk_attachment_info(const struct RendererAttachmentInfo *renderer_attachment_info, struct RV_AllocatedImage *image, RendererAttachmentType attachment_type);

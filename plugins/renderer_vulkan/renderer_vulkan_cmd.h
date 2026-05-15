@@ -22,9 +22,10 @@ typedef uint64_t RendererImageHandle;
 typedef uint32_t RendererShaderStageFlags;
 enum RendererPipelineType;
 struct RendererExtent2D;
+enum RendererImageLayout;
+struct RendererBeginRenderingInfo;
 
 void renderer_vulkan_cmd_begin_render_pass(struct RendererContext *context, struct RendererCommandList *command_list);
-void renderer_vulkan_cmd_end_render_pass(struct RendererContext *context, struct RendererCommandList *command_list);
 void renderer_vulkan_cmd_bind_graphics_pipeline(struct RendererContext *context, struct RendererCommandList *command_list, RendererGraphicsPipelineHandle pipeline_handle);
 void renderer_vulkan_cmd_bind_compute_pipeline(struct RendererContext *context, struct RendererCommandList *command_list, RendererComputePipelineHandle pipeline_handle);
 
@@ -36,5 +37,10 @@ void renderer_vulkan_cmd_draw(struct RendererContext *context, struct RendererCo
 
 TODO("Make platform agnostic")
 // ways to improve this efficiency: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples
-void renderer_vulkan_cmd_transition_image(struct RendererContext *context, VkCommandBuffer cmd, RendererImageHandle image_handle, enum VkImageLayout current_layout, enum VkImageLayout new_layout);
-void renderer_vulkan_cmd_blit_image_to_image(struct RendererContext *context, VkCommandBuffer cmd, RendererImageHandle image_handle_source, RendererImageHandle image_handle_destination, struct RendererExtent2D extent_source, struct RendererExtent2D extent_destination);
+void renderer_vulkan_cmd_transition_image(struct RendererContext *context, struct RendererCommandList *command_list, RendererImageHandle image_handle, enum RendererImageLayout current_layout, enum RendererImageLayout new_layout);
+void renderer_vulkan_cmd_blit_image_to_image(struct RendererContext *context, struct RendererCommandList *command_list, RendererImageHandle image_handle_source, RendererImageHandle image_handle_destination, struct RendererExtent2D extent_source, struct RendererExtent2D extent_destination);
+
+void renderer_vulkan_cmd_begin_rendering(struct RendererContext *context, struct RendererCommandList *, const struct RendererBeginRenderingInfo *renderer_begin_rendering_info);
+void renderer_vulkan_cmd_end_rendering(struct RendererContext *context, struct RendererCommandList *command_list);
+void renderer_vulkan_cmd_set_viewport(struct RendererContext *context, struct RendererCommandList *command_list, struct RendererExtent2D extent);
+void renderer_vulkan_cmd_set_scissor(struct RendererContext *context, struct RendererCommandList *command_list, struct RendererExtent2D extent);

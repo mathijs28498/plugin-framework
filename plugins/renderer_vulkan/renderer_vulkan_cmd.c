@@ -12,63 +12,27 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_cmd, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan.h"
 #include "renderer_vulkan_register.h"
 #include "renderer_vulkan_utils.h"
+#include "renderer_vulkan_conversion.h"
 
 void renderer_vulkan_cmd_begin_render_pass(RendererContext *context, RendererCommandList *command_list)
 {
     assert(context != NULL);
     assert(command_list != NULL);
 
-    RV_AllocatedImage allocated_image = {0};
-    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
-                                              context->draw_image_handle, allocated_image);
-
-    VkRenderingAttachmentInfo color_attachment = {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-        .imageView = allocated_image.image_view,
-        .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_LOAD,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-    };
-
-    VkRenderingInfo rendering_info = {
-        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-        .renderArea = {
-            .extent = {
-                .width = context->draw_extent.width,
-                .height = context->draw_extent.height,
-            }},
-        .layerCount = 1,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &color_attachment,
-    };
-
-    VkViewport viewport = {
-        .x = 0,
-        .y = 0,
-        .width = (float)context->draw_extent.width,
-        .height = (float)context->draw_extent.height,
-    };
-    VkRect2D scissor = {
-        .offset.x = 0,
-        .offset.y = 0,
-        .extent = {
-            .width = context->draw_extent.width,
-            .height = context->draw_extent.height,
+    RendererBeginRenderingInfo begin_rendering_info = {
+        .color_attachment_info = {
+            .load_op = RENDERER_ATTACHMENT_LOAD_OP_LOAD,
+            .store_op = RENDERER_ATTACHMENT_STORE_OP_STORE,
+            .image_handle = context->draw_image_handle,
         }};
 
-    VkCommandBuffer cmd = command_list->command_buffer;
+    renderer_vulkan_cmd_begin_rendering(context, command_list, &begin_rendering_info);
 
-    vkCmdBeginRendering(cmd, &rendering_info);
-    vkCmdSetViewport(cmd, 0, 1, &viewport);
-    vkCmdSetScissor(cmd, 0, 1, &scissor);
-}
-
-void renderer_vulkan_cmd_end_render_pass(RendererContext *context, RendererCommandList *command_list)
-{
-    assert(context != NULL);
-    assert(command_list != NULL);
-
-    vkCmdEndRendering(command_list->command_buffer);
+    RendererExtent2D renderer_draw_extent = {
+        .width = context->draw_extent.width,
+        .height = context->draw_extent.height};
+    renderer_vulkan_cmd_set_viewport(context, command_list, renderer_draw_extent);
+    renderer_vulkan_cmd_set_scissor(context, command_list, renderer_draw_extent);
 }
 
 void renderer_vulkan_cmd_bind_resource_sets(RendererContext *context, RendererCommandList *command_list, RendererPipelineType renderer_pipeline_type, RendererPipelineLayoutHandle pipeline_layout_handle, uint32_t first_set, uint32_t resource_set_len, const RendererResourceSetHandle *resource_set_handle, uint32_t dynamic_offset_len, const uint32_t *dynamic_offsets)
@@ -130,13 +94,17 @@ void renderer_vulkan_cmd_draw(RendererContext *context, RendererCommandList *com
 }
 
 // ways to improve this efficiency: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples
-void renderer_vulkan_cmd_transition_image(RendererContext *context, VkCommandBuffer cmd, RendererImageHandle image_handle, VkImageLayout current_layout, VkImageLayout new_layout)
+void renderer_vulkan_cmd_transition_image(RendererContext *context, RendererCommandList *command_list, RendererImageHandle image_handle, RendererImageLayout renderer_current_layout, RendererImageLayout renderer_new_layout)
 {
     assert(context != NULL);
 
     RV_AllocatedImage allocated_image = {0};
     RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a, image_handle, allocated_image);
 
+    VkImageLayout current_layout = rv_image_layout_to_vk_image_layout(renderer_current_layout);
+    VkImageLayout new_layout = rv_image_layout_to_vk_image_layout(renderer_new_layout);
+
+    TODO("Make this better, this is too fragile")
     VkImageAspectFlags aspect_mask = (new_layout == VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_COLOR_BIT;
 
     VkImageMemoryBarrier2 image_barrier = {
@@ -158,10 +126,10 @@ void renderer_vulkan_cmd_transition_image(RendererContext *context, VkCommandBuf
         .pImageMemoryBarriers = &image_barrier,
     };
 
-    vkCmdPipelineBarrier2(cmd, &dependency_info);
+    vkCmdPipelineBarrier2(command_list->command_buffer, &dependency_info);
 }
 
-void renderer_vulkan_cmd_blit_image_to_image(RendererContext *context, VkCommandBuffer cmd, RendererImageHandle image_handle_source, RendererImageHandle image_handle_destination, RendererExtent2D extent_source, RendererExtent2D extent_destination)
+void renderer_vulkan_cmd_blit_image_to_image(RendererContext *context, RendererCommandList *command_list, RendererImageHandle image_handle_source, RendererImageHandle image_handle_destination, RendererExtent2D extent_source, RendererExtent2D extent_destination)
 {
     assert(context != NULL);
 
@@ -215,5 +183,86 @@ void renderer_vulkan_cmd_blit_image_to_image(RendererContext *context, VkCommand
         .pRegions = &blit_region,
     };
 
-    vkCmdBlitImage2(cmd, &blit_image_info);
+    vkCmdBlitImage2(command_list->command_buffer, &blit_image_info);
+}
+
+void renderer_vulkan_cmd_begin_rendering(RendererContext *context, RendererCommandList *command_list, const RendererBeginRenderingInfo *renderer_begin_rendering_info)
+{
+    assert(context != NULL);
+    assert(command_list != NULL);
+    assert(renderer_begin_rendering_info != NULL);
+
+    TODO("Allow for more options for attachments");
+
+    RV_AllocatedImage color_attachment_image;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
+                                              renderer_begin_rendering_info->color_attachment_info.image_handle, color_attachment_image);
+
+    VkRenderingAttachmentInfo color_attachment_info = rv_attachment_info_to_vk_attachment_info(&renderer_begin_rendering_info->color_attachment_info, &color_attachment_image, RENDERER_ATTACHMENT_TYPE_COLOR);
+
+    VkRenderingInfo rendering_info = {
+        .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+        .renderArea = {
+            .extent = EXTENT_2D_RENDERER_TO_VK(color_attachment_image.image_extent),
+        },
+        .layerCount = 1,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &color_attachment_info,
+    };
+
+    VkRenderingAttachmentInfo depth_attachment_info = {0};
+    if (renderer_begin_rendering_info->depth_attachment_info != NULL)
+    {
+
+        RV_AllocatedImage depth_attachment_image;
+        RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
+                                                  renderer_begin_rendering_info->depth_attachment_info->image_handle, depth_attachment_image);
+
+        depth_attachment_info = rv_attachment_info_to_vk_attachment_info(renderer_begin_rendering_info->depth_attachment_info, &depth_attachment_image, RENDERER_ATTACHMENT_TYPE_DEPTH);
+
+        rendering_info.pDepthAttachment = &depth_attachment_info;
+    }
+
+    vkCmdBeginRendering(command_list->command_buffer, &rendering_info);
+}
+
+void renderer_vulkan_cmd_end_rendering(RendererContext *context, RendererCommandList *command_list)
+{
+    assert(context != NULL);
+    assert(command_list != NULL);
+
+    vkCmdEndRendering(command_list->command_buffer);
+}
+
+void renderer_vulkan_cmd_set_viewport(RendererContext *context, RendererCommandList *command_list, RendererExtent2D extent)
+{
+    assert(context != NULL);
+    assert(command_list != NULL);
+
+    VkViewport viewport = {
+        .x = 0,
+        .y = 0,
+        .width = (float)extent.width,
+        .height = (float)extent.height,
+        .minDepth = 0,
+        .maxDepth = 1,
+    };
+
+    vkCmdSetViewport(command_list->command_buffer, 0, 1, &viewport);
+}
+
+void renderer_vulkan_cmd_set_scissor(RendererContext *context, RendererCommandList *command_list, RendererExtent2D extent)
+{
+    assert(context != NULL);
+    assert(command_list != NULL);
+
+    VkRect2D scissor = {
+        .offset = {
+            .x = 0,
+            .y = 0,
+        },
+        .extent = EXTENT_2D_RENDERER_TO_VK(extent),
+    };
+
+    vkCmdSetScissor(command_list->command_buffer, 0, 1, &scissor);
 }

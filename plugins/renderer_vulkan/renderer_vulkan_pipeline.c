@@ -22,6 +22,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_pipeline, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_register.h"
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan.h"
+#include "renderer_vulkan_conversion.h"
 
 #define MAX_SHADER_STAGES 2
 

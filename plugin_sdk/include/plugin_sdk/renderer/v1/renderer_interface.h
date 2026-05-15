@@ -62,6 +62,15 @@ typedef enum RendererShaderStageBits
 
 typedef uint32_t RendererShaderStageFlags;
 
+typedef enum RendererImageLayout
+{
+    RENDERER_IMAGE_LAYOUT_UNDEFINED = 0,
+    RENDERER_IMAGE_LAYOUT_GENERAL = 1,
+    RENDERER_IMAGE_LAYOUT_TRANSFER_SRC = 6,
+    RENDERER_IMAGE_LAYOUT_TRANSFER_DST = 7,
+    RENDERER_IMAGE_LAYOUT_PRESENT_SRC = 1000001002,
+} RendererImageLayout;
+
 typedef enum RendererImageFormat
 {
     RENDERER_IMAGE_FORMAT_R8G8B8A8_UNORM,
@@ -148,6 +157,47 @@ typedef struct RendererComputePipelineCreateInfo
     RendererPipelineLayoutHandle layout_handle;
 } RendererComputePipelineCreateInfo;
 
+typedef enum RendererAttachmentLoadOp
+{
+    RENDERER_ATTACHMENT_LOAD_OP_LOAD,
+    RENDERER_ATTACHMENT_LOAD_OP_CLEAR,
+    RENDERER_ATTACHMENT_LOAD_OP_DONT_CARE,
+} RendererAttachmentLoadOp;
+
+typedef enum RendererAttachmentStoreOp
+{
+    RENDERER_ATTACHMENT_STORE_OP_STORE,
+    RENDERER_ATTACHMENT_STORE_OP_DONT_CARE,
+} RendererAttachmentStoreOp;
+
+typedef struct RendererClearColorValue
+{
+    float r, g, b, a;
+} RendererClearColorValue;
+
+typedef struct RendererClearValue
+{
+    union
+    {
+        RendererClearColorValue color;
+        float depth;
+    };
+} RendererClearValue;
+
+typedef struct RendererAttachmentInfo
+{
+    RendererImageHandle image_handle;
+    RendererAttachmentLoadOp load_op;
+    RendererAttachmentStoreOp store_op;
+    RendererClearValue clear_value;
+} RendererAttachmentInfo;
+
+typedef struct RendererBeginRenderingInfo
+{
+    RendererAttachmentInfo color_attachment_info;
+    RendererAttachmentInfo *depth_attachment_info;
+} RendererBeginRenderingInfo;
+
 typedef struct RendererVtable
 {
     int32_t (*start)(RendererContext *context);
@@ -169,8 +219,7 @@ typedef struct RendererVtable
 
     void (*dummy_get_extent)(RendererContext *context, uint32_t extent[2]);
 
-    void (*cmd_begin_render_pass)(RendererContext *context, RendererCommandList *command_list);
-    void (*cmd_end_render_pass)(RendererContext *context, RendererCommandList *command_list);
+    void (*cmd_end_rendering)(RendererContext *context, RendererCommandList *command_list);
     void (*cmd_bind_graphics_pipeline)(RendererContext *context, RendererCommandList *command_list, RendererGraphicsPipelineHandle pipeline_handle);
     void (*cmd_bind_compute_pipeline)(RendererContext *context, RendererCommandList *command_list, RendererComputePipelineHandle pipeline_handle);
     void (*cmd_draw)(RendererContext *context, RendererCommandList *command_list, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance);
@@ -252,14 +301,9 @@ static inline int32_t renderer_create_compute_pipeline(RendererInterface *iface,
     return iface->vtable->create_compute_pipeline(iface->context, pipeline_create_info, out_pipeline_handle);
 }
 
-static inline void renderer_cmd_begin_render_pass(RendererInterface *iface, RendererCommandList *command_list)
+static inline void renderer_cmd_end_rendering(RendererInterface *iface, RendererCommandList *command_list)
 {
-    iface->vtable->cmd_begin_render_pass(iface->context, command_list);
-}
-
-static inline void renderer_cmd_end_render_pass(RendererInterface *iface, RendererCommandList *command_list)
-{
-    iface->vtable->cmd_end_render_pass(iface->context, command_list);
+    iface->vtable->cmd_end_rendering(iface->context, command_list);
 }
 
 static inline void renderer_cmd_bind_graphics_pipeline(RendererInterface *iface, RendererCommandList *command_list, RendererGraphicsPipelineHandle pipeline_handle)

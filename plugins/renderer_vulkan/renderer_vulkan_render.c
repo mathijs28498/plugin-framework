@@ -19,6 +19,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_render, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_register.h"
 #include "renderer_vulkan_cmd.h"
 #include "renderer_vulkan.h"
+#include "renderer_vulkan_conversion.h"
 
 #define SECOND_IN_NS 1000000000
 
@@ -53,6 +54,7 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
         context->deps.logger, result, result < 0 && result != VK_ERROR_OUT_OF_DATE_KHR,
         vkAcquireNextImageKHR(context->device, context->swapchain, SECOND_IN_NS, frame->swapchain_semaphore, VK_NULL_HANDLE, &swapchain_image_index),
         -1, "Failed to acquire next image: %d", result);
+    TODO("Make this work with a length, not capacity")
     assert(swapchain_image_index < ARRAY_SIZE(context->swapchain_image_handles));
 
     if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
@@ -66,7 +68,6 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetFences(context->device, 1, &frame->render_fence),
                        -1, "Failed to reset render fence: %d", result);
 
-    VkCommandBuffer cmd = frame->command_list.command_buffer;
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetCommandPool(context->device, frame->command_pool, 0),
                        -1, "Failed to reset frame command pool: %d", result);
@@ -80,6 +81,7 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
         .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
     };
 
+    VkCommandBuffer cmd = frame->command_list.command_buffer;
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkBeginCommandBuffer(cmd, &cmd_begin_info),
                        -1, "Failed to begin command buffer: %d", result);
 
@@ -90,7 +92,7 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
 
     TODO("Also abstract this away somehow, possibly with different passes");
 
-    renderer_vulkan_cmd_transition_image(context, cmd, context->draw_image_handle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL);
+    renderer_vulkan_cmd_transition_image(context, &frame->command_list, context->draw_image_handle, RENDERER_IMAGE_LAYOUT_UNDEFINED, RENDERER_IMAGE_LAYOUT_GENERAL);
 
     return 0;
 }
@@ -103,16 +105,16 @@ int32_t renderer_vulkan_render_end_frame(RendererContext *context)
     VkResult result;
 
     RendererFrameData *frame = context->active_frame_state.frame;
-    VkCommandBuffer cmd = frame->command_list.command_buffer;
+    RendererCommandList *command_list = &frame->command_list;
     RendererImageHandle swapchain_image_handle = context->swapchain_image_handles[context->active_frame_state.swapchain_index];
 
     TODO("Remove this and add render passes");
     TODO("Make a renderer method for getting the extent")
     TODO("Make this method platform agnostic")
-    renderer_vulkan_cmd_transition_image(context, cmd, context->draw_image_handle, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL);
-    renderer_vulkan_cmd_transition_image(context, cmd, swapchain_image_handle, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    renderer_vulkan_cmd_transition_image(context, command_list, context->draw_image_handle, RENDERER_IMAGE_LAYOUT_GENERAL, RENDERER_IMAGE_LAYOUT_TRANSFER_SRC);
+    renderer_vulkan_cmd_transition_image(context, command_list, swapchain_image_handle, RENDERER_IMAGE_LAYOUT_UNDEFINED, RENDERER_IMAGE_LAYOUT_TRANSFER_DST);
 
-    renderer_vulkan_cmd_blit_image_to_image(context, cmd, context->draw_image_handle, swapchain_image_handle,
+    renderer_vulkan_cmd_blit_image_to_image(context, command_list, context->draw_image_handle, swapchain_image_handle,
                                             (RendererExtent2D){
                                                 .width = context->draw_extent.width,
                                                 .height = context->draw_extent.height,
@@ -122,12 +124,12 @@ int32_t renderer_vulkan_render_end_frame(RendererContext *context)
                                                 .height = context->swapchain_extent.height,
                                             });
 
-    renderer_vulkan_cmd_transition_image(context, cmd, swapchain_image_handle, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
+    renderer_vulkan_cmd_transition_image(context, command_list, swapchain_image_handle, RENDERER_IMAGE_LAYOUT_TRANSFER_DST, RENDERER_IMAGE_LAYOUT_PRESENT_SRC);
 
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vkEndCommandBuffer(cmd),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkEndCommandBuffer(command_list->command_buffer),
                        -1, "Failed to end buffer: %d", result);
 
-    VkCommandBufferSubmitInfo cmd_info = rv_create_command_buffer_submit_info(cmd);
+    VkCommandBufferSubmitInfo cmd_info = rv_create_command_buffer_submit_info(command_list->command_buffer);
 
     VkSemaphoreSubmitInfo wait_info = rv_create_semaphore_submit_info(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, frame->swapchain_semaphore);
     VkSemaphoreSubmitInfo signal_info = rv_create_semaphore_submit_info(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, frame->render_semaphore);

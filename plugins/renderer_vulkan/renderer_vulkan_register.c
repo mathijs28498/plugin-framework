@@ -50,8 +50,7 @@ static const RendererVtable plugin_vtable = {
     .create_graphics_pipeline = renderer_vulkan_create_graphics_pipeline,
     .create_compute_pipeline = renderer_vulkan_create_compute_pipeline,
 
-    .cmd_begin_render_pass = renderer_vulkan_cmd_begin_render_pass,
-    .cmd_end_render_pass = renderer_vulkan_cmd_end_render_pass,
+    .cmd_end_rendering = renderer_vulkan_cmd_end_rendering,
     .cmd_bind_graphics_pipeline = renderer_vulkan_cmd_bind_graphics_pipeline,
     .cmd_bind_compute_pipeline = renderer_vulkan_cmd_bind_compute_pipeline,
     .cmd_draw = renderer_vulkan_cmd_draw,

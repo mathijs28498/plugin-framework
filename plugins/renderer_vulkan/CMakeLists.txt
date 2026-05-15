@@ -17,13 +17,14 @@ target_sources(renderer_vulkan
     renderer_vulkan_cmd.c
     renderer_vulkan_pipeline.c
     renderer_vulkan_image.c
-
+    renderer_vulkan_conversion.c
 
     PUBLIC
     FILE_SET HEADERS
 )
 
 message("TODO: Add other targets")
+
 if(WIN32)
     target_sources(renderer_vulkan PRIVATE renderer_vulkan_platform_win32.c)
 endif()

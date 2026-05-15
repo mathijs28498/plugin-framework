@@ -15,6 +15,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_descriptor_set, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan.h"
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan_register.h"
+#include "renderer_vulkan_conversion.h"
 
 int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDescriptorType *descriptor_types_a, VkDescriptorPool *out_descriptor_pool)
 {
@@ -184,6 +185,7 @@ void renderer_vulkan_update_transient_resource_set(RendererContext *context, Ren
 {
     assert(context != NULL);
 
+    TODO("Get the image info from arguments")
     RV_AllocatedImage allocated_image = {0};
     RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
                                               context->draw_image_handle, allocated_image);

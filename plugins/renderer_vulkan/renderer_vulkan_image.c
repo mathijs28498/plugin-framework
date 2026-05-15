@@ -12,6 +12,7 @@
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_image, LOG_LEVEL_DEBUG)
 
 #include "renderer_vulkan_register.h"
+#include "renderer_vulkan_conversion.h"
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan.h"
 

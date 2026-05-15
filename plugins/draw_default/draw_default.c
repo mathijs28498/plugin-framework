@@ -47,13 +47,6 @@ int32_t create_resource_set_layouts(DrawContext *context)
     RETURN_IF_ERROR(context->deps.logger, ret, renderer_create_resource_set_layout(context->deps.renderer, &resource_set_layout_create_info, &context->draw_image_resource_set_layout_handle),
                     "Failed to create resource set: %d", ret);
 
-    // {(VkDescriptorSetLayoutBinding){
-    //     .binding = 0,
-    //     .descriptorCount = 1,
-    //     .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-    //     .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
-    // }});
-
     return 0;
 }
 
@@ -148,7 +141,7 @@ int32_t draw_default_present(DrawContext *context)
     // renderer_cmd_bind_pipeline(renderer, command_list, pipeline_handle);
     // renderer_cmd_draw(renderer, command_list, 3, 1, 0, 0);
 
-    // renderer_cmd_end_render_pass(renderer, command_list);
+    // renderer_cmd_end_rendering(renderer, command_list);
 
     RETURN_IF_ERROR(context->deps.logger, ret, renderer_end_frame(renderer),
                     "Failed to end frame: %d", ret);
