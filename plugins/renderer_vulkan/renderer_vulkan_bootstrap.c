@@ -84,15 +84,9 @@ TODO("Make this file the bootstrap, only showing a bootstrap function")
 TODO("")
 
 #if IS_DEBUG
-int32_t check_validation_layer_support(RendererContext *context, const char **validation_layers_a, bool *out_has_support)
+static inline int32_t inl_check_validation_layer_support(RendererContext *context, const char **validation_layers_a, bool *out_has_support)
 {
-    assert(context != NULL);
-    assert(validation_layers_a != NULL);
-    assert(out_has_support != NULL);
     int32_t ret;
-
-    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
-
     uint32_t layers_len;
     vkEnumerateInstanceLayerProperties(&layers_len, NULL);
 
@@ -119,14 +113,25 @@ int32_t check_validation_layer_support(RendererContext *context, const char **va
         if (!layer_found)
         {
             *out_has_support = false;
-            bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
             return 0;
         }
     }
 
-    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     *out_has_support = true;
     return 0;
+}
+
+int32_t check_validation_layer_support(RendererContext *context, const char **validation_layers_a, bool *out_has_support)
+{
+    assert(context != NULL);
+    assert(validation_layers_a != NULL);
+    assert(out_has_support != NULL);
+
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+    int32_t ret = inl_check_validation_layer_support(context, validation_layers_a, out_has_support);
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
+
+    return ret;
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
@@ -341,18 +346,13 @@ bool queue_family_indices_is_complete(const QueueFamilyIndices *queue_family_ind
     return queue_family_indices->has_graphics_family && queue_family_indices->has_present_family;
 }
 
-int32_t physical_device_extensions_are_supported(RendererContext *context, VkPhysicalDevice physical_device, bool *out_result)
+static inline int32_t inl_physical_device_extensions_are_supported(RendererContext *context, VkPhysicalDevice physical_device, bool *out_result)
 {
-    assert(context != NULL);
-    assert(physical_device != VK_NULL_HANDLE);
-    assert(out_result != NULL);
-
     uint32_t extensions_len;
     VkResult result;
     int32_t ret;
 
     *out_result = false;
-    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_len, NULL),
                        -1, "Failed to enumerate physical device extensions", result);
@@ -382,14 +382,25 @@ int32_t physical_device_extensions_are_supported(RendererContext *context, VkPhy
         if (!extension_found)
         {
             *out_result = false;
-            bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
             return 0;
         }
     }
-
-    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     *out_result = true;
+
     return 0;
+}
+
+int32_t physical_device_extensions_are_supported(RendererContext *context, VkPhysicalDevice physical_device, bool *out_result)
+{
+    assert(context != NULL);
+    assert(physical_device != VK_NULL_HANDLE);
+    assert(out_result != NULL);
+
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+    int32_t ret = inl_physical_device_extensions_are_supported(context, physical_device, out_result);
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
+
+    return ret;
 }
 
 int32_t query_swapchain_support_details(RendererContext *context, VkPhysicalDevice physical_device, SwapchainSupportDetails *out_swapchain_support_details)
@@ -557,15 +568,11 @@ int32_t rate_physical_device_suitability(RendererContext *context, VkPhysicalDev
     return score;
 }
 
-int32_t pick_physical_device(RendererContext *context)
+static inline int32_t inl_pick_physical_device(RendererContext *context)
 {
-    assert(context != NULL);
-
     int32_t ret;
     uint32_t physical_devices_len = 0;
     VkResult result;
-
-    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, NULL),
                        -1, "Unable to get physical device count");
@@ -596,8 +603,18 @@ int32_t pick_physical_device(RendererContext *context)
 
     context->physical_device = physical_devices[chosen_physical_device_index];
 
-    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     return 0;
+}
+
+int32_t pick_physical_device(RendererContext *context)
+{
+    assert(context != NULL);
+
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+    int32_t ret = inl_pick_physical_device(context);
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
+
+    return ret;
 }
 
 TODO("Make this use the bump allocator")

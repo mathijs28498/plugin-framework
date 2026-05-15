@@ -295,16 +295,10 @@ void rv_pipeline_disable_depthtest(RV_PipelineBuilder *pipeline_builder)
     pipeline_builder->depth_stencil_ci.maxDepthBounds = 1.f;
 }
 
-int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle)
+static inline int32_t inl_renderer_vulkan_create_pipeline_layout(RendererContext *context, const RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle)
 {
-    assert(context != NULL);
-    assert(renderer_pipeline_layout_create_info != NULL);
-    assert(out_pipeline_layout_handle != NULL);
-
     VkResult result;
     int32_t ret;
-
-    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
 
     uint32_t push_constant_ranges_len = renderer_pipeline_layout_create_info->push_constants_len;
     VkPushConstantRange *push_constant_ranges;
@@ -351,9 +345,20 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
                     "Failed to push gradient pipeline layout destroy data to destroy queue: %d", ret);
 
     *out_pipeline_layout_handle = rv_pipeline_layout_handle.raw;
-
-    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     return 0;
+}
+
+int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle)
+{
+    assert(context != NULL);
+    assert(renderer_pipeline_layout_create_info != NULL);
+    assert(out_pipeline_layout_handle != NULL);
+
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+    int32_t ret = inl_renderer_vulkan_create_pipeline_layout(context, renderer_pipeline_layout_create_info, out_pipeline_layout_handle);
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
+
+    return ret;
 }
 
 int32_t renderer_vulkan_create_graphics_pipeline(RendererContext *context, const RendererGraphicsPipelineCreateInfo *renderer_pipeline_create_info, RendererGraphicsPipelineHandle *out_pipeline_handle)

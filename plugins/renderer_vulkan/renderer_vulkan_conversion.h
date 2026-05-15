@@ -2,6 +2,8 @@
 
 #include <stdint.h>
 
+#include <plugin_sdk/renderer/v1/renderer_types.h>
+
 #include "renderer_vulkan_utils.h"
 
 typedef enum RendererAttachmentType
@@ -10,12 +12,10 @@ typedef enum RendererAttachmentType
     RENDERER_ATTACHMENT_TYPE_DEPTH,
 } RendererAttachmentType;
 
-
 RV_CREATE_HANDLE_DEFINITION(VkSemaphore);
 RV_CREATE_HANDLE_DEFINITION(VkCommandBuffer);
 RV_CREATE_HANDLE_DEFINITION(VkImage);
 RV_CREATE_HANDLE_DEFINITION(VkBuffer);
-
 
 struct VkImageSubresourceRange;
 enum VkImageLayout;
@@ -41,7 +41,6 @@ typedef uint32_t VkImageUsageFlags;
 typedef uint32_t RendererImageUsageFlags;
 typedef uint32_t VkMemoryPropertyFlags;
 
-
 enum RendererPipelineType;
 enum VkPipelineBindPoint;
 enum RendererResourceType;
@@ -58,6 +57,8 @@ enum VkAttachmentStoreOp;
 enum RendererAttachmentStoreOp;
 struct RendererAttachmentInfo;
 struct RV_AllocatedImage;
+struct VkExtent3D;
+struct VkExtent2D;
 
 struct VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mask);
 struct VkSemaphoreSubmitInfo rv_create_semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore);
@@ -78,14 +79,7 @@ enum VkAttachmentLoadOp rv_attachment_load_op_to_vk_attachment_load_op(enum Rend
 enum VkAttachmentStoreOp rv_attachment_store_op_to_vk_attachment_store_op(enum RendererAttachmentStoreOp renderer_attachment_store_op);
 struct VkRenderingAttachmentInfo rv_attachment_info_to_vk_attachment_info(const struct RendererAttachmentInfo *renderer_attachment_info, struct RV_AllocatedImage *image, RendererAttachmentType attachment_type);
 
-#define EXTENT_3D_RENDERER_TO_VK(renderer_extent) \
-    (VkExtent3D) { .width = (renderer_extent).width, .height = (renderer_extent).height, .depth = (renderer_extent).depth }
-
-#define EXTENT_3D_VK_TO_RENDERER(renderer_extent) \
-    (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height, .depth = (vk_extent).depth }
-
-#define EXTENT_2D_RENDERER_TO_VK(renderer_extent) \
-    (VkExtent2D) { .width = (renderer_extent).width, .height = (renderer_extent).height }
-
-#define EXTENT_2D_VK_TO_RENDERER(vk_extent) \
-    (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height }
+struct VkExtent3D rv_renderer_extent_3d_to_vk_extent_3d(const RendererExtent3D *renderer_extent);
+RendererExtent3D rv_vk_extent_3d_to_renderer_3d(const struct VkExtent3D *renderer_extent);
+struct VkExtent2D rv_renderer_extent_2d_to_vk_extent_2d(const RendererExtent2D *renderer_extent);
+RendererExtent2D rv_vk_extent_2d_to_renderer_2d(const struct VkExtent2D *renderer_extent);

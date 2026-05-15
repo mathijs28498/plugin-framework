@@ -32,7 +32,7 @@ int32_t renderer_vulkan_create_image(RendererContext *context, RendererImageCrea
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .imageType = VK_IMAGE_TYPE_2D,
         .format = vk_format,
-        .extent = EXTENT_3D_RENDERER_TO_VK(renderer_image_create_info->extent),
+        .extent = rv_renderer_extent_3d_to_vk_extent_3d(&renderer_image_create_info->extent),
         .mipLevels = 1,
         .arrayLayers = 1,
         .samples = VK_SAMPLE_COUNT_1_BIT,

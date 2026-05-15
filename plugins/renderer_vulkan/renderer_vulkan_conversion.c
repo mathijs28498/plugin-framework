@@ -272,3 +272,38 @@ VkRenderingAttachmentInfo rv_attachment_info_to_vk_attachment_info(const Rendere
         .clearValue = clear_value,
     };
 }
+
+VkExtent3D rv_renderer_extent_3d_to_vk_extent_3d(const RendererExtent3D *renderer_extent)
+{
+    return (VkExtent3D){.width = renderer_extent->width,
+                        .height = renderer_extent->height,
+                        .depth = renderer_extent->depth};
+}
+
+RendererExtent3D rv_vk_extent_3d_to_renderer_3d(const VkExtent3D *renderer_extent)
+{
+    return (RendererExtent3D){.width = renderer_extent->width,
+                              .height = renderer_extent->height,
+                              .depth = renderer_extent->depth};
+}
+
+VkExtent2D rv_renderer_extent_2d_to_vk_extent_2d(const RendererExtent2D *renderer_extent)
+{
+    return (VkExtent2D){.width = renderer_extent->width,
+                        .height = renderer_extent->height};
+}
+
+RendererExtent2D rv_vk_extent_2d_to_renderer_2d(const VkExtent2D *renderer_extent)
+{
+    return (RendererExtent2D){.width = renderer_extent->width,
+                              .height = renderer_extent->height};
+}
+
+#define rv_vk_extent_3d_to_renderer_3d(renderer_extent) \
+    (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height, .depth = (vk_extent).depth }
+
+#define rv_renderer_extent_2d_to_vk_extent_2d(renderer_extent) \
+    (VkExtent2D) { .width = (renderer_extent).width, .height = (renderer_extent).height }
+
+#define rv_vk_extent_2d_to_renderer_extent_2d(vk_extent) \
+    (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height }

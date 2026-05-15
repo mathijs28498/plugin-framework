@@ -17,16 +17,10 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_descriptor_set, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_register.h"
 #include "renderer_vulkan_conversion.h"
 
-int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDescriptorType *descriptor_types_a, VkDescriptorPool *out_descriptor_pool)
+static inline int32_t inl_create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDescriptorType *descriptor_types_a, VkDescriptorPool *out_descriptor_pool)
 {
-    assert(context != NULL);
-    assert(max_sets > 0);
-    assert(descriptor_types_a != NULL);
-
     VkResult result;
     int32_t ret;
-
-    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
 
     VkDescriptorPoolSize *descriptor_pool_sizes;
     RETURN_IF_ERROR(context->deps.logger, ret, BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkDescriptorPoolSize, GET_ARRAY_LENGTH(descriptor_types_a), &descriptor_pool_sizes),
@@ -52,9 +46,20 @@ int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDe
     RETURN_IF_ERROR(context->deps.logger, ret,
                     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyDescriptorPool, context->device, *out_descriptor_pool, NULL),
                     "Failed to push descriptor pool to swapchain destroy queue: %d", ret);
-
-    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     return 0;
+}
+
+int32_t create_descriptor_pool(RendererContext *context, uint32_t max_sets, VkDescriptorType *descriptor_types_a, VkDescriptorPool *out_descriptor_pool)
+{
+    assert(context != NULL);
+    assert(max_sets > 0);
+    assert(descriptor_types_a != NULL);
+
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+    int32_t ret = inl_create_descriptor_pool(context, max_sets, descriptor_types_a, out_descriptor_pool);
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
+
+    return ret;
 }
 
 int32_t renderer_vulkan_allocate_transient_resource_set(RendererContext *context, RendererResourceSetLayoutHandle resource_set_layout_handle, RendererResourceSetHandle *out_resource_set_handle)
@@ -88,15 +93,10 @@ int32_t renderer_vulkan_allocate_transient_resource_set(RendererContext *context
     return 0;
 }
 
-int32_t renderer_vulkan_create_resource_set_layout(RendererContext *context, const RendererResourceSetLayoutCreateInfo *renderer_resource_set_layout_create_info, RendererResourceSetLayoutHandle *out_resource_set_layout_handle)
+static inline int32_t inl_renderer_vulkan_create_resource_set_layout(RendererContext *context, const RendererResourceSetLayoutCreateInfo *renderer_resource_set_layout_create_info, RendererResourceSetLayoutHandle *out_resource_set_layout_handle)
 {
-    assert(context != NULL);
-    assert(renderer_create_resource_set_layout != NULL);
-
     VkResult result;
     int32_t ret;
-
-    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
 
     VkDescriptorSetLayoutBinding *descriptor_set_layout_bindings;
     uint32_t bindings_len = renderer_resource_set_layout_create_info->bindings_len;
@@ -136,9 +136,19 @@ int32_t renderer_vulkan_create_resource_set_layout(RendererContext *context, con
                                      vkDestroyDescriptorSetLayout(context->device, descriptor_set_layout, NULL));
 
     *out_resource_set_layout_handle = rv_descriptor_set_layout_handle.raw;
-
-    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     return 0;
+}
+
+int32_t renderer_vulkan_create_resource_set_layout(RendererContext *context, const RendererResourceSetLayoutCreateInfo *renderer_resource_set_layout_create_info, RendererResourceSetLayoutHandle *out_resource_set_layout_handle)
+{
+    assert(context != NULL);
+    assert(renderer_create_resource_set_layout != NULL);
+
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+    int32_t ret = inl_renderer_vulkan_create_resource_set_layout(context, renderer_resource_set_layout_create_info, out_resource_set_layout_handle);
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
+
+    return ret;
 }
 
 int32_t rv_create_descriptor_pools(RendererContext *context)

@@ -203,8 +203,10 @@ void renderer_vulkan_cmd_begin_rendering(RendererContext *context, RendererComma
     VkRenderingInfo rendering_info = {
         .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
         .renderArea = {
-            .extent = EXTENT_2D_RENDERER_TO_VK(color_attachment_image.image_extent),
-        },
+            .extent = {
+                .width = color_attachment_image.image_extent.width,
+                .height = color_attachment_image.image_extent.height,
+            }},
         .layerCount = 1,
         .colorAttachmentCount = 1,
         .pColorAttachments = &color_attachment_info,
@@ -261,7 +263,7 @@ void renderer_vulkan_cmd_set_scissor(RendererContext *context, RendererCommandLi
             .x = 0,
             .y = 0,
         },
-        .extent = EXTENT_2D_RENDERER_TO_VK(extent),
+        .extent = rv_renderer_extent_2d_to_vk_extent_2d(&extent),
     };
 
     vkCmdSetScissor(command_list->command_buffer, 0, 1, &scissor);
