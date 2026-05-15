@@ -92,7 +92,6 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
 
     TODO("Also abstract this away somehow, possibly with different passes");
 
-    renderer_vulkan_cmd_transition_image(context, &frame->command_list, context->draw_image_handle, RENDERER_IMAGE_LAYOUT_UNDEFINED, RENDERER_IMAGE_LAYOUT_GENERAL);
 
     return 0;
 }
@@ -111,18 +110,6 @@ int32_t renderer_vulkan_render_end_frame(RendererContext *context)
     TODO("Remove this and add render passes");
     TODO("Make a renderer method for getting the extent")
     TODO("Make this method platform agnostic")
-    renderer_vulkan_cmd_transition_image(context, command_list, context->draw_image_handle, RENDERER_IMAGE_LAYOUT_GENERAL, RENDERER_IMAGE_LAYOUT_TRANSFER_SRC);
-    renderer_vulkan_cmd_transition_image(context, command_list, swapchain_image_handle, RENDERER_IMAGE_LAYOUT_UNDEFINED, RENDERER_IMAGE_LAYOUT_TRANSFER_DST);
-
-    renderer_vulkan_cmd_blit_image_to_image(context, command_list, context->draw_image_handle, swapchain_image_handle,
-                                            (RendererExtent2D){
-                                                .width = context->draw_extent.width,
-                                                .height = context->draw_extent.height,
-                                            },
-                                            (RendererExtent2D){
-                                                .width = context->swapchain_extent.width,
-                                                .height = context->swapchain_extent.height,
-                                            });
 
     renderer_vulkan_cmd_transition_image(context, command_list, swapchain_image_handle, RENDERER_IMAGE_LAYOUT_TRANSFER_DST, RENDERER_IMAGE_LAYOUT_PRESENT_SRC);
 

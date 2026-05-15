@@ -413,59 +413,59 @@ int32_t renderer_vulkan_create_compute_pipeline(RendererContext *context, const 
     return 0;
 }
 
-int32_t create_triangle_pipeline(RendererContext *context)
-{
-    assert(context != NULL);
+// int32_t create_triangle_pipeline(RendererContext *context)
+// {
+//     assert(context != NULL);
 
-    int32_t ret;
-    VkResult result;
+//     int32_t ret;
+//     VkResult result;
 
-    TODO("REMVOE THIS");
-    VkShaderModule vertex_shader_module = NULL, fragment_shader_module = NULL;
-    // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_shader(context, COLORED_TRIANGLE_VERTEX_SHADER_U32_CODE, COLORED_TRIANGLE_VERTEX_SHADER_BYTES_LEN, &vertex_shader_module),
-    //                 "Failed to load vertex shader module: %d", ret);
-    // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_shader(context, COLORED_TRIANGLE_FRAGMENT_SHADER_U32_CODE, COLORED_TRIANGLE_FRAGMENT_SHADER_BYTES_LEN, &fragment_shader_module),
-    //                 "Failed to load fragment shader module: %d", ret);
+//     TODO("REMVOE THIS");
+//     VkShaderModule vertex_shader_module = NULL, fragment_shader_module = NULL;
+//     // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_shader(context, COLORED_TRIANGLE_VERTEX_SHADER_U32_CODE, COLORED_TRIANGLE_VERTEX_SHADER_BYTES_LEN, &vertex_shader_module),
+//     //                 "Failed to load vertex shader module: %d", ret);
+//     // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_shader(context, COLORED_TRIANGLE_FRAGMENT_SHADER_U32_CODE, COLORED_TRIANGLE_FRAGMENT_SHADER_BYTES_LEN, &fragment_shader_module),
+//     //                 "Failed to load fragment shader module: %d", ret);
 
-    VkPipelineLayoutCreateInfo graphics_pipeline_layout_create_info = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-    };
+//     VkPipelineLayoutCreateInfo graphics_pipeline_layout_create_info = {
+//         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+//     };
 
-    VkPipelineLayout graphics_pipeline_layout;
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &graphics_pipeline_layout_create_info, NULL, &graphics_pipeline_layout),
-                       -1, "Failed to create graphics pipeline layout: %d", result);
+//     VkPipelineLayout graphics_pipeline_layout;
+//     RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &graphics_pipeline_layout_create_info, NULL, &graphics_pipeline_layout),
+//                        -1, "Failed to create graphics pipeline layout: %d", result);
 
-    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, graphics_pipeline_layout, NULL);
+//     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, graphics_pipeline_layout, NULL);
 
-    RV_PipelineBuilder *pipeline_builder;
-    RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_create_pipeline_builder(&pipeline_builder),
-                    "Failed to create pipeline builder: %d", ret);
+//     RV_PipelineBuilder *pipeline_builder;
+//     RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_create_pipeline_builder(&pipeline_builder),
+//                     "Failed to create pipeline builder: %d", ret);
 
-    rv_pipeline_set_layout(pipeline_builder, graphics_pipeline_layout);
-    RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_set_shaders(pipeline_builder, vertex_shader_module, fragment_shader_module),
-                    "Failed to set shaders: %d", ret);
-    rv_pipeline_set_input_topology(pipeline_builder, RV_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-    rv_pipeline_set_polygon_mode(pipeline_builder, RV_POLYGON_MODE_FILL);
-    rv_pipeline_set_cull_mode(pipeline_builder, RV_CULL_MODE_NONE, RV_FRONT_FACE_CLOCKWISE);
-    rv_pipeline_set_multisampling_none(pipeline_builder);
-    rv_pipeline_disable_blending(pipeline_builder);
-    // rv_pipeline_enable_blending_additive(pipeline_builder);
-    // rv_pipeline_enable_blending_alphablend(pipeline_builder);
-    rv_pipeline_disable_depthtest(pipeline_builder);
+//     rv_pipeline_set_layout(pipeline_builder, graphics_pipeline_layout);
+//     RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_set_shaders(pipeline_builder, vertex_shader_module, fragment_shader_module),
+//                     "Failed to set shaders: %d", ret);
+//     rv_pipeline_set_input_topology(pipeline_builder, RV_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+//     rv_pipeline_set_polygon_mode(pipeline_builder, RV_POLYGON_MODE_FILL);
+//     rv_pipeline_set_cull_mode(pipeline_builder, RV_CULL_MODE_NONE, RV_FRONT_FACE_CLOCKWISE);
+//     rv_pipeline_set_multisampling_none(pipeline_builder);
+//     rv_pipeline_disable_blending(pipeline_builder);
+//     // rv_pipeline_enable_blending_additive(pipeline_builder);
+//     // rv_pipeline_enable_blending_alphablend(pipeline_builder);
+//     rv_pipeline_disable_depthtest(pipeline_builder);
 
-    RV_AllocatedImage allocated_image = {0};
-    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
-                                              context->draw_image_handle, allocated_image);
-    rv_pipeline_set_color_attachment_format(pipeline_builder, allocated_image.image_format);
-    rv_pipeline_set_depth_format(pipeline_builder, VK_FORMAT_UNDEFINED);
+//     RV_AllocatedImage allocated_image = {0};
+//     RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
+//                                               context->draw_image_handle, allocated_image);
+//     rv_pipeline_set_color_attachment_format(pipeline_builder, allocated_image.image_format);
+//     rv_pipeline_set_depth_format(pipeline_builder, VK_FORMAT_UNDEFINED);
 
-    RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_builder_build(context, pipeline_builder, &context->triangle_pipeline),
-                    "Failed to build graphics pipeline: %d", ret);
+//     RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_builder_build(context, pipeline_builder, &context->triangle_pipeline),
+//                     "Failed to build graphics pipeline: %d", ret);
 
-    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipeline, context->device, context->triangle_pipeline, NULL);
+//     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipeline, context->device, context->triangle_pipeline, NULL);
 
-    vkDestroyShaderModule(context->device, fragment_shader_module, NULL);
-    vkDestroyShaderModule(context->device, vertex_shader_module, NULL);
+//     vkDestroyShaderModule(context->device, fragment_shader_module, NULL);
+//     vkDestroyShaderModule(context->device, vertex_shader_module, NULL);
 
-    return 0;
-}
+//     return 0;
+// }

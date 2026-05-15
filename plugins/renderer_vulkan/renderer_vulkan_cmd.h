@@ -3,6 +3,7 @@
 #include <stdint.h>
 
 #include <plugin_sdk/plugin_utils.h>
+#include <plugin_sdk/renderer/v1/renderer_types.h>
 
 TODO("Remoce this dependency")
 #include <renderer_vulkan_utils.h>
@@ -13,11 +14,6 @@ enum VkImageLayout;
 
 struct RendererContext;
 struct RendererCommandList;
-typedef uint64_t RendererGraphicsPipelineHandle;
-typedef uint64_t RendererComputePipelineHandle;
-typedef uint64_t RendererPipelineLayoutHandle;
-typedef uint64_t RendererResourceSetHandle;
-typedef uint64_t RendererImageHandle;
 
 typedef uint32_t RendererShaderStageFlags;
 enum RendererPipelineType;

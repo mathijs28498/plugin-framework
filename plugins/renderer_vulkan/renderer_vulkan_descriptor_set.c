@@ -181,14 +181,17 @@ int32_t rv_create_descriptor_pools(RendererContext *context)
 
 TODO("Add arguments for the infos")
 TODO("Make generation decide if it is a transient or global")
-void renderer_vulkan_update_transient_resource_set(RendererContext *context, RendererResourceSetHandle resource_set_handle)
+TODO("Create custom values for descriptor info")
+void renderer_vulkan_update_transient_resource_set(RendererContext *context, RendererResourceSetHandle resource_set_handle,
+                                                   TODO("REMOVE THIS HARDCODED SHIT")
+                                                       RendererImageHandle draw_image_handle)
 {
     assert(context != NULL);
 
     TODO("Get the image info from arguments")
     RV_AllocatedImage allocated_image = {0};
     RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
-                                              context->draw_image_handle, allocated_image);
+                                              draw_image_handle, allocated_image);
 
     VkDescriptorImageInfo draw_image_descriptor_info = {
         .imageLayout = VK_IMAGE_LAYOUT_GENERAL,

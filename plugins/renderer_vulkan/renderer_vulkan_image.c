@@ -48,7 +48,7 @@ int32_t renderer_vulkan_create_image(RendererContext *context, RendererImageCrea
     TODO("Get rid of RV_VkExtent3D ");
     RV_AllocatedImage allocated_image = {
         .image_format = renderer_image_create_info->format,
-        .image_extent = EXTENT_3D_RENDERER_TO_RV(renderer_image_create_info->extent),
+        .image_extent = renderer_image_create_info->extent,
     };
 
     RV_RETURN_IF_ERROR(context->deps.logger, result,
@@ -92,5 +92,27 @@ int32_t renderer_vulkan_create_image(RendererContext *context, RendererImageCrea
                                      });
 
     *out_image_handle = rv_image_handle.raw;
+    return 0;
+}
+
+RendererImageHandle renderer_vulkan_get_render_image_handle(RendererContext *context)
+{
+    assert(context != NULL);
+    return context->swapchain_image_handles[context->active_frame_state.swapchain_index];
+}
+
+int32_t renderer_vulkan_get_image_properties(RendererContext *context, RendererImageHandle image_handle, RendererImageProperties *out_image_properties)
+{
+    assert(context != NULL);
+    assert(out_image_properties != NULL);
+
+    RV_AllocatedImage image = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a, image_handle, image);
+
+    *out_image_properties = (RendererImageProperties){
+        .extent = image.image_extent,
+        .format = image.image_format,
+    };
+
     return 0;
 }

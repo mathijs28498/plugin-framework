@@ -11,36 +11,27 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_register, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/plugin_utils.h>
 
 #include "renderer_vulkan.h"
+#include "renderer_vulkan_image.h"
 #include "renderer_vulkan_start.h"
 #include "renderer_vulkan_render.h"
 #include "renderer_vulkan_cmd.h"
 #include "renderer_vulkan_pipeline.h"
 #include "renderer_vulkan_descriptor_set.h"
 
-void renderer_vulkan_dummy_get_extent(RendererContext *context, uint32_t extent[2])
-{
-    assert(context != NULL);
-    assert(extent != NULL);
-
-    extent[0] = context->draw_extent.width;
-    extent[1] = context->draw_extent.height;
-}
-RendererResourceSetLayoutHandle renderer_vulkan_dummy_get_draw_image_ds_handle(RendererContext *context)
-{
-    return context->draw_image_descriptor_set_layout_handle;
-}
 
 static const RendererVtable plugin_vtable = {
-    .dummy_get_extent = renderer_vulkan_dummy_get_extent,
-
     .start = renderer_vulkan_start,
     .begin_frame = renderer_vulkan_render_begin_frame,
     .end_frame = renderer_vulkan_render_end_frame,
     .on_window_resize = renderer_vulkan_on_window_resize,
 
+    .get_render_image_handle = renderer_vulkan_get_render_image_handle,
+    .get_image_properties = renderer_vulkan_get_image_properties,
+
     .create_shader = renderer_vulkan_create_shader,
     .destroy_shader = renderer_vulkan_destroy_shader,
 
+    .create_image = renderer_vulkan_create_image,
     .create_resource_set_layout = renderer_vulkan_create_resource_set_layout,
     .allocate_transient_resource_set = renderer_vulkan_allocate_transient_resource_set,
     .update_transient_resource_set = renderer_vulkan_update_transient_resource_set,
@@ -57,6 +48,9 @@ static const RendererVtable plugin_vtable = {
     .cmd_bind_resource_sets = renderer_vulkan_cmd_bind_resource_sets,
     .cmd_push_constants = renderer_vulkan_cmd_push_constants,
     .cmd_dispatch = renderer_vulkan_cmd_dispatch,
+
+    .cmd_transition_image = renderer_vulkan_cmd_transition_image,
+    .cmd_blit_image_to_image = renderer_vulkan_cmd_blit_image_to_image,
 };
 
 TODO("Figure out what these sizes should be");

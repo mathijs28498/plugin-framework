@@ -14,26 +14,26 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_cmd, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan_conversion.h"
 
-void renderer_vulkan_cmd_begin_render_pass(RendererContext *context, RendererCommandList *command_list)
-{
-    assert(context != NULL);
-    assert(command_list != NULL);
+// void renderer_vulkan_cmd_begin_render_pass(RendererContext *context, RendererCommandList *command_list)
+// {
+//     assert(context != NULL);
+//     assert(command_list != NULL);
 
-    RendererBeginRenderingInfo begin_rendering_info = {
-        .color_attachment_info = {
-            .load_op = RENDERER_ATTACHMENT_LOAD_OP_LOAD,
-            .store_op = RENDERER_ATTACHMENT_STORE_OP_STORE,
-            .image_handle = context->draw_image_handle,
-        }};
+//     RendererBeginRenderingInfo begin_rendering_info = {
+//         .color_attachment_info = {
+//             .load_op = RENDERER_ATTACHMENT_LOAD_OP_LOAD,
+//             .store_op = RENDERER_ATTACHMENT_STORE_OP_STORE,
+//             .image_handle = context->draw_image_handle,
+//         }};
 
-    renderer_vulkan_cmd_begin_rendering(context, command_list, &begin_rendering_info);
+//     renderer_vulkan_cmd_begin_rendering(context, command_list, &begin_rendering_info);
 
-    RendererExtent2D renderer_draw_extent = {
-        .width = context->draw_extent.width,
-        .height = context->draw_extent.height};
-    renderer_vulkan_cmd_set_viewport(context, command_list, renderer_draw_extent);
-    renderer_vulkan_cmd_set_scissor(context, command_list, renderer_draw_extent);
-}
+//     RendererExtent2D renderer_draw_extent = {
+//         .width = context->draw_extent.width,
+//         .height = context->draw_extent.height};
+//     renderer_vulkan_cmd_set_viewport(context, command_list, renderer_draw_extent);
+//     renderer_vulkan_cmd_set_scissor(context, command_list, renderer_draw_extent);
+// }
 
 void renderer_vulkan_cmd_bind_resource_sets(RendererContext *context, RendererCommandList *command_list, RendererPipelineType renderer_pipeline_type, RendererPipelineLayoutHandle pipeline_layout_handle, uint32_t first_set, uint32_t resource_set_len, const RendererResourceSetHandle *resource_set_handle, uint32_t dynamic_offset_len, const uint32_t *dynamic_offsets)
 {

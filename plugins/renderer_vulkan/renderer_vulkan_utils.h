@@ -104,6 +104,7 @@ void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation al
         }                                                                                                                                           \
     } while (0)
 
+TODO("Maybe make the out_resource work by reference, should the input be a pointer or not then?")
 #define RV_RES_RV_HANDLE_GET(generations_pool_a, resource_pool_a, rv_handle, out_ret, out_resource) \
     do                                                                                              \
     {                                                                                               \
@@ -205,19 +206,3 @@ void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation al
         RendererVulkanHandle UNIQUE_VAR(rv_handle) = {.raw = (handle)};                                                             \
         RV_RES_RV_HANDLE_FREE_RETURN_IF_ERROR(logger, occupied_pool_a, generations_pool_a, resource_pool_a, UNIQUE_VAR(rv_handle)); \
     } while (0)
-
-
-#define EXTENT_3D_RENDERER_TO_RV(renderer_extent) \
-    (RV_VkExtent3D) { .width = (renderer_extent).width, .height = (renderer_extent).height, .depth = (renderer_extent).depth }
-
-#define EXTENT_3D_RENDERER_TO_VK(renderer_extent) \
-    (VkExtent3D) { .width = (renderer_extent).width, .height = (renderer_extent).height, .depth = (renderer_extent).depth }
-
-#define EXTENT_3D_VK_TO_RENDERER(renderer_extent) \
-    (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height, .depth = (vk_extent).depth }
-
-#define EXTENT_2D_RENDERER_TO_VK(renderer_extent) \
-    (VkExtent2D) { .width = (renderer_extent).width, .height = (renderer_extent).height }
-
-#define EXTENT_2D_VK_TO_RENDERER(vk_extent) \
-    (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height }

@@ -193,34 +193,6 @@ int32_t create_vma_allocator(RendererContext *context)
     return 0;
 }
 
-int32_t create_draw_image(RendererContext *context)
-{
-    assert(context != NULL);
-
-    uint32_t ret;
-
-    RendererExtent3D image_extent = {
-        .width = context->swapchain_extent.width,
-        .height = context->swapchain_extent.height,
-        .depth = 1,
-    };
-
-    RendererImageCreateInfo renderer_image_create_info = {
-        .extent = image_extent,
-        .format = RENDERER_IMAGE_FORMAT_R16G16B16A16_SFLOAT,
-        .usage_flags = RENDERER_IMAGE_USAGE_TRANSFER_SRC_BIT | RENDERER_IMAGE_USAGE_TRANSFER_DST_BIT | RENDERER_IMAGE_USAGE_STORAGE_BIT | RENDERER_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        .memory_usage = RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY,
-    };
-
-    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_image(context, &renderer_image_create_info, &context->draw_image_handle),
-                    "Failed to create draw image: %d", ret);
-
-    context->draw_extent.width = image_extent.width;
-    context->draw_extent.height = image_extent.height;
-
-    return 0;
-}
-
 // int32_t create_mesh_pipeline(RendererContext *context)
 // {
 //     assert(context != NULL);
@@ -463,9 +435,6 @@ int32_t renderer_vulkan_start_internal(RendererContext *context, RendererStartCo
     RV_TRY_INIT(context->deps.logger, ret, create_vma_allocator(context), context->main_destroy_queue,
                 "Failed to create vma allocator: %d", ret);
 
-    RV_TRY_INIT(context->deps.logger, ret, create_draw_image(context), context->main_destroy_queue,
-                "Failed to create draw image: %d", ret);
-
     RV_TRY_INIT(context->deps.logger, ret, rv_create_descriptor_pools(context), context->main_destroy_queue,
                 "Failed to create draw image: %d", ret);
 
@@ -501,6 +470,7 @@ int32_t renderer_vulkan_start(RendererContext *context)
     return ret;
 }
 
+TODO("Reimplement this")
 int32_t renderer_vulkan_start_recreate_swapchain(RendererContext *context)
 {
     TODO("What needs to happen if fail? delete all queues?")

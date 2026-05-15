@@ -6,6 +6,7 @@
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan, LOG_LEVEL_DEBUG);
+#include <plugin_sdk/renderer/v1/renderer_interface.h>
 
 #include "renderer_vulkan_register.h"
 #include "renderer_vulkan_bootstrap.h"
@@ -43,3 +44,9 @@ void renderer_vulkan_on_window_resize(RendererContext *context, uint32_t width, 
     context->resize_extent.width = width;
     context->resize_extent.height = height;
 }
+
+// RendererExtent2D renderer_vulkan_get_render_extent(RendererContext *context)
+// {
+//     return (RendererExtent2D {
+//         . context->swapchain_extent;
+// }

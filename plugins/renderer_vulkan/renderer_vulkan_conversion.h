@@ -77,3 +77,15 @@ enum VkImageLayout rv_attachment_type_to_vk_image_layout(RendererAttachmentType 
 enum VkAttachmentLoadOp rv_attachment_load_op_to_vk_attachment_load_op(enum RendererAttachmentLoadOp renderer_attachment_load_op);
 enum VkAttachmentStoreOp rv_attachment_store_op_to_vk_attachment_store_op(enum RendererAttachmentStoreOp renderer_attachment_store_op);
 struct VkRenderingAttachmentInfo rv_attachment_info_to_vk_attachment_info(const struct RendererAttachmentInfo *renderer_attachment_info, struct RV_AllocatedImage *image, RendererAttachmentType attachment_type);
+
+#define EXTENT_3D_RENDERER_TO_VK(renderer_extent) \
+    (VkExtent3D) { .width = (renderer_extent).width, .height = (renderer_extent).height, .depth = (renderer_extent).depth }
+
+#define EXTENT_3D_VK_TO_RENDERER(renderer_extent) \
+    (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height, .depth = (vk_extent).depth }
+
+#define EXTENT_2D_RENDERER_TO_VK(renderer_extent) \
+    (VkExtent2D) { .width = (renderer_extent).width, .height = (renderer_extent).height }
+
+#define EXTENT_2D_VK_TO_RENDERER(vk_extent) \
+    (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height }

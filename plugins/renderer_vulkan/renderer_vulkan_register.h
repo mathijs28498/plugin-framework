@@ -5,6 +5,7 @@
 #include <stdbool.h>
 
 #include <plugin_sdk/plugin_utils.h>
+#include <plugin_sdk/renderer/v1/renderer_types.h>
 
 #include "plugin_dependencies.h"
 #include "renderer_vulkan_utils.h"
@@ -39,19 +40,6 @@ RV_CREATE_HANDLE_DEFINITION(VmaAllocator);
 RV_CREATE_HANDLE_DEFINITION(VmaAllocation);
 
 typedef uint32_t RendererImageFormat;
-
-typedef struct RV_VkExtent2D
-{
-    uint32_t width;
-    uint32_t height;
-} RV_VkExtent2D;
-
-typedef struct RV_VkExtent3D
-{
-    uint32_t width;
-    uint32_t height;
-    uint32_t depth;
-} RV_VkExtent3D;
 
 typedef void (*rv_call_fn_any)(void);
 
@@ -103,10 +91,10 @@ typedef struct RV_AllocatedImage
     VkImage image;
     VkImageView image_view;
     VmaAllocation allocation;
-    TODO("Add this")
+    TODO("Possibly Add this")
     // VkImageLayout current_layout;
     RendererImageFormat image_format;
-    RV_VkExtent3D image_extent;
+    RendererExtent3D image_extent;
 } RV_AllocatedImage;
 
 typedef struct AllocatedBuffer
@@ -170,16 +158,13 @@ typedef struct RendererContext
     TODO("Make this an _a array")
     RendererImageHandle swapchain_image_handles[MAX_SWAPCHAIN_IMAGES_LEN];
     RendererImageFormat swapchain_image_format;
-    RV_VkExtent2D swapchain_extent;
+    RendererExtent2D swapchain_extent;
     VmaAllocator vma_allocator;
     RV_CallRecord *main_destroy_queue;
 
-    RendererImageHandle draw_image_handle;
-    RV_VkExtent2D draw_extent;
-
     bool resize_requested;
     bool halt_render;
-    RV_VkExtent2D resize_extent;
+    RendererExtent2D resize_extent;
 
     VkQueue graphics_queue;
     uint32_t graphics_queue_family;
@@ -190,8 +175,6 @@ typedef struct RendererContext
     ActiveFrameState active_frame_state;
 
     VkDescriptorPool global_descriptor_pool;
-
-    uint64_t draw_image_descriptor_set_layout_handle;
 
     bool *shader_module_occupied_a;
     uint32_t *shader_module_generations_a;
