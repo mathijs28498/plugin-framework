@@ -34,7 +34,7 @@ static const RendererVtable plugin_vtable = {
     .create_image = renderer_vulkan_create_image,
     .create_resource_set_layout = renderer_vulkan_create_resource_set_layout,
     .allocate_transient_resource_set = renderer_vulkan_allocate_transient_resource_set,
-    .update_transient_resource_set = renderer_vulkan_update_transient_resource_set,
+    .update_resource_set = renderer_vulkan_update_resource_set,
 
     .create_pipeline_layout = renderer_vulkan_create_pipeline_layout,
 

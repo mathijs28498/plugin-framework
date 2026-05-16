@@ -215,7 +215,6 @@ void renderer_vulkan_cmd_begin_rendering(RendererContext *context, RendererComma
     VkRenderingAttachmentInfo depth_attachment_info = {0};
     if (renderer_begin_rendering_info->depth_attachment_info != NULL)
     {
-
         RV_AllocatedImage depth_attachment_image;
         RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
                                                   renderer_begin_rendering_info->depth_attachment_info->image_handle, depth_attachment_image);

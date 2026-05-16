@@ -10,6 +10,8 @@ typedef uint64_t RendererGraphicsPipelineHandle;
 typedef uint64_t RendererComputePipelineHandle;
 typedef uint64_t RendererCommandListHandle;
 typedef uint64_t RendererImageHandle;
+typedef uint64_t RendererSamplerHandle;
+typedef uint64_t RendererBufferHandle;
 
 typedef struct RendererExtent3D
 {

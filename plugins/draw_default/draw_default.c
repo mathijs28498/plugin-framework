@@ -157,14 +157,31 @@ int32_t draw_default_present(DrawContext *context)
     RendererImageProperties render_image_properties;
     RETURN_IF_ERROR(logger, ret, renderer_get_image_properties(renderer, render_image_handle, &render_image_properties),
                     "Failed to get render image properties: %d", ret);
-                    
+
     renderer_cmd_transition_image(renderer, command_list, context->draw_image_handle, RENDERER_IMAGE_LAYOUT_UNDEFINED, RENDERER_IMAGE_LAYOUT_GENERAL);
 
     RendererResourceSetHandle draw_image_resource_set_handle;
     RETURN_IF_ERROR(logger, ret, renderer_allocate_transient_resource_set(renderer, context->draw_image_resource_set_layout_handle, &draw_image_resource_set_handle),
                     "Failed to allocate transient resource set: %d", ret);
 
-    renderer_update_transient_resource_set(renderer, draw_image_resource_set_handle, context->draw_image_handle);
+    RendererResourceImageBinding draw_image_binding = {
+        .image_handle = context->draw_image_handle,
+        .image_layout = RENDERER_IMAGE_LAYOUT_GENERAL,
+    };
+    RendererResourceSetWrite draw_image_resource_set_write = {
+        .binding = 0,
+        .resource_type = RENDERER_RESOURCE_TYPE_STORAGE_IMAGE,
+        .resource_bindings_len = 1,
+        .image_bindings = &draw_image_binding,
+    };
+
+    RendererResourceSetUpdateInfo resource_set_update_info = {
+        .resource_set_handle = draw_image_resource_set_handle,
+        .resource_set_writes_len = 1,
+        .resource_set_writes = &draw_image_resource_set_write,
+    };
+
+    renderer_update_resource_set(renderer, &resource_set_update_info);
 
     BackgroundPushConstants push_constants = {
         .top_left = {1, 0, 0, 1},
@@ -188,7 +205,6 @@ int32_t draw_default_present(DrawContext *context)
     renderer_cmd_transition_image(renderer, command_list, context->draw_image_handle, RENDERER_IMAGE_LAYOUT_GENERAL, RENDERER_IMAGE_LAYOUT_TRANSFER_SRC);
 
     renderer_cmd_transition_image(renderer, command_list, render_image_handle, RENDERER_IMAGE_LAYOUT_UNDEFINED, RENDERER_IMAGE_LAYOUT_TRANSFER_DST);
-
 
     renderer_cmd_blit_image_to_image(renderer, command_list, context->draw_image_handle, render_image_handle,
                                      (RendererExtent2D){

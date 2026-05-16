@@ -125,6 +125,54 @@ typedef struct RendererPipelineLayoutCreateInfo
     RendererResourceSetLayoutHandle *resource_set_layout_handles;
 } RendererPipelineLayoutCreateInfo;
 
+typedef struct RendererResourceImageBinding
+{
+    RendererImageHandle image_handle;
+    RendererImageLayout image_layout;
+} RendererResourceImageBinding;
+
+typedef struct RendererResourceSamplerBinding
+{
+    uint64_t sampler_handle;
+} RendererResourceSamplerBinding;
+
+typedef struct RendererResourceCombinedImageSamplerBinding
+{
+    RendererImageHandle image_handle;
+    RendererImageLayout image_layout;
+    RendererSamplerHandle sampler_handle;
+} RendererResourceCombinedImageSamplerBinding;
+
+typedef struct RendererResourceBufferBinding
+{
+    RendererBufferHandle buffer_handle;
+    uint64_t offset;
+    uint64_t size;
+} RendererResourceBufferBinding;
+
+typedef struct RendererResourceSetWrite
+{
+    uint32_t binding;
+    uint32_t first_resource;
+
+    RendererResourceType resource_type;
+    uint32_t resource_bindings_len;
+    union
+    {
+        const RendererResourceImageBinding *image_bindings;
+        const RendererResourceSamplerBinding *sampler_bindings;
+        const RendererResourceCombinedImageSamplerBinding *combined_image_sampler_bindings;
+        const RendererResourceBufferBinding *buffer_bindings;
+    };
+} RendererResourceSetWrite;
+
+typedef struct RendererResourceSetUpdateInfo
+{
+    RendererResourceSetHandle resource_set_handle;
+    uint32_t resource_set_writes_len;
+    const RendererResourceSetWrite *resource_set_writes;
+} RendererResourceSetUpdateInfo;
+
 typedef struct RendererGraphicsPipelineCreateInfo
 {
     RendererShaderHandle vertex_shader_handle;
@@ -200,7 +248,7 @@ typedef struct RendererVtable
     int32_t (*create_image)(RendererContext *context, RendererImageCreateInfo *renderer_image_create_info, RendererImageHandle *out_image_handle);
     int32_t (*create_resource_set_layout)(RendererContext *context, const RendererResourceSetLayoutCreateInfo *renderer_resource_set_layout_create_info, RendererResourceSetLayoutHandle *out_resource_set_layout_handle);
     int32_t (*allocate_transient_resource_set)(RendererContext *context, RendererResourceSetLayoutHandle resource_set_layout_handle, RendererResourceSetHandle *out_resource_set_handle);
-    void (*update_transient_resource_set)(RendererContext *context, RendererResourceSetHandle resource_set_handle, RendererImageHandle draw_image_handle);
+    void (*update_resource_set)(RendererContext *context, const RendererResourceSetUpdateInfo *resource_set_update_info);
 
     int32_t (*create_pipeline_layout)(RendererContext *context, const RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle);
 
@@ -281,9 +329,9 @@ static inline int32_t renderer_allocate_transient_resource_set(RendererInterface
     return VTABLE_METHOD_CALL(iface, allocate_transient_resource_set, resource_set_layout_handle, out_resource_set_handle);
 }
 
-static inline void renderer_update_transient_resource_set(RendererInterface *iface, RendererResourceSetHandle resource_set_handle, RendererImageHandle draw_image_handle)
+static inline void renderer_update_resource_set(RendererInterface *iface, const RendererResourceSetUpdateInfo *resource_set_update_info)
 {
-    VTABLE_METHOD_CALL(iface, update_transient_resource_set, resource_set_handle, draw_image_handle);
+    VTABLE_METHOD_CALL(iface, update_resource_set, resource_set_update_info);
 }
 
 static inline int32_t renderer_create_pipeline_layout(RendererInterface *iface, const RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle)
