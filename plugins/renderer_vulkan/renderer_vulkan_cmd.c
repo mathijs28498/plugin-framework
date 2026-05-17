@@ -44,7 +44,7 @@ void renderer_vulkan_cmd_bind_resource_sets(RendererContext *context, RendererCo
     RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_layout_generations_a, context->pipeline_layouts_a, pipeline_layout_handle, pipeline_layout);
 
     TODO("Allow for multiple descriptor sets")
-    VkDescriptorSet descriptor_set = context->active_frame_state.frame->transient_descriptor_sets[(size_t)resource_set_handle[0]];
+    VkDescriptorSet descriptor_set = context->active_frame_state.frame->transient_descriptor_sets_a[(size_t)resource_set_handle[0]];
     vkCmdBindDescriptorSets(command_list->command_buffer, rv_pipeline_type_to_vk_pipeline_bind_point(renderer_pipeline_type), pipeline_layout, first_set, resource_set_len, &descriptor_set, dynamic_offset_len, dynamic_offsets);
 }
 
@@ -83,6 +83,7 @@ void renderer_vulkan_cmd_bind_compute_pipeline(RendererContext *context, Rendere
     assert(command_list != NULL);
     VkPipeline pipeline = VK_NULL_HANDLE;
     RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_generations_a, context->pipelines_a, pipeline_handle, pipeline);
+   
     vkCmdBindPipeline(command_list->command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
 }
 

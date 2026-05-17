@@ -3,9 +3,13 @@
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 
+#include <plugin_sdk/logger/v1/logger_interface.h>
+#include <plugin_sdk/logger/v1/logger_interface_macros.h>
+LOGGER_INTERFACE_REGISTER(renderer_vulkan_conversion, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/renderer/v1/renderer_interface.h>
 
 #include "renderer_vulkan_register.h"
+#include "renderer_vulkan.h"
 
 VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mask)
 {
@@ -72,6 +76,7 @@ VkDescriptorType rv_resource_type_to_vk_descriptor_type(RendererResourceType res
         break;
 
     default:
+        UNREACHABLE();
         return VK_DESCRIPTOR_TYPE_MAX_ENUM;
         break;
     }
@@ -106,6 +111,7 @@ VkPipelineBindPoint rv_pipeline_type_to_vk_pipeline_bind_point(RendererPipelineT
     case RENDERER_PIPELINE_TYPE_COMPUTE:
         return VK_PIPELINE_BIND_POINT_COMPUTE;
     default:
+        UNREACHABLE();
         return VK_PIPELINE_BIND_POINT_MAX_ENUM;
     }
 }
@@ -118,6 +124,8 @@ VkImageLayout rv_image_layout_to_vk_image_layout(RendererImageLayout image_layou
         return VK_IMAGE_LAYOUT_UNDEFINED;
     case RENDERER_IMAGE_LAYOUT_GENERAL:
         return VK_IMAGE_LAYOUT_GENERAL;
+    case RENDERER_IMAGE_LAYOUT_COLOR_ATTACHMENT:
+        return VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     case RENDERER_IMAGE_LAYOUT_TRANSFER_SRC:
         return VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
     case RENDERER_IMAGE_LAYOUT_TRANSFER_DST:
@@ -125,6 +133,7 @@ VkImageLayout rv_image_layout_to_vk_image_layout(RendererImageLayout image_layou
     case RENDERER_IMAGE_LAYOUT_PRESENT_SRC:
         return VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
     default:
+        UNREACHABLE();
         return VK_IMAGE_LAYOUT_UNDEFINED;
     }
 }
@@ -133,6 +142,8 @@ VkFormat rv_image_format_to_vk_format(RendererImageFormat format)
 {
     switch (format)
     {
+    case RENDERER_IMAGE_FORMAT_UNDEFINED:
+        return VK_FORMAT_UNDEFINED;
     case RENDERER_IMAGE_FORMAT_R8G8B8A8_UNORM:
         return VK_FORMAT_R8G8B8A8_UNORM;
     case RENDERER_IMAGE_FORMAT_R8G8B8A8_SRGB:
@@ -146,6 +157,7 @@ VkFormat rv_image_format_to_vk_format(RendererImageFormat format)
     case RENDERER_IMAGE_FORMAT_D24_UNORM_S8_UINT:
         return VK_FORMAT_D24_UNORM_S8_UINT;
     default:
+        UNREACHABLE();
         return VK_FORMAT_UNDEFINED;
     }
 }
@@ -190,6 +202,7 @@ VmaMemoryUsage rv_image_memory_usage_to_vma_memory_usage(RendererImageMemoryUsag
     case RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY:
         return VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
     default:
+        UNREACHABLE();
         return VMA_MEMORY_USAGE_AUTO;
     }
 }
@@ -201,7 +214,7 @@ VkMemoryPropertyFlags rv_image_memory_usage_to_vk_memory_usage(RendererImageMemo
     case RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY:
         return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     default:
-
+        UNREACHABLE();
         return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     }
 }
@@ -215,6 +228,7 @@ VkImageLayout rv_attachment_type_to_vk_image_layout(RendererAttachmentType attac
     case RENDERER_ATTACHMENT_TYPE_DEPTH:
         return VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
     default:
+        UNREACHABLE();
         return 0;
     };
 }
@@ -230,6 +244,7 @@ VkAttachmentLoadOp rv_attachment_load_op_to_vk_attachment_load_op(RendererAttach
     case RENDERER_ATTACHMENT_LOAD_OP_DONT_CARE:
         return VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     default:
+        UNREACHABLE();
         return 0;
     };
 }
@@ -243,6 +258,7 @@ VkAttachmentStoreOp rv_attachment_store_op_to_vk_attachment_store_op(RendererAtt
     case RENDERER_ATTACHMENT_STORE_OP_DONT_CARE:
         return VK_ATTACHMENT_STORE_OP_DONT_CARE;
     default:
+        UNREACHABLE();
         return 0;
     };
 }
@@ -307,3 +323,74 @@ RendererExtent2D rv_vk_extent_2d_to_renderer_2d(const VkExtent2D *renderer_exten
 
 #define rv_vk_extent_2d_to_renderer_extent_2d(vk_extent) \
     (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height }
+
+VkPrimitiveTopology rv_topology_to_vk_topology(RendererPrimitiveTopology topology)
+{
+    switch (topology)
+    {
+    case RENDERER_PRIMITIVE_TOPOLOGY_POINT_LIST:
+        return VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+    case RENDERER_PRIMITIVE_TOPOLOGY_LINE_LIST:
+        return VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    case RENDERER_PRIMITIVE_TOPOLOGY_LINE_STRIP:
+        return VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
+    case RENDERER_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST:
+        return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    case RENDERER_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP:
+        return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP;
+    case RENDERER_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN:
+        return VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
+    default:
+        UNREACHABLE();
+        return 0;
+    }
+}
+
+VkPolygonMode rv_fill_mode_to_vk_polygon_mode(RendererFillMode fill_mode)
+{
+    switch (fill_mode)
+    {
+    case RENDERER_FILL_MODE_SOLID:
+        return VK_POLYGON_MODE_FILL;
+    case RENDERER_FILL_MODE_WIREFRAME:
+        return VK_POLYGON_MODE_LINE;
+    case RENDERER_FILL_MODE_POINT:
+        return VK_POLYGON_MODE_POINT;
+    default:
+        UNREACHABLE();
+        return 0;
+    }
+}
+
+TODO("Improve this method, maybe enum in stead of bits or something?")
+VkCullModeFlagBits rv_cull_mode_to_vk_cull_mode(RendererCullModeFlagBits cull_mode)
+{
+    switch (cull_mode)
+    {
+    case RENDERER_CULL_MODE_NONE:
+        return VK_CULL_MODE_NONE;
+    case RENDERER_CULL_MODE_FRONT_BIT:
+        return VK_CULL_MODE_FRONT_BIT;
+    case RENDERER_CULL_MODE_BACK_BIT:
+        return VK_CULL_MODE_BACK_BIT;
+    case RENDERER_CULL_MODE_FRONT_AND_BACK:
+        return VK_CULL_MODE_FRONT_AND_BACK;
+    default:
+        UNREACHABLE();
+        return 0;
+    }
+}
+
+VkFrontFace rv_front_face_to_vk_front_face(RendererFrontFace front_face)
+{
+    switch (front_face)
+    {
+    case RENDERER_FRONT_FACE_COUNTER_CLOCKWISE:
+        return VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    case RENDERER_FRONT_FACE_CLOCKWISE:
+        return VK_FRONT_FACE_CLOCKWISE;
+    default:
+        UNREACHABLE();
+        return 0;
+    }
+}

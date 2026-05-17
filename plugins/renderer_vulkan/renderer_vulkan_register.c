@@ -18,12 +18,12 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_register, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_pipeline.h"
 #include "renderer_vulkan_descriptor_set.h"
 
-
 static const RendererVtable plugin_vtable = {
     .start = renderer_vulkan_start,
     .begin_frame = renderer_vulkan_render_begin_frame,
     .end_frame = renderer_vulkan_render_end_frame,
     .on_window_resize = renderer_vulkan_on_window_resize,
+    .consume_has_resized = renderer_vulkan_consume_has_resized,
 
     .get_render_image_handle = renderer_vulkan_get_render_image_handle,
     .get_image_properties = renderer_vulkan_get_image_properties,
@@ -32,16 +32,26 @@ static const RendererVtable plugin_vtable = {
     .destroy_shader = renderer_vulkan_destroy_shader,
 
     .create_image = renderer_vulkan_create_image,
+    .destroy_image = renderer_vulkan_destroy_image,
     .create_resource_set_layout = renderer_vulkan_create_resource_set_layout,
+    .destroy_resource_set_layout = renderer_vulkan_destroy_resource_set_layout,
     .allocate_transient_resource_set = renderer_vulkan_allocate_transient_resource_set,
     .update_resource_set = renderer_vulkan_update_resource_set,
 
     .create_pipeline_layout = renderer_vulkan_create_pipeline_layout,
+    .destroy_pipeline_layout = renderer_vulkan_destroy_pipeline_layout,
 
     .create_graphics_pipeline = renderer_vulkan_create_graphics_pipeline,
     .create_compute_pipeline = renderer_vulkan_create_compute_pipeline,
+    .destroy_graphics_pipeline = renderer_vulkan_destroy_graphics_pipeline,
+    .destroy_compute_pipeline = renderer_vulkan_destroy_compute_pipeline,
 
+    .cmd_begin_rendering = renderer_vulkan_cmd_begin_rendering,
     .cmd_end_rendering = renderer_vulkan_cmd_end_rendering,
+
+    .cmd_set_viewport = renderer_vulkan_cmd_set_viewport,
+    .cmd_set_scissor = renderer_vulkan_cmd_set_scissor,
+
     .cmd_bind_graphics_pipeline = renderer_vulkan_cmd_bind_graphics_pipeline,
     .cmd_bind_compute_pipeline = renderer_vulkan_cmd_bind_compute_pipeline,
     .cmd_draw = renderer_vulkan_cmd_draw,
@@ -63,7 +73,7 @@ TODO("Make these part of the configurations")
 #define TRANSIENT_DESCRIPTOR_SETS_CAPACITY 128
 #define PIPELINES_CAPACITY 128
 #define PIPELINE_LAYOUTS_CAPACITY 128
-#define ALLOCATED_IMAGES_CAPACITY 128
+#define ALLOCATED_IMAGES_CAPACITY 16
 #define BUMP_ARENA_CAPACITY (1024 * 128)
 
 static int32_t plugin_init(RendererContext *context)
@@ -71,6 +81,7 @@ static int32_t plugin_init(RendererContext *context)
     assert(context != NULL);
     int32_t ret;
 
+    TODO("Fix alignment weird issues");
     struct
     {
         INIT_ARRAY_MEMORY_FIELD(main_destroy_queue_mem, RV_CallRecord, MAIN_DESTROY_QUEUE_CAPACITY);
@@ -99,12 +110,12 @@ static int32_t plugin_init(RendererContext *context)
     RETURN_IF_ERROR(context->deps.logger, ret, arena_allocator_get_arena(context->deps.arena_allocator, alloc_size, &arena),
                     "Unable to allocate arena allocator: %d", -1);
 
-    BIND_ARRAY(RV_CallRecord, arena->main_destroy_queue_mem, context->main_destroy_queue, MAIN_DESTROY_QUEUE_CAPACITY);
-    BIND_ARRAY(RV_CallRecord, arena->swapchain_destroy_queue_mem, context->swapchain_destroy_queue, SWAPCHAIN_DESTROY_QUEUE_CAPACITY);
+    BIND_ARRAY(RV_CallRecord, arena->main_destroy_queue_mem, context->global_destroy_queue_a, MAIN_DESTROY_QUEUE_CAPACITY);
+    BIND_ARRAY(RV_CallRecord, arena->swapchain_destroy_queue_mem, context->swapchain_destroy_queue_a, SWAPCHAIN_DESTROY_QUEUE_CAPACITY);
     for (size_t i = 0; i < ARRAY_SIZE(context->frames); i++)
     {
-        BIND_ARRAY(RV_CallRecord, arena->frame_destroy_queue_mem[i], context->frames[i].destroy_queue, FRAME_DESTROY_QUEUE_CAPACITY);
-        BIND_ARRAY(VkDescriptorSet, arena->transient_descriptor_sets_mem[i], context->frames[i].transient_descriptor_sets, TRANSIENT_DESCRIPTOR_SETS_CAPACITY);
+        BIND_ARRAY(RV_CallRecord, arena->frame_destroy_queue_mem[i], context->frames[i].destroy_queue_a, FRAME_DESTROY_QUEUE_CAPACITY);
+        BIND_ARRAY(VkDescriptorSet, arena->transient_descriptor_sets_mem[i], context->frames[i].transient_descriptor_sets_a, TRANSIENT_DESCRIPTOR_SETS_CAPACITY);
     }
 
     BIND_ARRAY_FILLED(bool, arena->shader_module_occupied_mem, context->shader_module_occupied_a, SHADER_MODULES_CAPACITY);
@@ -123,9 +134,9 @@ static int32_t plugin_init(RendererContext *context)
     BIND_ARRAY_FILLED(uint32_t, arena->pipeline_generations_mem, context->pipeline_generations_a, PIPELINES_CAPACITY);
     BIND_ARRAY_FILLED(VkPipeline, arena->pipelines_mem, context->pipelines_a, PIPELINES_CAPACITY);
 
-    BIND_ARRAY_FILLED(bool, arena->allocated_image_occupied_mem, context->allocated_image_occupied_a, PIPELINES_CAPACITY);
-    BIND_ARRAY_FILLED(uint32_t, arena->pipeline_generations_mem, context->allocated_image_generations_a, PIPELINES_CAPACITY);
-    BIND_ARRAY_FILLED(RV_AllocatedImage, arena->allocated_images_mem, context->allocated_images_a, PIPELINES_CAPACITY);
+    BIND_ARRAY_FILLED(bool, arena->allocated_image_occupied_mem, context->allocated_image_occupied_a, ALLOCATED_IMAGES_CAPACITY);
+    BIND_ARRAY_FILLED(uint32_t, arena->allocated_image_generations_mem, context->allocated_image_generations_a, ALLOCATED_IMAGES_CAPACITY);
+    BIND_ARRAY_FILLED(RV_AllocatedImage, arena->allocated_images_mem, context->allocated_images_a, ALLOCATED_IMAGES_CAPACITY);
 
     BIND_ARRAY(uint8_t, arena->bump_arena_mem, context->bump_arena_a, BUMP_ARENA_CAPACITY);
 

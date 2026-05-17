@@ -14,8 +14,8 @@
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_WARNING)
 #include <plugin_sdk/renderer/v1/renderer_interface.h>
 
-#include "shader_colored_triangle_mesh_vertex.h"
-#include "shader_colored_triangle_fragment.h"
+// #include "shader_colored_triangle_mesh_vertex.h"
+// #include "shader_colored_triangle_fragment.h"
 
 #include "renderer_vulkan_bootstrap.h"
 #include "renderer_vulkan_utils.h"
@@ -54,7 +54,7 @@ int32_t create_frame_command_buffers(RendererContext *context)
                            -1, "Failed to create frame command pool for frame %d: %d", i, result);
 
         RETURN_IF_ERROR(context->deps.logger, ret,
-                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyCommandPool, context->device, context->frames[i].command_pool, NULL),
+                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, vkDestroyCommandPool, context->device, context->frames[i].command_pool, NULL),
                         "Failed to push frame command pool destroy data to destroy queue: %d", ret);
 
         command_buffer_alloc_info.commandPool = frame->command_pool;
@@ -84,7 +84,7 @@ int32_t create_start_command_buffer(RendererContext *context, RendererStartConte
                        -1, "Failed to create start command pool: %d", result);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, start_context->destroy_queue, vkDestroyCommandPool, context->device, start_context->command_pool, NULL),
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, start_context->destroy_queue_a, vkDestroyCommandPool, context->device, start_context->command_pool, NULL),
                     "Failed to push start command pool to destroy queue: %d", ret);
 
     VkCommandBufferAllocateInfo command_buffer_alloc_info = {
@@ -147,23 +147,25 @@ int32_t create_sync_structures(RendererContext *context)
                            -1, "Failed to create fence for frame %d: %d", i, result);
 
         RETURN_IF_ERROR(context->deps.logger, ret,
-                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyFence, context->device, frame->render_fence, NULL),
+                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, vkDestroyFence, context->device, frame->render_fence, NULL),
                         "Failed to push render fence destroy data to destroy queue: %d", ret);
 
         RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateSemaphore(context->device, &semaphore_create_info, NULL, &frame->render_semaphore),
                            -1, "Failed to create render semaphore for frame %d: %d", i, result);
 
         RETURN_IF_ERROR(context->deps.logger, ret,
-                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroySemaphore, context->device, frame->render_semaphore, NULL),
+                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, vkDestroySemaphore, context->device, frame->render_semaphore, NULL),
                         "Failed to push render semaphore destroy data to destroy queue: %d", ret);
 
         RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreateSemaphore(context->device, &semaphore_create_info, NULL, &frame->swapchain_semaphore),
                            -1, "Failed to create swacphain semaphore for frame %d: %d", i, result);
 
         RETURN_IF_ERROR(context->deps.logger, ret,
-                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroySemaphore, context->device, frame->swapchain_semaphore, NULL),
+                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, vkDestroySemaphore, context->device, frame->swapchain_semaphore, NULL),
                         "Failed to push swapchain semaphore destroy data to destroy queue: %d", ret);
     }
+
+    context->active_frame_state.frame = &context->frames[0];
 
     return 0;
 }
@@ -187,7 +189,7 @@ int32_t create_vma_allocator(RendererContext *context)
                        -1, "Unable to create vma allocator: %d", result);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_1(context->deps.logger, context->main_destroy_queue, vmaDestroyAllocator, context->vma_allocator),
+                    RV_CALL_QUEUE_PUSH_1(context->deps.logger, context->global_destroy_queue_a, vmaDestroyAllocator, context->vma_allocator),
                     "Failed to push swapchain semaphore destroy data to destroy queue: %d", ret);
 
     return 0;
@@ -221,7 +223,7 @@ int32_t create_vma_allocator(RendererContext *context)
 //     RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &graphics_pipeline_layout_create_info, NULL, &context->mesh_pipeline_layout),
 //                        -1, "Failed to create graphics pipeline layout: %d", result);
 
-//     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, context->mesh_pipeline_layout, NULL);
+//     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, vkDestroyPipelineLayout, context->device, context->mesh_pipeline_layout, NULL);
 
 //     RV_PipelineBuilder *pipeline_builder;
 //     RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_create_pipeline_builder(&pipeline_builder),
@@ -245,7 +247,7 @@ int32_t create_vma_allocator(RendererContext *context)
 //     RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_builder_build(context, pipeline_builder, &context->mesh_pipeline),
 //                     "Failed to build graphics pipeline: %d", ret);
 
-//     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipeline, context->device, context->mesh_pipeline, NULL);
+//     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, vkDestroyPipeline, context->device, context->mesh_pipeline, NULL);
 
 //     vkDestroyShaderModule(context->device, fragment_shader_module, NULL);
 //     vkDestroyShaderModule(context->device, vertex_shader_module, NULL);
@@ -287,7 +289,7 @@ int32_t create_mesh_buffer(RendererContext *context, RendererStartContext *start
                     "Unable to create vertex buffer: %d", ret);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, rv_destroy_buffer, context->vma_allocator, out_mesh_buffers->vertex_buffer.buffer, out_mesh_buffers->vertex_buffer.allocation),
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, rv_destroy_buffer, context->vma_allocator, out_mesh_buffers->vertex_buffer.buffer, out_mesh_buffers->vertex_buffer.allocation),
                     "Failed to push vertex buffer to destroy queue: %d", ret);
 
     VkBufferDeviceAddressInfo device_address_info = {
@@ -304,7 +306,7 @@ int32_t create_mesh_buffer(RendererContext *context, RendererStartContext *start
                     "Unable to create index buffer: %d", ret);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, rv_destroy_buffer, context->vma_allocator, out_mesh_buffers->index_buffer.buffer, out_mesh_buffers->index_buffer.allocation),
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, rv_destroy_buffer, context->vma_allocator, out_mesh_buffers->index_buffer.buffer, out_mesh_buffers->index_buffer.allocation),
                     "Failed to push index buffer to destroy queue: %d", ret);
 
     // Create the staging buffer
@@ -342,7 +344,7 @@ int32_t create_mesh_buffer(RendererContext *context, RendererStartContext *start
     vkCmdCopyBuffer(start_context->command_buffer, staging_buffer.buffer, out_mesh_buffers->index_buffer.buffer, 1, &index_copy_region);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, start_context->destroy_queue, rv_destroy_buffer, context->vma_allocator, staging_buffer.buffer, staging_buffer.allocation),
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, start_context->destroy_queue_a, rv_destroy_buffer, context->vma_allocator, staging_buffer.buffer, staging_buffer.allocation),
                     "Failed to push staging buffer to destroy queue: %d", ret);
 
     return 0;
@@ -423,28 +425,28 @@ int32_t renderer_vulkan_start_internal(RendererContext *context, RendererStartCo
 
     int32_t ret;
 
-    RV_TRY_INIT(context->deps.logger, ret, renderer_vulkan_bootstrap(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, renderer_vulkan_bootstrap(context), context->global_destroy_queue_a,
                 "Failed to bootstrap vulkan: %d", ret);
 
-    RV_TRY_INIT(context->deps.logger, ret, create_command_buffers(context, start_context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_command_buffers(context, start_context), context->global_destroy_queue_a,
                 "Failed to init commands: %d", ret);
 
-    RV_TRY_INIT(context->deps.logger, ret, create_sync_structures(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_sync_structures(context), context->global_destroy_queue_a,
                 "Failed to create sync structures: %d", ret);
 
-    RV_TRY_INIT(context->deps.logger, ret, create_vma_allocator(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_vma_allocator(context), context->global_destroy_queue_a,
                 "Failed to create vma allocator: %d", ret);
 
-    RV_TRY_INIT(context->deps.logger, ret, rv_create_descriptor_pools(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, rv_create_descriptor_pools(context), context->global_destroy_queue_a,
                 "Failed to create draw image: %d", ret);
 
-    RV_TRY_INIT(context->deps.logger, ret, init_pipelines(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, init_pipelines(context), context->global_destroy_queue_a,
                 "Failed to load shader module: %d", ret);
 
-    RV_TRY_INIT(context->deps.logger, ret, create_mesh_buffers(context, start_context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_mesh_buffers(context, start_context), context->global_destroy_queue_a,
                 "Failed to create mesh buffers: %d", ret);
 
-    RV_TRY_INIT(context->deps.logger, ret, execute_start_command_buffer(context, start_context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, execute_start_command_buffer(context, start_context), context->global_destroy_queue_a,
                 "Failed to execute initial command buffer: %d", ret);
 
     return 0;
@@ -457,20 +459,19 @@ int32_t renderer_vulkan_start(RendererContext *context)
     int32_t ret;
     CREATE_ARRAY(RV_CallRecord, start_context_destroy_queue, START_DESTROY_QUEUE_CAPACITY);
 
-    RendererStartContext start_context = {.destroy_queue = start_context_destroy_queue};
+    RendererStartContext start_context = {.destroy_queue_a = start_context_destroy_queue};
 
     ret = renderer_vulkan_start_internal(context, &start_context);
 
     TODO("Destroy the necessary queues here on error");
     TODO("Also wait for device idle here")
 
-    rv_call_queue_flush(start_context.destroy_queue);
+    rv_call_queue_flush(start_context.destroy_queue_a);
     bump_arena_free(context->bump_arena_a, true);
 
     return ret;
 }
 
-TODO("Reimplement this")
 int32_t renderer_vulkan_start_recreate_swapchain(RendererContext *context)
 {
     TODO("What needs to happen if fail? delete all queues?")
@@ -478,31 +479,34 @@ int32_t renderer_vulkan_start_recreate_swapchain(RendererContext *context)
     assert(context->device != VK_NULL_HANDLE);
     assert(context->swapchain != VK_NULL_HANDLE);
 
-    // int32_t ret;
-    // VkResult result;
+    VkResult result;
+    int32_t ret;
 
-    // RV_RETURN_IF_ERROR(context->deps.logger, result, vkDeviceWaitIdle(context->device),
-    //                    -1, "Failed to wait for device to idle: %d", result);
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkDeviceWaitIdle(context->device),
+                       -1, "Failed to wait for device to idle: %d", result);
 
-    // rv_call_queue_flush(context->swapchain_destroy_queue);
+    rv_call_queue_flush(context->swapchain_destroy_queue_a);
 
-    // if (context->resize_extent.width == 0 || context->resize_extent.height == 0)
-    // {
-    //     context->resize_requested = false;
-    //     context->halt_render = true;
-    //     return 0;
-    // }
+    if (context->resize_extent.width == 0 || context->resize_extent.height == 0)
+    {
+        context->resize_requested = false;
+        context->halt_render = true;
+        return 0;
+    }
 
-    // context->halt_render = false;
+    context->halt_render = false;
 
-    // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_bootstrap_recreate_swapchain(context),
-    //                 "Failed to bootstrap recreate swapchain: %d", ret);
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_bootstrap_recreate_swapchain(context),
+                    "Failed to bootstrap recreate swapchain: %d", ret);
 
-    // RETURN_IF_ERROR(context->deps.logger, ret, create_draw_image(context),
-    //                 "Failed to recreate draw image: %d", ret);
-
-    // // renderer_vulkan_update_descriptor_set(context);
-
-    // context->resize_requested = false;
+    context->resize_requested = false;
+    context->swapchain_recreated = true;
     return 0;
+}
+
+bool renderer_vulkan_consume_has_resized(RendererContext *context)
+{
+    bool swapchain_recreated = context->swapchain_recreated;
+    context->swapchain_recreated = false;
+    return swapchain_recreated;
 }

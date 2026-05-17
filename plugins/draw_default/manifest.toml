@@ -3,6 +3,7 @@ interface_version = "1"
 plugin_name = "default"
 module_path = "${build_dir}/draw_default.dll"
 supported_lifetimes = ["singleton"]
+shutdown = true
 
 [dependencies]
 logger = {}

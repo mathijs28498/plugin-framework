@@ -36,7 +36,7 @@ TODO("Make platform agnostic")
 void renderer_vulkan_cmd_transition_image(struct RendererContext *context, struct RendererCommandList *command_list, RendererImageHandle image_handle, enum RendererImageLayout current_layout, enum RendererImageLayout new_layout);
 void renderer_vulkan_cmd_blit_image_to_image(struct RendererContext *context, struct RendererCommandList *command_list, RendererImageHandle image_handle_source, RendererImageHandle image_handle_destination, struct RendererExtent2D extent_source, struct RendererExtent2D extent_destination);
 
-void renderer_vulkan_cmd_begin_rendering(struct RendererContext *context, struct RendererCommandList *, const struct RendererBeginRenderingInfo *renderer_begin_rendering_info);
+void renderer_vulkan_cmd_begin_rendering(struct RendererContext *context, struct RendererCommandList *command_list, const struct RendererBeginRenderingInfo *renderer_begin_rendering_info);
 void renderer_vulkan_cmd_end_rendering(struct RendererContext *context, struct RendererCommandList *command_list);
 void renderer_vulkan_cmd_set_viewport(struct RendererContext *context, struct RendererCommandList *command_list, struct RendererExtent2D extent);
 void renderer_vulkan_cmd_set_scissor(struct RendererContext *context, struct RendererCommandList *command_list, struct RendererExtent2D extent);

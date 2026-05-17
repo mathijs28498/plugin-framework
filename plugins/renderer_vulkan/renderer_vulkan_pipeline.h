@@ -4,14 +4,11 @@
 
 #include "renderer_vulkan_utils.h"
 
-// Forward declare the context
 struct RendererContext;
 
 RV_CREATE_HANDLE_DEFINITION(VkPipeline);
 RV_CREATE_HANDLE_DEFINITION(VkShaderModule);
 RV_CREATE_HANDLE_DEFINITION(VkPipelineLayout);
-
-typedef struct RV_PipelineBuilder RV_PipelineBuilder;
 
 typedef enum RV_VkPrimitiveTopology
 {
@@ -48,21 +45,21 @@ typedef uint32_t RV_VkCullModeFlags;
 typedef uint32_t RendererVkFormat;
 typedef uint32_t RV_VkShaderStageFlagBits;
 
-int32_t rv_pipeline_create_pipeline_builder(RV_PipelineBuilder **out_pipeline_builder);
-int32_t rv_pipeline_builder_build(struct RendererContext *context, RV_PipelineBuilder *pipeline_builder, VkPipeline *out_pipeline);
+// int32_t rv_pipeline_create_pipeline_builder(RV_PipelineBuilder **out_pipeline_builder);
+// int32_t rv_pipeline_builder_build(struct RendererContext *context, RV_PipelineBuilder *pipeline_builder, VkPipeline *out_pipeline);
 
-void rv_pipeline_set_layout(RV_PipelineBuilder *pipeline_builder, VkPipelineLayout pipeline_layout);
-int32_t rv_pipeline_set_shaders(RV_PipelineBuilder *pipeline_builder, VkShaderModule vertex_shader, VkShaderModule fragment_shader);
-void rv_pipeline_set_input_topology(RV_PipelineBuilder *pipeline_builder, RV_VkPrimitiveTopology topology);
-void rv_pipeline_set_polygon_mode(RV_PipelineBuilder *pipeline_builder, RV_VkPolygonMode polygon_mode);
-void rv_pipeline_set_cull_mode(RV_PipelineBuilder *pipeline_builder, RV_VkCullModeFlags cull_mode_flags, RV_VkFrontFace front_face);
-void rv_pipeline_set_multisampling_none(RV_PipelineBuilder *pipeline_builder);
-void rv_pipeline_disable_blending(RV_PipelineBuilder *pipeline_builder);
-void rv_pipeline_enable_blending_additive(RV_PipelineBuilder *pipeline_builder);
-void rv_pipeline_enable_blending_alphablend(RV_PipelineBuilder *pipeline_builder);
-void rv_pipeline_set_color_attachment_format(RV_PipelineBuilder *pipeline_builder, RendererVkFormat format);
-void rv_pipeline_set_depth_format(RV_PipelineBuilder *pipeline_builder, RendererVkFormat format);
-void rv_pipeline_disable_depthtest(RV_PipelineBuilder *pipeline_builder);
+// void rv_pipeline_set_layout(RV_PipelineBuilder *pipeline_builder, VkPipelineLayout pipeline_layout);
+// int32_t rv_pipeline_set_shaders(RV_PipelineBuilder *pipeline_builder, VkShaderModule vertex_shader, VkShaderModule fragment_shader);
+// void rv_pipeline_set_input_topology(RV_PipelineBuilder *pipeline_builder, RV_VkPrimitiveTopology topology);
+// void rv_pipeline_set_polygon_mode(RV_PipelineBuilder *pipeline_builder, RV_VkPolygonMode polygon_mode);
+// void rv_pipeline_set_cull_mode(RV_PipelineBuilder *pipeline_builder, RV_VkCullModeFlags cull_mode_flags, RV_VkFrontFace front_face);
+// void rv_pipeline_set_multisampling_none(RV_PipelineBuilder *pipeline_builder);
+// void rv_pipeline_disable_blending(RV_PipelineBuilder *pipeline_builder);
+// void rv_pipeline_enable_blending_additive(RV_PipelineBuilder *pipeline_builder);
+// void rv_pipeline_enable_blending_alphablend(RV_PipelineBuilder *pipeline_builder);
+// void rv_pipeline_set_color_attachment_format(RV_PipelineBuilder *pipeline_builder, RendererVkFormat format);
+// void rv_pipeline_set_depth_format(RV_PipelineBuilder *pipeline_builder, RendererVkFormat format);
+// void rv_pipeline_disable_depthtest(RV_PipelineBuilder *pipeline_builder);
 
 struct VkPipelineShaderStageCreateInfo rv_pipeline_create_shader_stage_ci(RV_VkShaderStageFlagBits shader_stage, VkShaderModule shader_module);
 
@@ -79,8 +76,9 @@ int32_t renderer_vulkan_create_shader(struct RendererContext *context, const uin
 int32_t renderer_vulkan_destroy_shader(struct RendererContext *context, RendererShaderHandle shader_handle);
 
 int32_t renderer_vulkan_create_pipeline_layout(struct RendererContext *context, const struct RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle);
+int32_t renderer_vulkan_destroy_pipeline_layout(struct RendererContext *context, RendererPipelineLayoutHandle pipeline_handle);
 
 int32_t renderer_vulkan_create_graphics_pipeline(struct RendererContext *context, const struct RendererGraphicsPipelineCreateInfo *renderer_pipeline_create_info, RendererGraphicsPipelineHandle *out_pipeline_handle);
 int32_t renderer_vulkan_create_compute_pipeline(struct RendererContext *context, const struct RendererComputePipelineCreateInfo *renderer_pipeline_create_info, RendererComputePipelineHandle *out_pipeline_handle);
-
-int32_t create_triangle_pipeline(struct RendererContext *context);
+int32_t renderer_vulkan_destroy_graphics_pipeline(struct RendererContext *context, RendererGraphicsPipelineHandle pipeline_handle);
+int32_t renderer_vulkan_destroy_compute_pipeline(struct RendererContext *context, RendererComputePipelineHandle pipeline_handle);

@@ -1,5 +1,4 @@
 #pragma once
-
 #include <stdint.h>
 
 #include <plugin_sdk/renderer/v1/renderer_types.h>
@@ -40,6 +39,8 @@ typedef uint32_t VkShaderStageFlags;
 typedef uint32_t VkImageUsageFlags;
 typedef uint32_t RendererImageUsageFlags;
 typedef uint32_t VkMemoryPropertyFlags;
+typedef uint32_t RendererCullModeFlagBits;
+typedef uint32_t VkCullModeFlagBits;
 
 enum RendererPipelineType;
 enum VkPipelineBindPoint;
@@ -55,10 +56,19 @@ enum VkAttachmentLoadOp;
 enum RendererAttachmentLoadOp;
 enum VkAttachmentStoreOp;
 enum RendererAttachmentStoreOp;
+enum VkShaderStageFlagBits;
+enum RendererFrontFace;
+enum VkFrontFace;
+enum RendererFillMode;
+enum VkPolygonMode;
+enum RendererPrimitiveTopology;
+enum VkPrimitiveTopology;
 struct RendererAttachmentInfo;
 struct RV_AllocatedImage;
 struct VkExtent3D;
 struct VkExtent2D;
+struct RendererShaderCreateInfo;
+struct VkPipelineShaderStageCreateInfo;
 
 struct VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mask);
 struct VkSemaphoreSubmitInfo rv_create_semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore);
@@ -83,3 +93,10 @@ struct VkExtent3D rv_renderer_extent_3d_to_vk_extent_3d(const RendererExtent3D *
 RendererExtent3D rv_vk_extent_3d_to_renderer_3d(const struct VkExtent3D *renderer_extent);
 struct VkExtent2D rv_renderer_extent_2d_to_vk_extent_2d(const RendererExtent2D *renderer_extent);
 RendererExtent2D rv_vk_extent_2d_to_renderer_2d(const struct VkExtent2D *renderer_extent);
+
+int32_t create_pipeline_shader_stage_create_info(struct RendererContext *context, const struct RendererShaderCreateInfo *shader_create_info, enum VkShaderStageFlagBits shader_stage, struct VkPipelineShaderStageCreateInfo *out_pipeline_shader_stage_create_info);
+
+enum VkPrimitiveTopology rv_topology_to_vk_topology(enum RendererPrimitiveTopology topology);
+enum VkPolygonMode rv_fill_mode_to_vk_polygon_mode(enum RendererFillMode fill_mode);
+VkCullModeFlagBits rv_cull_mode_to_vk_cull_mode(RendererCullModeFlagBits cull_mode);
+enum VkFrontFace rv_front_face_to_vk_front_face(enum RendererFrontFace front_face);

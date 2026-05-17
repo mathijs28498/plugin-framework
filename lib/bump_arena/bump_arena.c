@@ -11,9 +11,15 @@ int32_t bump_arena_alloc(uint8_t *arena_a, size_t size, size_t alignment, void *
 {
     assert(arena_a != NULL);
     assert(out_allocated != NULL);
-    assert(size > 0);
     assert(alignment > 0);
     assert((alignment & (alignment - 1)) == 0);
+
+    *(void **)out_allocated = NULL;
+
+    if (size == 0)
+    {
+        return 0;
+    }
 
     uintptr_t allocated_unaligned = (uintptr_t)arena_a + (uintptr_t)GET_ARRAY_LENGTH(arena_a);
     uintptr_t allocated_aligned = (allocated_unaligned + alignment - 1) & ~(alignment - 1);

@@ -30,10 +30,12 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
     assert(!context->active_frame_state.is_active);
 
     VkResult result;
+    int32_t ret;
 
     if (context->resize_requested)
     {
-        renderer_vulkan_start_recreate_swapchain(context);
+        RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_start_recreate_swapchain(context),
+                        "Failed to recreate swapchain: %d", ret);
     }
 
     if (context->halt_render)
@@ -47,7 +49,7 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkWaitForFences(context->device, 1, &frame->render_fence, VK_TRUE, SECOND_IN_NS),
                        -1, "Failed to wait for render fence: %d", result);
 
-    rv_call_queue_flush(frame->destroy_queue);
+    rv_call_queue_flush(frame->destroy_queue_a);
 
     uint32_t swapchain_image_index;
     RV_RETURN_IF_ERROR_CONDITION(
@@ -61,20 +63,19 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
     {
         renderer_vulkan_start_recreate_swapchain(context);
         TODO("Add proper enum values");
-        LOG_WRN_TRACE(context->deps.logger, "Swapchain is out of date or suboptimal, aborting frame");
+        LOG_WRN_TRACE(context->deps.logger, "Swapchain is out of date or suboptimal, aborting frame: %d", result);
         return 2;
     }
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetFences(context->device, 1, &frame->render_fence),
                        -1, "Failed to reset render fence: %d", result);
 
-
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetCommandPool(context->device, frame->command_pool, 0),
                        -1, "Failed to reset frame command pool: %d", result);
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkResetDescriptorPool(context->device, frame->transient_descriptor_pool, 0),
                        -1, "Failed to reset frame command pool: %d", result);
-    GET_ARRAY_LENGTH(frame->transient_descriptor_sets) = 0;
+    GET_ARRAY_LENGTH(frame->transient_descriptor_sets_a) = 0;
 
     VkCommandBufferBeginInfo cmd_begin_info = {
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
@@ -89,9 +90,6 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
     context->active_frame_state.swapchain_index = swapchain_image_index;
     context->active_frame_state.is_active = true;
     *out_command_list = &frame->command_list;
-
-    TODO("Also abstract this away somehow, possibly with different passes");
-
 
     return 0;
 }
@@ -138,10 +136,20 @@ int32_t renderer_vulkan_render_end_frame(RendererContext *context)
     };
     context->active_frame_state.is_active = false;
 
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vkQueuePresentKHR(context->present_queue, &present_info),
-                       -1, "Failed to present queue: %d", result);
+    RV_RETURN_IF_ERROR_CONDITION(
+        context->deps.logger, result, result < 0 && result != VK_ERROR_OUT_OF_DATE_KHR,
+        vkQueuePresentKHR(context->present_queue, &present_info),
+        -1, "Failed to present queue: %d", result);
 
     context->frame_number++;
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+    {
+        context->resize_requested = true;
+
+        LOG_WRN_TRACE(context->deps.logger, "Present queue is out of date or suboptimal, setting resizing to true: %d", result);
+        return 2;
+    }
 
     return 0;
 }

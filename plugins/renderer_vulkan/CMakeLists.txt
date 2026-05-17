@@ -43,22 +43,3 @@ plugin_generate_register_inc(renderer_vulkan
     GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
     TOML_DIR_PATH "${CMAKE_CURRENT_LIST_DIR}"
 )
-
-include("RendererShaderGenerator")
-
-target_embed_shader(renderer_vulkan
-    GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
-    SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/colored_triangle.vert"
-    SHADER_STAGE "vertex"
-)
-target_embed_shader(renderer_vulkan
-    GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
-    SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/colored_triangle.frag"
-    SHADER_STAGE "fragment"
-)
-
-target_embed_shader(renderer_vulkan
-    GEN_DIR_PATH "${CMAKE_CURRENT_BINARY_DIR}/generated"
-    SHADER_FILE_PATH "${CMAKE_CURRENT_LIST_DIR}/shaders/colored_triangle_mesh.vert"
-    SHADER_STAGE "vertex"
-)

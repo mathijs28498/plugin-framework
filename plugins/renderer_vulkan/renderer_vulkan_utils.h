@@ -17,16 +17,16 @@
 
 TODO("This does not flush multiple queues when for example the swapchain and the main queue have to be flushed, fix this")
 TODO("Is the flush even necessary with the new function? Can I just do it at the end in the start script where I destroy the init queue")
-#define RV_TRY_INIT(logger, err_var, create_func_call, destroy_queue, ...) \
-    do                                                                     \
-    {                                                                      \
-        (err_var) = (create_func_call);                                    \
-        if ((err_var) < 0)                                                 \
-        {                                                                  \
-            LOG_ERR_TRACE((logger), __VA_ARGS__);                          \
-            rv_call_queue_flush(destroy_queue);                            \
-            return (err_var);                                              \
-        }                                                                  \
+#define RV_TRY_INIT(logger, err_var, create_func_call, destroy_queue_a, ...) \
+    do                                                                       \
+    {                                                                        \
+        (err_var) = (create_func_call);                                      \
+        if ((err_var) < 0)                                                   \
+        {                                                                    \
+            LOG_ERR_TRACE((logger), __VA_ARGS__);                            \
+            rv_call_queue_flush(destroy_queue_a);                            \
+            return (err_var);                                                \
+        }                                                                    \
     } while (0)
 
 struct LoggerInterface;
@@ -71,6 +71,7 @@ TODO("Figure out if this belongs here, remove definitions if not")
 int32_t rv_create_buffer(struct RendererContext *context, size_t alloc_size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage, struct AllocatedBuffer *out_buffer);
 void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation allocation);
 
+TODO("Figure out if O(1) free lookup is wanted")
 #define RV_RES_RV_HANDLE_ALLOC(occupied_pool_a, generations_pool_a, resource_pool_a, resource, out_free_handle_found, out_handle) \
     do                                                                                                                            \
     {                                                                                                                             \
@@ -98,7 +99,7 @@ void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation al
         RV_RES_RV_HANDLE_ALLOC(occupied_pool_a, generations_pool_a, resource_pool_a, resource, UNIQUE_VAR(free_handle_found), out_resource_handle); \
         if (!UNIQUE_VAR(free_handle_found))                                                                                                         \
         {                                                                                                                                           \
-            LOG_ERR_TRACE(logger, "Failed to allocate handle, no ");                                                                                \
+            LOG_ERR_TRACE(logger, "Failed to allocate handle, no free handle found");                                                               \
             destroy_func;                                                                                                                           \
             return -1;                                                                                                                              \
         }                                                                                                                                           \
@@ -176,16 +177,29 @@ TODO("Maybe make the out_resource work by reference, should the input be a point
             (out_ret) = -1;                                                                             \
             break;                                                                                      \
         }                                                                                               \
+        uint32_t UNIQUE_VAR(is_occupied) = (occupied_pool_a)[(rv_handle).index];                        \
+        if (!UNIQUE_VAR(is_occupied))                                                                   \
+        {                                                                                               \
+            (out_ret) = -2;                                                                             \
+            break;                                                                                      \
+        }                                                                                               \
         uint32_t UNIQUE_VAR(current_generation) = (generations_pool_a)[(rv_handle).index];              \
         if (UNIQUE_VAR(current_generation) != (rv_handle).generation)                                   \
         {                                                                                               \
-            (out_ret) = -2;                                                                             \
+            (out_ret) = -3;                                                                             \
             break;                                                                                      \
         }                                                                                               \
                                                                                                         \
         (occupied_pool_a)[(rv_handle).index] = false;                                                   \
         (generations_pool_a)[(rv_handle).index]++;                                                      \
         (out_ret) = 0;                                                                                  \
+    } while (0)
+
+#define RV_RES_RENDERER_HANDLE_FREE(occupied_pool_a, generations_pool_a, resource_pool_a, handle, out_ret)           \
+    do                                                                                                               \
+    {                                                                                                                \
+        RendererVulkanHandle UNIQUE_VAR(rv_handle) = {.raw = (handle)};                                              \
+        RV_RES_RV_HANDLE_FREE(occupied_pool_a, generations_pool_a, resource_pool_a, UNIQUE_VAR(rv_handle), out_ret); \
     } while (0)
 
 #define RV_RES_RV_HANDLE_FREE_RETURN_IF_ERROR(logger, occupied_pool_a, generations_pool_a, resource_pool_a, rv_handle) \

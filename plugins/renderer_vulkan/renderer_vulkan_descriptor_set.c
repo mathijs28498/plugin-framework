@@ -44,7 +44,7 @@ static inline int32_t inl_create_descriptor_pool(RendererContext *context, uint3
                        -1, "Failed to create descriptor pool: %d", result);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyDescriptorPool, context->device, *out_descriptor_pool, NULL),
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, vkDestroyDescriptorPool, context->device, *out_descriptor_pool, NULL),
                     "Failed to push descriptor pool to swapchain destroy queue: %d", ret);
     return 0;
 }
@@ -70,8 +70,8 @@ int32_t renderer_vulkan_allocate_transient_resource_set(RendererContext *context
     VkResult result;
 
     RendererFrameData *frame = context->active_frame_state.frame;
-    size_t new_decriptor_set_index = GET_ARRAY_LENGTH(frame->transient_descriptor_sets);
-    RETURN_IF_TRUE(context->deps.logger, new_decriptor_set_index >= GET_ARRAY_CAPACITY(frame->transient_descriptor_sets),
+    size_t new_decriptor_set_index = GET_ARRAY_LENGTH(frame->transient_descriptor_sets_a);
+    RETURN_IF_TRUE(context->deps.logger, new_decriptor_set_index >= GET_ARRAY_CAPACITY(frame->transient_descriptor_sets_a),
                    -1, "Failed to allocate transient descriptor set, transient descriptor sets for current frame is full");
 
     VkDescriptorSetLayout descriptor_set_layout;
@@ -85,9 +85,9 @@ int32_t renderer_vulkan_allocate_transient_resource_set(RendererContext *context
     };
 
     RV_RETURN_IF_ERROR(context->deps.logger, result,
-                       vkAllocateDescriptorSets(context->device, &descriptor_set_alloc_info, &frame->transient_descriptor_sets[new_decriptor_set_index]),
+                       vkAllocateDescriptorSets(context->device, &descriptor_set_alloc_info, &frame->transient_descriptor_sets_a[new_decriptor_set_index]),
                        -1, "Failed to allocate descriptor sets: %d", result);
-    GET_ARRAY_LENGTH(frame->transient_descriptor_sets) += 1;
+    GET_ARRAY_LENGTH(frame->transient_descriptor_sets_a) += 1;
     *out_resource_set_handle = (uint64_t)new_decriptor_set_index;
 
     return 0;
@@ -125,11 +125,6 @@ static inline int32_t inl_renderer_vulkan_create_resource_set_layout(RendererCon
     RV_RETURN_IF_ERROR(context->deps.logger, result,
                        vkCreateDescriptorSetLayout(context->device, &descriptor_set_layout_create_info, NULL, &descriptor_set_layout),
                        -1, "Unable to create descriptor set layout: %d", result);
-
-    TODO("This belongs in the main_destroy_queue, so shouldnt be here, but the whole function is being called in recreate_swapchain, so fix that")
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyDescriptorSetLayout, context->device, descriptor_set_layout, NULL),
-                    "Failed to push descriptor set layout to swapchain destroy queue: %d", ret);
 
     RendererVulkanHandle rv_descriptor_set_layout_handle = {0};
     RV_RES_RV_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->descriptor_set_layout_occupied_a, context->descriptor_set_layout_generations_a, context->descriptor_set_layouts_a, descriptor_set_layout, rv_descriptor_set_layout_handle,
@@ -246,7 +241,7 @@ void inl_renderer_vulkan_update_resource_set(RendererContext *context, const Ren
 {
     int32_t ret;
 
-    VkDescriptorSet descriptor_set = context->active_frame_state.frame->transient_descriptor_sets[(size_t)resource_set_update_info->resource_set_handle];
+    VkDescriptorSet descriptor_set = context->active_frame_state.frame->transient_descriptor_sets_a[(size_t)resource_set_update_info->resource_set_handle];
 
     VkWriteDescriptorSet *write_descriptor_sets;
     RETURN_IF_ERROR_VOID(context->deps.logger, ret, BUMP_ARENA_ALLOC_TYPED(context->bump_arena_a, VkWriteDescriptorSet, resource_set_update_info->resource_set_writes_len, &write_descriptor_sets),
@@ -269,4 +264,21 @@ void renderer_vulkan_update_resource_set(RendererContext *context, const Rendere
     BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
     inl_renderer_vulkan_update_resource_set(context, resource_set_update_info);
     bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
+}
+
+int32_t renderer_vulkan_destroy_resource_set_layout(RendererContext *context, RendererResourceSetLayoutHandle resource_set_layout_handle)
+{
+    assert(context != NULL);
+
+    int32_t ret;
+
+    VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->descriptor_set_layout_generations_a, context->descriptor_set_layouts_a, resource_set_layout_handle, descriptor_set_layout);
+    RV_RES_RENDERER_HANDLE_FREE_RETURN_IF_ERROR(context->deps.logger, context->descriptor_set_layout_occupied_a, context->descriptor_set_layout_generations_a, context->descriptor_set_layouts_a, resource_set_layout_handle);
+
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->active_frame_state.frame->destroy_queue_a, vkDestroyDescriptorSetLayout, context->device, descriptor_set_layout, NULL),
+                    "Failed to push descriptor set layout to swapchain destroy queue: %d", ret);
+
+    return 0;
 }

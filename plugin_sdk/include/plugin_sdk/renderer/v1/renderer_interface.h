@@ -46,6 +46,7 @@ typedef enum RendererImageLayout
 {
     RENDERER_IMAGE_LAYOUT_UNDEFINED = 0,
     RENDERER_IMAGE_LAYOUT_GENERAL = 1,
+    RENDERER_IMAGE_LAYOUT_COLOR_ATTACHMENT = 2,
     RENDERER_IMAGE_LAYOUT_TRANSFER_SRC = 6,
     RENDERER_IMAGE_LAYOUT_TRANSFER_DST = 7,
     RENDERER_IMAGE_LAYOUT_PRESENT_SRC = 1000001002,
@@ -53,6 +54,7 @@ typedef enum RendererImageLayout
 
 typedef enum RendererImageFormat
 {
+    RENDERER_IMAGE_FORMAT_UNDEFINED,
     RENDERER_IMAGE_FORMAT_R8G8B8A8_UNORM,
     RENDERER_IMAGE_FORMAT_R8G8B8A8_SRGB,
     RENDERER_IMAGE_FORMAT_R16G16B16A16_SFLOAT,
@@ -173,20 +175,70 @@ typedef struct RendererResourceSetUpdateInfo
     const RendererResourceSetWrite *resource_set_writes;
 } RendererResourceSetUpdateInfo;
 
+typedef struct RendererShaderCreateInfo
+{
+    RendererShaderHandle shader_handle;
+    const char *entry_point;
+} RendererShaderCreateInfo;
+
+typedef enum RendererPrimitiveTopology
+{
+    RENDERER_PRIMITIVE_TOPOLOGY_POINT_LIST = 0,
+    RENDERER_PRIMITIVE_TOPOLOGY_LINE_LIST = 1,
+    RENDERER_PRIMITIVE_TOPOLOGY_LINE_STRIP = 2,
+    RENDERER_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST = 3,
+    RENDERER_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP = 4,
+    RENDERER_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN = 6,
+} RendererPrimitiveTopology;
+
+typedef enum RendererFillMode
+{
+    RENDERER_FILL_MODE_SOLID = 0,
+    RENDERER_FILL_MODE_WIREFRAME = 1,
+    RENDERER_FILL_MODE_POINT = 2,
+} RendererFillMode;
+
+typedef enum RendererCullModeFlagBits
+{
+    RENDERER_CULL_MODE_NONE = 0,
+    RENDERER_CULL_MODE_FRONT_BIT = 0x00000001,
+    RENDERER_CULL_MODE_BACK_BIT = 0x00000002,
+    RENDERER_CULL_MODE_FRONT_AND_BACK = 0x00000003,
+} RendererCullModeFlagBits;
+
+typedef enum RendererFrontFace
+{
+    RENDERER_FRONT_FACE_COUNTER_CLOCKWISE = 0,
+    RENDERER_FRONT_FACE_CLOCKWISE = 1,
+} RendererFrontFace;
+
+typedef enum RendererBlendMode
+{
+    RENDERER_BLEND_MODE_NONE = 0,
+    RENDERER_BLEND_MODE_ADDITIVE = 1,
+    RENDERER_BLEND_MODE_ALPHA_BLEND = 2,
+} RendererBlendMode;
+
 typedef struct RendererGraphicsPipelineCreateInfo
 {
-    RendererShaderHandle vertex_shader_handle;
-    const char *vertex_shader_entry_point;
-    RendererShaderHandle fragment_shader_handle;
-    const char *fragment_shader_entry_point;
-
     RendererPipelineLayoutHandle layout_handle;
+
+    RendererShaderCreateInfo vertex_shader;
+    RendererShaderCreateInfo fragment_shader;
+
+    RendererImageFormat color_attachment_format;
+    RendererImageFormat depth_attachment_format;
+    RendererPrimitiveTopology topology;
+    RendererFillMode fill_mode;
+    RendererCullModeFlagBits cull_mode;
+    RendererFrontFace front_face;
+    RendererBlendMode blend_mode;
+
 } RendererGraphicsPipelineCreateInfo;
 
 typedef struct RendererComputePipelineCreateInfo
 {
-    RendererShaderHandle compute_shader_handle;
-    const char *compute_shader_entry_point;
+    RendererShaderCreateInfo compute_shader;
 
     RendererPipelineLayoutHandle layout_handle;
 } RendererComputePipelineCreateInfo;
@@ -238,6 +290,7 @@ typedef struct RendererVtable
     int32_t (*begin_frame)(RendererContext *context, RendererCommandList **out_command_list);
     int32_t (*end_frame)(RendererContext *context);
     void (*on_window_resize)(RendererContext *context, uint32_t width, uint32_t height);
+    bool (*consume_has_resized)(RendererContext *context);
 
     RendererImageHandle (*get_render_image_handle)(RendererContext *context);
     int32_t (*get_image_properties)(RendererContext *context, RendererImageHandle image_handle, RendererImageProperties *out_image_properties);
@@ -246,16 +299,26 @@ typedef struct RendererVtable
     int32_t (*destroy_shader)(RendererContext *context, RendererShaderHandle shader_handle);
 
     int32_t (*create_image)(RendererContext *context, RendererImageCreateInfo *renderer_image_create_info, RendererImageHandle *out_image_handle);
+    int32_t (*destroy_image)(RendererContext *context, RendererImageHandle image_handle);
     int32_t (*create_resource_set_layout)(RendererContext *context, const RendererResourceSetLayoutCreateInfo *renderer_resource_set_layout_create_info, RendererResourceSetLayoutHandle *out_resource_set_layout_handle);
+    int32_t (*destroy_resource_set_layout)(RendererContext *context, RendererResourceSetLayoutHandle resource_set_layout_handle);
     int32_t (*allocate_transient_resource_set)(RendererContext *context, RendererResourceSetLayoutHandle resource_set_layout_handle, RendererResourceSetHandle *out_resource_set_handle);
     void (*update_resource_set)(RendererContext *context, const RendererResourceSetUpdateInfo *resource_set_update_info);
 
     int32_t (*create_pipeline_layout)(RendererContext *context, const RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle);
+    int32_t (*destroy_pipeline_layout)(RendererContext *context, RendererPipelineLayoutHandle pipeline_layout_handle);
 
     int32_t (*create_graphics_pipeline)(RendererContext *context, const RendererGraphicsPipelineCreateInfo *pipeline_create_info, RendererGraphicsPipelineHandle *out_pipeline_handle);
     int32_t (*create_compute_pipeline)(RendererContext *context, const RendererComputePipelineCreateInfo *pipeline_create_info, RendererComputePipelineHandle *out_pipeline_handle);
+    int32_t (*destroy_graphics_pipeline)(RendererContext *context, RendererGraphicsPipelineHandle pipeline_handle);
+    int32_t (*destroy_compute_pipeline)(RendererContext *context, RendererComputePipelineHandle pipeline_handle);
 
+    void (*cmd_begin_rendering)(RendererContext *context, RendererCommandList *command_list, const RendererBeginRenderingInfo *renderer_begin_rendering_info);
     void (*cmd_end_rendering)(RendererContext *context, RendererCommandList *command_list);
+
+    void (*cmd_set_viewport)(RendererContext *context, RendererCommandList *command_list, RendererExtent2D extent);
+    void (*cmd_set_scissor)(RendererContext *context, RendererCommandList *command_list, RendererExtent2D extent);
+
     void (*cmd_bind_graphics_pipeline)(RendererContext *context, RendererCommandList *command_list, RendererGraphicsPipelineHandle pipeline_handle);
     void (*cmd_bind_compute_pipeline)(RendererContext *context, RendererCommandList *command_list, RendererComputePipelineHandle pipeline_handle);
     void (*cmd_draw)(RendererContext *context, RendererCommandList *command_list, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance);
@@ -304,6 +367,11 @@ static inline void renderer_on_window_resize(RendererInterface *iface, uint32_t 
     VTABLE_METHOD_CALL(iface, on_window_resize, width, height);
 }
 
+static inline bool renderer_consume_has_resized(RendererInterface *iface)
+{
+    return VTABLE_METHOD_CALL_NO_ARGS(iface, consume_has_resized);
+}
+
 static inline int32_t renderer_create_shader(RendererInterface *iface, const uint32_t *shader_code_u32, size_t shader_code_bytes_len, RendererShaderHandle *out_shader_handle)
 {
     return VTABLE_METHOD_CALL(iface, create_shader, shader_code_u32, shader_code_bytes_len, out_shader_handle);
@@ -319,9 +387,19 @@ static inline int32_t renderer_create_image(RendererInterface *iface, RendererIm
     return VTABLE_METHOD_CALL(iface, create_image, renderer_image_create_info, out_image_handle);
 }
 
+static inline int32_t renderer_destroy_image(RendererInterface *iface, RendererImageHandle image_handle)
+{
+    return VTABLE_METHOD_CALL(iface, destroy_image, image_handle);
+}
+
 static inline int32_t renderer_create_resource_set_layout(RendererInterface *iface, const RendererResourceSetLayoutCreateInfo *renderer_resource_set_layout_create_info, RendererResourceSetLayoutHandle *out_resource_set_layout_handle)
 {
     return VTABLE_METHOD_CALL(iface, create_resource_set_layout, renderer_resource_set_layout_create_info, out_resource_set_layout_handle);
+}
+
+static inline int32_t renderer_destroy_resource_set_layout(RendererInterface *iface, RendererResourceSetLayoutHandle resource_set_layout_handle)
+{
+    return VTABLE_METHOD_CALL(iface, destroy_resource_set_layout, resource_set_layout_handle);
 }
 
 static inline int32_t renderer_allocate_transient_resource_set(RendererInterface *iface, RendererResourceSetLayoutHandle resource_set_layout_handle, RendererResourceSetHandle *out_resource_set_handle)
@@ -339,6 +417,11 @@ static inline int32_t renderer_create_pipeline_layout(RendererInterface *iface, 
     return VTABLE_METHOD_CALL(iface, create_pipeline_layout, renderer_pipeline_layout_create_info, out_pipeline_layout_handle);
 }
 
+static inline int32_t renderer_destroy_pipeline_layout(RendererInterface *iface, RendererPipelineLayoutHandle pipeline_layout_handle)
+{
+    return VTABLE_METHOD_CALL(iface, destroy_pipeline_layout, pipeline_layout_handle);
+}
+
 static inline int32_t renderer_create_graphics_pipeline(RendererInterface *iface, const RendererGraphicsPipelineCreateInfo *pipeline_create_info, RendererGraphicsPipelineHandle *out_pipeline_handle)
 {
     return VTABLE_METHOD_CALL(iface, create_graphics_pipeline, pipeline_create_info, out_pipeline_handle);
@@ -349,9 +432,34 @@ static inline int32_t renderer_create_compute_pipeline(RendererInterface *iface,
     return VTABLE_METHOD_CALL(iface, create_compute_pipeline, pipeline_create_info, out_pipeline_handle);
 }
 
+static inline int32_t renderer_destroy_graphics_pipeline(RendererInterface *iface, RendererGraphicsPipelineHandle pipeline_handle)
+{
+    return VTABLE_METHOD_CALL(iface, destroy_graphics_pipeline, pipeline_handle);
+}
+
+static inline int32_t renderer_destroy_compute_pipeline(RendererInterface *iface, RendererComputePipelineHandle pipeline_handle)
+{
+    return VTABLE_METHOD_CALL(iface, destroy_compute_pipeline, pipeline_handle);
+}
+
+static inline void renderer_cmd_begin_rendering(RendererInterface *iface, RendererCommandList *command_list, const RendererBeginRenderingInfo *renderer_begin_rendering_info)
+{
+    VTABLE_METHOD_CALL(iface, cmd_begin_rendering, command_list, renderer_begin_rendering_info);
+}
+
 static inline void renderer_cmd_end_rendering(RendererInterface *iface, RendererCommandList *command_list)
 {
     VTABLE_METHOD_CALL(iface, cmd_end_rendering, command_list);
+}
+
+static inline void renderer_cmd_set_viewport(RendererInterface *iface, RendererCommandList *command_list, RendererExtent2D extent)
+{
+    VTABLE_METHOD_CALL(iface, cmd_set_viewport, command_list, extent);
+}
+
+static inline void renderer_cmd_set_scissor(RendererInterface *iface, RendererCommandList *command_list, RendererExtent2D extent)
+{
+    VTABLE_METHOD_CALL(iface, cmd_set_scissor, command_list, extent);
 }
 
 static inline void renderer_cmd_bind_graphics_pipeline(RendererInterface *iface, RendererCommandList *command_list, RendererGraphicsPipelineHandle pipeline_handle)

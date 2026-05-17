@@ -81,14 +81,14 @@ typedef struct RendererFrameData
 
     VkDescriptorPool transient_descriptor_pool;
     // uint32_t transient_descriptor_sets_len;
-    VkDescriptorSet *transient_descriptor_sets;
+    VkDescriptorSet *transient_descriptor_sets_a;
 
-    RV_CallRecord *destroy_queue;
+    RV_CallRecord *destroy_queue_a;
 } RendererFrameData;
 
 typedef struct RV_AllocatedImage
 {
-    VkImage image;
+    _Alignas(16) VkImage image;
     VkImageView image_view;
     VmaAllocation allocation;
     TODO("Possibly Add this")
@@ -152,7 +152,7 @@ typedef struct RendererContext
     VkDevice device;
     VkSwapchainKHR swapchain;
     VkSwapchainKHR old_swapchain;
-    RV_CallRecord *swapchain_destroy_queue;
+    RV_CallRecord *swapchain_destroy_queue_a;
     TODO("Figure out what to do with the size/capacity here")
     TODO("Make a struct holding the swapchain data")
     TODO("Make this an _a array")
@@ -160,9 +160,10 @@ typedef struct RendererContext
     RendererImageFormat swapchain_image_format;
     RendererExtent2D swapchain_extent;
     VmaAllocator vma_allocator;
-    RV_CallRecord *main_destroy_queue;
+    RV_CallRecord *global_destroy_queue_a;
 
     bool resize_requested;
+    bool swapchain_recreated;
     bool halt_render;
     RendererExtent2D resize_extent;
 
