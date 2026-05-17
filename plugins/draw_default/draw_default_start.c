@@ -199,3 +199,17 @@ int32_t draw_default_start(DrawContext *context)
 
     return 0;
 }
+
+void draw_default_cleanup(DrawContext *context)
+{
+    assert(context != NULL);
+
+    RendererInterface *renderer = context->deps.renderer;
+
+    (void)renderer_destroy_graphics_pipeline(renderer, context->triangle_pipeline_handle);
+    (void)renderer_destroy_pipeline_layout(renderer, context->triangle_pipeline_layout_handle);
+    (void)renderer_destroy_compute_pipeline(renderer, context->background_pipeline_handle);
+    (void)renderer_destroy_pipeline_layout(renderer, context->background_pipeline_layout_handle);
+    (void)renderer_destroy_resource_set_layout(renderer, context->draw_image_resource_set_layout_handle);
+    (void)renderer_destroy_image(renderer, context->draw_image_handle);
+}
