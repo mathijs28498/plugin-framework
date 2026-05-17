@@ -9,9 +9,61 @@ LOGGER_INTERFACE_REGISTER(draw_default_start, LOG_LEVEL_DEBUG)
 
 #include "shader_background_compute.h"
 #include "shader_colored_triangle_vertex.h"
+#include "shader_colored_triangle_mesh_vertex.h"
 #include "shader_colored_triangle_fragment.h"
 
 #include "draw_default_register.h"
+
+typedef struct DD_Shaders
+{
+    RendererShaderCreateInfo triangle_vertex_shader;
+    RendererShaderCreateInfo triangle_mesh_vertex_shader;
+    RendererShaderCreateInfo triangle_fragment_shader;
+    RendererShaderCreateInfo background_compute_shader;
+} DD_Shaders;
+
+int32_t create_shaders(DrawContext *context, DD_Shaders *out_shaders)
+{
+    assert(context != NULL);
+    assert(out_shaders != NULL);
+
+    int32_t ret;
+    LoggerInterface *logger = context->deps.logger;
+    RendererInterface *renderer = context->deps.renderer;
+
+    RETURN_IF_ERROR(logger, ret,
+                    renderer_create_shader(renderer, COLORED_TRIANGLE_VERTEX_SHADER_U32_CODE, COLORED_TRIANGLE_VERTEX_SHADER_BYTES_LEN, &out_shaders->triangle_vertex_shader.shader_handle),
+                    "Failed to triangle vertex create shader: %d", ret);
+    out_shaders->triangle_vertex_shader.entry_point = "main";
+
+    RETURN_IF_ERROR(logger, ret,
+                    renderer_create_shader(renderer, COLORED_TRIANGLE_MESH_VERTEX_SHADER_U32_CODE, COLORED_TRIANGLE_MESH_VERTEX_SHADER_BYTES_LEN, &out_shaders->triangle_mesh_vertex_shader.shader_handle),
+                    "Failed to triangle vertex create shader: %d", ret);
+    out_shaders->triangle_mesh_vertex_shader.entry_point = "main";
+
+    RETURN_IF_ERROR(logger, ret,
+                    renderer_create_shader(renderer, COLORED_TRIANGLE_FRAGMENT_SHADER_U32_CODE, COLORED_TRIANGLE_FRAGMENT_SHADER_BYTES_LEN, &out_shaders->triangle_fragment_shader.shader_handle),
+                    "Failed to triangle fragment create shader: %d", ret);
+    out_shaders->triangle_fragment_shader.entry_point = "main";
+
+    RETURN_IF_ERROR(logger, ret,
+                    renderer_create_shader(renderer, BACKGROUND_COMPUTE_SHADER_U32_CODE, BACKGROUND_COMPUTE_SHADER_BYTES_LEN, &out_shaders->background_compute_shader.shader_handle),
+                    "Failed to create shader: %d", ret);
+    out_shaders->background_compute_shader.entry_point = "main";
+
+    return 0;
+}
+
+void destroy_shaders(DrawContext *context, DD_Shaders *shaders)
+{
+    assert(context != NULL);
+    assert(shaders != NULL);
+
+    renderer_destroy_shader(context->deps.renderer, shaders->triangle_vertex_shader.shader_handle);
+    renderer_destroy_shader(context->deps.renderer, shaders->triangle_mesh_vertex_shader.shader_handle);
+    renderer_destroy_shader(context->deps.renderer, shaders->triangle_fragment_shader.shader_handle);
+    renderer_destroy_shader(context->deps.renderer, shaders->background_compute_shader.shader_handle);
+}
 
 int32_t create_resource_set_layouts(DrawContext *context)
 {
@@ -69,23 +121,13 @@ int32_t draw_default_create_draw_image(DrawContext *context)
     return 0;
 }
 
-int32_t create_triangle_pipeline(DrawContext *context)
+int32_t create_triangle_pipeline(DrawContext *context, DD_Shaders *shaders)
 {
     assert(context != NULL);
     int32_t ret;
 
     LoggerInterface *logger = context->deps.logger;
     RendererInterface *renderer = context->deps.renderer;
-
-    RendererShaderHandle vertex_shader_handle;
-    RendererShaderHandle fragment_shader_handle;
-    RETURN_IF_ERROR(logger, ret,
-                    renderer_create_shader(renderer, COLORED_TRIANGLE_VERTEX_SHADER_U32_CODE, COLORED_TRIANGLE_VERTEX_SHADER_BYTES_LEN, &vertex_shader_handle),
-                    "Failed to create shader: %d", ret);
-
-    RETURN_IF_ERROR(logger, ret,
-                    renderer_create_shader(renderer, COLORED_TRIANGLE_FRAGMENT_SHADER_U32_CODE, COLORED_TRIANGLE_FRAGMENT_SHADER_BYTES_LEN, &fragment_shader_handle),
-                    "Failed to create shader: %d", ret);
 
     RendererPipelineLayoutCreateInfo pipeline_layout_create_info = {0};
     RETURN_IF_ERROR(logger, ret, renderer_create_pipeline_layout(renderer, &pipeline_layout_create_info, &context->triangle_pipeline_layout_handle),
@@ -98,14 +140,8 @@ int32_t create_triangle_pipeline(DrawContext *context)
     RendererGraphicsPipelineCreateInfo pipeline_create_info = {
         .layout_handle = context->triangle_pipeline_layout_handle,
 
-        .vertex_shader = {
-            .shader_handle = vertex_shader_handle,
-            .entry_point = "main",
-        },
-        .fragment_shader = {
-            .shader_handle = fragment_shader_handle,
-            .entry_point = "main",
-        },
+        .vertex_shader = shaders->triangle_vertex_shader,
+        .fragment_shader = shaders->triangle_fragment_shader,
 
         .color_attachment_format = draw_image_properties.format,
         .depth_attachment_format = RENDERER_IMAGE_FORMAT_UNDEFINED,
@@ -118,26 +154,65 @@ int32_t create_triangle_pipeline(DrawContext *context)
     RETURN_IF_ERROR(logger, ret, renderer_create_graphics_pipeline(renderer, &pipeline_create_info, &context->triangle_pipeline_handle),
                     "Failed to create triangle pipeline: %d", ret);
 
-    RETURN_IF_ERROR(logger, ret, renderer_destroy_shader(renderer, fragment_shader_handle),
-                    "Failed to destroy fragment shader: %d", ret);
-    RETURN_IF_ERROR(logger, ret, renderer_destroy_shader(renderer, vertex_shader_handle),
-                    "Failed to destroy vertex shader: %d", ret);
+    return 0;
+}
+
+int32_t create_triangle_mesh_pipeline(DrawContext *context, DD_Shaders *shaders)
+{
+    assert(context != NULL);
+    assert(shaders != NULL);
+
+    int32_t ret;
+
+    LoggerInterface *logger = context->deps.logger;
+    RendererInterface *renderer = context->deps.renderer;
+
+    RendererPushConstantsInfo gpu_push_constants_info = {
+        .offset = 0,
+        .size = sizeof(GPUDrawPushConstants),
+        .render_stage_flags = RENDERER_SHADER_STAGE_VERTEX_BIT,
+    };
+
+    RendererPipelineLayoutCreateInfo pipeline_layout_create_info = {
+        .push_constants_len = 1,
+        .push_constants = &gpu_push_constants_info,
+    };
+
+    RETURN_IF_ERROR(logger, ret, renderer_create_pipeline_layout(renderer, &pipeline_layout_create_info, &context->triangle_mesh_pipeline_layout_handle),
+                    "Failed to create triangle mesh pipeline layout: %d", ret);
+
+    RendererImageProperties draw_image_properties;
+    RETURN_IF_ERROR(logger, ret, renderer_get_image_properties(renderer, context->draw_image_handle, &draw_image_properties),
+                    "Failed to get draw image properties: %d", ret);
+
+    RendererGraphicsPipelineCreateInfo pipeline_create_info = {
+        .layout_handle = context->triangle_mesh_pipeline_layout_handle,
+
+        .vertex_shader = shaders->triangle_mesh_vertex_shader,
+        .fragment_shader = shaders->triangle_fragment_shader,
+
+        .color_attachment_format = draw_image_properties.format,
+        .depth_attachment_format = RENDERER_IMAGE_FORMAT_UNDEFINED,
+        .topology = RENDERER_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+        .fill_mode = RENDERER_FILL_MODE_SOLID,
+        .cull_mode = RENDERER_CULL_MODE_NONE,
+        .front_face = RENDERER_FRONT_FACE_CLOCKWISE,
+        .blend_mode = RENDERER_BLEND_MODE_NONE,
+    };
+
+    RETURN_IF_ERROR(logger, ret, renderer_create_graphics_pipeline(renderer, &pipeline_create_info, &context->triangle_mesh_pipeline_handle),
+                    "Failed to create triangle mesh pipeline: %d", ret);
 
     return 0;
 }
 
-int32_t create_background_pipeline(DrawContext *context)
+int32_t create_background_pipeline(DrawContext *context, DD_Shaders *shaders)
 {
     assert(context != NULL);
     int32_t ret;
 
     LoggerInterface *logger = context->deps.logger;
     RendererInterface *renderer = context->deps.renderer;
-
-    RendererShaderHandle compute_shader_handle;
-    RETURN_IF_ERROR(logger, ret,
-                    renderer_create_shader(renderer, BACKGROUND_COMPUTE_SHADER_U32_CODE, BACKGROUND_COMPUTE_SHADER_BYTES_LEN, &compute_shader_handle),
-                    "Failed to create shader: %d", ret);
 
     RendererPushConstantsInfo push_constants_info[] = {{
         .render_stage_flags = RENDERER_SHADER_STAGE_COMPUTE_BIT,
@@ -158,19 +233,13 @@ int32_t create_background_pipeline(DrawContext *context)
                     "Failed to create pipeline layout: %d", ret);
 
     RendererComputePipelineCreateInfo pipeline_create_info = {
-        .compute_shader = {
-            .shader_handle = compute_shader_handle,
-            .entry_point = "main",
-        },
+        .compute_shader = shaders->background_compute_shader,
         .layout_handle = context->background_pipeline_layout_handle,
     };
 
     RETURN_IF_ERROR(logger, ret,
                     renderer_create_compute_pipeline(renderer, &pipeline_create_info, &context->background_pipeline_handle),
                     "Failed to create compute pipeline: %d", ret);
-
-    RETURN_IF_ERROR(logger, ret, renderer_destroy_shader(renderer, compute_shader_handle),
-                    "Failed to destroy shader: %d", ret);
 
     return 0;
 }
@@ -191,11 +260,20 @@ int32_t draw_default_start(DrawContext *context)
     RETURN_IF_ERROR(logger, ret, create_resource_set_layouts(context),
                     "Failed to create resource set layouts: %d", ret);
 
-    RETURN_IF_ERROR(logger, ret, create_background_pipeline(context),
+    DD_Shaders shaders;
+    RETURN_IF_ERROR(logger, ret, create_shaders(context, &shaders),
+                    "Failed to create shaders: %d", ret);
+
+    RETURN_IF_ERROR(logger, ret, create_background_pipeline(context, &shaders),
                     "Failed to create background pipeline: %d", ret);
 
-    RETURN_IF_ERROR(logger, ret, create_triangle_pipeline(context),
+    RETURN_IF_ERROR(logger, ret, create_triangle_pipeline(context, &shaders),
                     "Failed to create triangle pipeline: %d", ret);
+
+    RETURN_IF_ERROR(logger, ret, create_triangle_mesh_pipeline(context, &shaders),
+                    "Failed to create triangle pipeline: %d", ret);
+
+    destroy_shaders(context, &shaders);
 
     return 0;
 }
@@ -204,12 +282,48 @@ void draw_default_cleanup(DrawContext *context)
 {
     assert(context != NULL);
 
+    int32_t ret;
+    LoggerInterface *logger = context->deps.logger;
     RendererInterface *renderer = context->deps.renderer;
 
-    (void)renderer_destroy_graphics_pipeline(renderer, context->triangle_pipeline_handle);
-    (void)renderer_destroy_pipeline_layout(renderer, context->triangle_pipeline_layout_handle);
-    (void)renderer_destroy_compute_pipeline(renderer, context->background_pipeline_handle);
-    (void)renderer_destroy_pipeline_layout(renderer, context->background_pipeline_layout_handle);
-    (void)renderer_destroy_resource_set_layout(renderer, context->draw_image_resource_set_layout_handle);
-    (void)renderer_destroy_image(renderer, context->draw_image_handle);
+    ret = renderer_destroy_graphics_pipeline(renderer, context->triangle_mesh_pipeline_handle);
+    if (ret < 0)
+    {
+        LOG_WRN_TRACE(logger, "Failed to destroy graphics_pipeline: %d", ret);
+    }
+    ret = renderer_destroy_pipeline_layout(renderer, context->triangle_mesh_pipeline_layout_handle);
+    if (ret < 0)
+    {
+        LOG_WRN_TRACE(logger, "Failed to destroy pipeline_layout: %d", ret);
+    }
+    ret = renderer_destroy_graphics_pipeline(renderer, context->triangle_pipeline_handle);
+    if (ret < 0)
+    {
+        LOG_WRN_TRACE(logger, "Failed to destroy graphics_pipeline: %d", ret);
+    }
+    ret = renderer_destroy_pipeline_layout(renderer, context->triangle_pipeline_layout_handle);
+    if (ret < 0)
+    {
+        LOG_WRN_TRACE(logger, "Failed to destroy pipeline_layout: %d", ret);
+    }
+    ret = renderer_destroy_compute_pipeline(renderer, context->background_pipeline_handle);
+    if (ret < 0)
+    {
+        LOG_WRN_TRACE(logger, "Failed to destroy compute_pipeline: %d", ret);
+    }
+    ret = renderer_destroy_pipeline_layout(renderer, context->background_pipeline_layout_handle);
+    if (ret < 0)
+    {
+        LOG_WRN_TRACE(logger, "Failed to destroy pipeline_layout: %d", ret);
+    }
+    ret = renderer_destroy_resource_set_layout(renderer, context->draw_image_resource_set_layout_handle);
+    if (ret < 0)
+    {
+        LOG_WRN_TRACE(logger, "Failed to destroy resource_set_layout: %d", ret);
+    }
+    ret = renderer_destroy_image(renderer, context->draw_image_handle);
+    if (ret < 0)
+    {
+        LOG_WRN_TRACE(logger, "Failed to destroy image: %d", ret);
+    }
 }

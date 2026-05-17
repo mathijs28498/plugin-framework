@@ -18,6 +18,12 @@ typedef struct BackgroundPushConstants
     vec4 bottom_right;
 } BackgroundPushConstants;
 
+typedef struct GPUDrawPushConstants
+{
+    mat4 world_matrix;
+    RendererVertexBufferAddress vertex_buffer_address;
+} GPUDrawPushConstants;
+
 typedef struct DrawContext
 {
     PluginDependencies deps;
@@ -28,6 +34,9 @@ typedef struct DrawContext
 
     RendererPipelineLayoutHandle triangle_pipeline_layout_handle;
     RendererGraphicsPipelineHandle triangle_pipeline_handle;
+
+    RendererPipelineLayoutHandle triangle_mesh_pipeline_layout_handle;
+    RendererGraphicsPipelineHandle triangle_mesh_pipeline_handle;
 
     RendererImageHandle draw_image_handle;
     RendererExtent2D draw_extent;
