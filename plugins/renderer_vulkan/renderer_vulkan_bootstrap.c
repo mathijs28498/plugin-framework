@@ -59,8 +59,8 @@ TODO("Make a better version for certain parts that reoccure")
 /*
 TODO: Improve
 - [ ] Getting capabilities and looping over them
-    - [ ] Dont use the heap or static arrays, use an arena allocator
-    - [ ] Figure out how to get access to an arena allocator
+    - [ ] Dont use the heap or static arrays, use an allocator
+    - [ ] Figure out how to get access to an allocator
 - [ ] Settings for chosing all the different parts (like extensions, present_modes etc)
     - [ ] Make sure all settings are in 1 place
     - [ ] Make the user able to pick these settings with sane defaults
@@ -241,7 +241,7 @@ int32_t create_instance(RendererContext *context)
     const char **platform_required_extensions_a = NULL;
     renderer_vulkan_platform_get_required_extensions(&platform_required_extensions_a);
     assert(platform_required_extensions_a != NULL);
-    TODO("Make the required_extensions_a allocated based on size of both extensions by arena allocator");
+    TODO("Make the required_extensions_a allocated based on size of both extensions by allocator");
 
     ARRAY_PUSH_MULTI_CHECKED(
         required_extensions_a, platform_required_extensions_a, GET_ARRAY_LENGTH(platform_required_extensions_a),

@@ -1,11 +1,13 @@
-max_plugin_amount=64
-memory_arena_size="256*KiB"
+max_plugin_amount = 64
+# memory_arena_size = "256*KiB"
+# # memory_arena_size = "128 * 20"
+memory_arena_size = "KiB + 256"
 
 [requested_plugins]
 # plugin_manager = {plugin_name = "default"}
-# logger = {}
-gui_application = { lifetime = "singleton" }
-
+logger = { lifetime = "singleton" }
+# gui_application = { lifetime = "singleton" }
+allocator = { lifetime = "singleton" }
 
 
 # { interface_name = "draw_2d" },

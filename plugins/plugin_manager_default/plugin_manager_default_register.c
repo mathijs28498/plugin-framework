@@ -22,7 +22,7 @@ static const PluginManagerPMVtable plugin_vtable = {
 
 static int32_t plugin_init(PluginManagerContext *context)
 {
-    SET_ARRAY_FIELD_CAPACITY(context->registered_plugins);
+    SET_ARRAY_FIELD_CAPACITY(context->registered_plugins_a);
 
     context->singleton_scope.lifetime = PLUGIN_LIFETIME_SINGLETON;
     SET_ARRAY_FIELD_CAPACITY(context->singleton_scope.plugins);
@@ -37,7 +37,7 @@ static int32_t plugin_shutdown(PluginManagerContext *context)
     // LOG_INF(context->logger, "Program exited with code %d", exit_code)
 
     TODO("Shutdown any scopes that are still open");
-    int32_t ret = plugin_manager_default_shutdown_scope(context->context_slab_pool, context->registered_plugins, &context->singleton_scope);
+    int32_t ret = plugin_manager_default_shutdown_scope(context->context_slab_pool, context->registered_plugins_a, &context->singleton_scope);
     if (ret < 0)
     {
         TODO("Add error log here");

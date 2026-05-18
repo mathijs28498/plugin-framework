@@ -39,7 +39,7 @@ typedef struct RegisteredPlugin
 {
     // When a lifetime is set it cannot be changed, if a different lifetime is requested while the lifetime is not PLUGIN_LIFETIME_UNKNOWN it is an error
     enum PluginLifetime lifetime;
-    void *platform_handle;
+    bool is_explicitly_requested;
     const struct PluginMetadata *metadata;
 } RegisteredPlugin;
 
@@ -48,7 +48,7 @@ typedef struct PluginManagerContext
     TODO("Make sure that the PluginDependencies deps; file is correctly formatted")
     PluginDependencies deps;
     TODO("Maybe DO add the plugin_manager as registered plugin so that other plugins can have it as a dependency for scopes, just look into how to handle shutdown and destroy")
-    ARRAY_FIELD(struct RegisteredPlugin, registered_plugins, MAX_REGISTERED_PLUGINS_LEN);
+    ARRAY_FIELD(struct RegisteredPlugin, registered_plugins_a, MAX_REGISTERED_PLUGINS_LEN);
     PluginScope singleton_scope;
     struct PluginContextSlabPool *context_slab_pool;
 } PluginManagerContext;

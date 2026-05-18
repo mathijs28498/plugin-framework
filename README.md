@@ -135,7 +135,7 @@ static inline int32_t gui_application_run(GuiApplicationInterface *iface)
 
 ## Memory Model
 
-Each plugin receives a `PluginContext` backed by a 1 KiB O(1) **slab allocator**. On plugin shutdown, the slab is freed in a single operation. If a plugin requires more than 1KiB memory, or has configurable dynamic memory, an arena can be allocated during initialization which has to be returned at shutdown. Application should be able to run for long unattended times, so fragmentation has to be kept to a minimum.
+Each plugin receives a `PluginContext` backed by a 1 KiB O(1) **slab allocator**. On plugin shutdown, the slab is freed in a single operation. If a plugin requires more than 1KiB memory, or has configurable dynamic memory, an allocation can be executed during initialization which has to be returned at shutdown. Application should be able to run for long unattended times, so fragmentation has to be kept to a minimum.
 
 ***
 
@@ -186,7 +186,7 @@ The goal is a fully self-authored stack, from memory allocator to language runti
 | input           | ✅ Complete                    |
 | logger          | ✅ Complete                    |
 | time            | ✅ Complete - Windows only     |
-| arena_allocator | 🔨 In Progress                 |
+| allocator | 🔨 In Progress                 |
 | draw            | 🔨 In Progress                 |
 | gui_application | 🔨 In Progress                 |
 | plugin_manager  | 🔨  In Progress                |
@@ -196,7 +196,7 @@ The goal is a fully self-authored stack, from memory allocator to language runti
 
 ***
 
-## Arena Allocator Progress
+## Allocator Progress
 
 | Feature                     | Status        |
 | --------------------------- | ------------- |

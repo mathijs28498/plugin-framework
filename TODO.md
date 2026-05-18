@@ -58,7 +58,7 @@
 - [x] Get rid of all static, non relative paths
 
 ### 1
-- [ ] Change the name of the arena_allocator as that is not correct
+- [ ] Change the name of the allocator as that is not correct
 - [ ] Make all stretchy buffers have a _a suffix
 - [ ] Fix all todos
 - [ ] Make pre render loop command buffer mechanism to use for the program
@@ -84,7 +84,7 @@
     - [ ] How about double frees?
 
 ### 2
-- [ ] Improve arena allocator plugin with safety and stuff
+- [ ] Improve allocator plugin with safety and stuff
   - [ ] Add analytics of the allocations in debug
   - [ ] Add post freeze
     - [ ] Buddy allocator vs the other one
@@ -108,7 +108,7 @@
 - [ ] Link vulkan indirectly for faster performance: https://docs.vulkan.org/guide/latest/loader.html#loader
 - [ ] Add project wide debug level
 - [ ] Add allocator plugin
-  - [ ] Add arena allocator with compile time settings for arenas
+  - [ ] Add allocator with compile time settings for arenas
     - [ ] Have compile time settings to allow for x for y size arenas
     - [ ] Have the plugins using it register, then get back a handle to use
       - [ ] This registering should say if it needs global/temporary, and the amount and sizes

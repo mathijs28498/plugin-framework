@@ -5,7 +5,7 @@
 #include <vulkan/vulkan.h>
 
 #include <plugin_sdk/renderer/v1/renderer_interface.h>
-#include <plugin_sdk/arena_allocator/v1/arena_allocator_interface.h>
+#include <plugin_sdk/allocator/v1/allocator_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_register, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/plugin_utils.h>
@@ -107,8 +107,8 @@ static int32_t plugin_init(RendererContext *context)
     } *arena;
 
     size_t alloc_size = sizeof(*arena);
-    RETURN_IF_ERROR(context->deps.logger, ret, arena_allocator_get_arena(context->deps.arena_allocator, alloc_size, &arena),
-                    "Unable to allocate arena allocator: %d", -1);
+    RETURN_IF_ERROR(context->deps.logger, ret, allocator_get_arena(context->deps.allocator, alloc_size, &arena),
+                    "Unable to allocate allocator: %d", -1);
 
     BIND_ARRAY(RV_CallRecord, arena->main_destroy_queue_mem, context->global_destroy_queue_a, MAIN_DESTROY_QUEUE_CAPACITY);
     BIND_ARRAY(RV_CallRecord, arena->swapchain_destroy_queue_mem, context->swapchain_destroy_queue_a, SWAPCHAIN_DESTROY_QUEUE_CAPACITY);

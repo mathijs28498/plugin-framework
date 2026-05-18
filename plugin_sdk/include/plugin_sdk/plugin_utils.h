@@ -48,6 +48,20 @@ static const bool IS_PLUGIN_BUILD_SHARED = false;
 #define CONCAT_2(x, y) CONCAT_2_(x, y)
 #define UNIQUE_VAR(prefix) CONCAT_2(prefix, __LINE__)
 
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)         \
+    ((byte) & 0x80 ? '1' : '0'),     \
+        ((byte) & 0x40 ? '1' : '0'), \
+        ((byte) & 0x20 ? '1' : '0'), \
+        ((byte) & 0x10 ? '1' : '0'), \
+        ((byte) & 0x08 ? '1' : '0'), \
+        ((byte) & 0x04 ? '1' : '0'), \
+        ((byte) & 0x02 ? '1' : '0'), \
+        ((byte) & 0x01 ? '1' : '0')
+
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+
 #define SAFE_WHILE(condition, max_iterations, on_fail)     \
     for (uint32_t UNIQUE_VAR(_safety_loop_) = 0;           \
          (UNIQUE_VAR(_safety_loop_) <= (max_iterations));  \

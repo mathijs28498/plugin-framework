@@ -1,0 +1,8 @@
+interface_name = "allocator"
+interface_version = "1"
+plugin_name = "buddy"
+module_path = "${build_dir}/allocator_buddy.dll"
+supported_lifetimes = ["singleton"]
+
+[dependencies]
+logger = {}
