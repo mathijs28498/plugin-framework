@@ -17,7 +17,7 @@ typedef struct AllocatorContext
     uint8_t free_list_depth;
     uint8_t *memory_pool;
     uint64_t memory_pool_size;
-    bool permanent_arenas_frozen;
+    bool permanent_allocations_frozen;
 } AllocatorContext;
 
 #pragma pack(pop)

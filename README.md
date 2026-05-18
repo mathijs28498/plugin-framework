@@ -180,19 +180,19 @@ The goal is a fully self-authored stack, from memory allocator to language runti
 
 ## Plugins
 
-| Plugin          | Status                        |
-| --------------- | ----------------------------- |
-| environment     | ✅ Complete                    |
-| input           | ✅ Complete                    |
-| logger          | ✅ Complete                    |
-| time            | ✅ Complete - Windows only     |
-| allocator | 🔨 In Progress                 |
-| draw            | 🔨 In Progress                 |
-| gui_application | 🔨 In Progress                 |
-| plugin_manager  | 🔨  In Progress                |
-| render_graph    | 🔨  In Progress                |
-| renderer        | 🔨  In Progress                |
-| window          | 🔨  In Progress - Windows only |
+| Plugin          | Status                       |
+| --------------- | ---------------------------- |
+| environment     | ✅ Complete                   |
+| input           | ✅ Complete                   |
+| logger          | ✅ Complete                   |
+| time            | ✅ Complete - Windows only    |
+| allocator       | 🔨 In Progress                |
+| draw            | 🔨 In Progress                |
+| gui_application | 🔨 In Progress                |
+| plugin_manager  | 🔨 In Progress                |
+| render_graph    | 🔨 In Progress                |
+| renderer        | 🔨 In Progress                |
+| window          | 🔨 In Progress - Windows only |
 
 ***
 
@@ -235,5 +235,5 @@ The goal is a fully self-authored stack, from memory allocator to language runti
 | -------- | ----------- |
 | Windows  | ✅ Supported |
 | Linux    | 📋 Planned   |
-| Embedded | 📋 Planned   |
 | Web      | 📋 Planned   |
+| Embedded | 📋 Planned   |

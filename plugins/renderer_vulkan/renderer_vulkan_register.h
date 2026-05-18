@@ -6,6 +6,7 @@
 
 #include <plugin_sdk/plugin_utils.h>
 #include <plugin_sdk/renderer/v1/renderer_types.h>
+#include <plugin_sdk/allocator/v1/allocator_types.h>
 
 #include "plugin_dependencies.h"
 #include "renderer_vulkan_utils.h"
@@ -176,6 +177,8 @@ typedef struct RendererContext
     ActiveFrameState active_frame_state;
 
     VkDescriptorPool global_descriptor_pool;
+
+    AllocatorAllocationHandle allocated_memory_handle;
 
     bool *shader_module_occupied_a;
     uint32_t *shader_module_generations_a;
