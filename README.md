@@ -1,192 +1,239 @@
-## TODO
-- [x] Change api name to interface
-- [x] Change plugin_manager_common.h to plugin_utils.h
-- [x] Change plugin_manager_impl.h to plugin_sdk.h
-- [x] Add retaining window at end of program exit
-- [x] Remove test plugins 
-- [x] Rename plugin_manager_api.h to plugin_framework.h
-- [x] Remove _plugin suffix to plugin names
-- [x] Properly destroy the window at end of execution
-- [x] Make gui_application initialize the screen with its own method
-- [x] Clean up internal apis and make them better
-    - [x] Make internal apis proper plugins that are just linked statically
-- [x] Add register plugin macro (rather than the define from now) goes in cmake now
-- [x] Add shutdown methods to plugins
-    - [x] Make the plugins shutdown in opposite order as initialization
-- [x] Improve plugin_registry json
-- [x] Add compile step to create plugin registry from json
-- [x] Json registration of plugins
-- [x] Remove build to get a clean build
-- [x] Look into json parsing code generation inside of python rather than cmake
-- [x] Separate array c generation and parsing
-- [x] Split python code generator between generating compile time/ configure time (only make cmake at configure time)
-- [x] Change char[] to char* where static chars are
-- [x] Change json to toml for configs
-- [x] Make logger and environment part of setup_context and make them statically loaded in the get_context method rather than at runtime in the init function
-- [x] Remove the internal plugin name and change it to initialized plugins/core in python
-- [x] Combine internal and external plugins in registry and have the toml decide if a plugin is purely static or not
-- [x] Add static loading
-    - [x] Figure out naming collisions
-- [x] Fix static dependencies
-- [x] Fix gen_plugin.py
-- [x] Make interface context dependencies automatically added to context
-- [x] Create inline functions for interfaces
-- [x] Change register macros to a vtable (sigh)
-- [x] Decouple vtable from interface
-- [x] Make plugin manager into an interface
-- [x] Create minimal plugin manager bootloader
-- [x] Make plugin manager own the lifetime of context and interface
-- [x] allow for plugins to create and destroy elements with malloc and free
-- [x] Figure out how it binds the methods
-- [x] Figure out how the plugin_manager does not get loaded to its scope
-- [x] dont force "core" in manifests, have a compile time check that at least the logger and environment are added, if not add them as interfaces with the default
-- [x] Look into using extern const PluginMetadata instead of a getter function for static analyzation
-- [x] Figure out if exported declarations can also be supported dynamically where they are using dllexport so the framework can use them dynamically or if theyre purely for plugin_manager
-- [x] Figure out how to handle capacity in dynamic plugin resolution
-- [x] Implement scope shutdown
-- [x] Make dependencies a union created called PluginDependencies and add it like "PluginDependencies dep;"
-- [x] Make static plugins work again
-- [x] Determine if logger macro should take the logger argument or not
-- [x] Figure out singleton and scoped and transient 
-- [x] Make plugin_manager work static and dynamic (or always static)
-- [x] Look into singleton vs scoped vs transient
-  - [x] This can now be described in the toml with different allocation methods for singleton vs the others possibly
-- [x] figure out how to properly structure the code to be used outside this repo
-- [x] Add ${registry_dir} and ${build_dir} anchors for manifest paths
-- [x] Change calloc for context to use a static allocator
-  - [x] Also make it work with scopes
-- [x] Get rid of all static, non relative paths
+# Plugin Framework
 
-### 1
-- [ ] Change the name of the arena_allocator as that is not correct
-- [ ] Make all stretchy buffers have a _a suffix
-- [ ] Fix all todos
-- [ ] Make pre render loop command buffer mechanism to use for the program
-- [ ] Create proper renderer abstraction and draw plugins
-- [ ] Add hotreloading of all of vulkan without closing windows: https://www.perplexity.ai/search/efd4e2be-4cde-417e-86ec-25e7a01ed4cd
-  - [ ] Call the cleanup and bootstrap of renderer
-  - [ ] Keep track of any handles gotten from the renderer inside the draw so they can be recreated
-  - [ ] Figure out how to recreate all necessary textures
-    - [ ] storing them in CPU backing store vs storing path to texture locations
-  - [ ] Allow for hot gpu swapping
-  - [ ] Check functionality for handling VK_ERROR_DEVICE_LOST by
-    - [ ] infinite loop shader in fragment (maybe other phases too?)
-    - [ ] Use after free, delete a pipeline without vkDeviceWaitIdle
-    - [ ] Win + Ctrl + Shift + B forceful restart graphics driver
-  - [ ] Make destroying set the handle to VK_NULL_HANDLE somehow
-- [ ] Add immediate execute where you begin, get a commandlist and id, then call commands, then end execute
-- [x] Add generations to handles
-- [ ] Add destruction of handles
-  - [ ] Responsibility is owner (consumer plugin, so draw plugin)
-  - [ ] Decouple cpu and gpu destruction. Free the label, then add destruction of it to queue
-  - [ ] How to handle shutdown destruction?
-  - [ ] Make consumer have a queue or something to call at shutdown
-    - [ ] How about double frees?
+A modular, dependency-aware, statically allocated plugin framework written in C, designed for desktop, web, and embedded systems. Plugins are either dynamically loaded at runtime, or statically linked at compile time. Based on a user configurated app.toml and plugin_registry.toml it determines which plugins to load and automatically resolves and injects dependencies. The framework and its plugins use purely static memory. Instead a statically sized memory pool (size determined by a configuration) gets passed to the plugin framework. Plugins get allocated from a slab partition of the memory pool, dynamic memory can be allocated via a buddy allocator plugin.
 
-### 2
-- [ ] Improve arena allocator plugin with safety and stuff
-  - [ ] Add analytics of the allocations in debug
-  - [ ] Add post freeze
-    - [ ] Buddy allocator vs the other one
-  - [ ] Add a free
-  - [ ] Add a handle or someting for the caller
-- [ ] Add compile error checking for semantics and syntax in shader generate script
-- [ ] Add interface and plugin configurations
-  - [ ] Interface plugins at include folder next to header, toml file
-  - [ ] Plugin plugins at plugin, toml file
-  - [ ] Read toml file and generate headers based on toml files in plugin
-  - [ ] Read toml file and generate headers and sources in framework py sources should be const structs
-  - [ ] Hand the configurations in the plugin_init by reference
-  - [ ] Allow configurations in app.toml
-- [ ] Automatic python dependency tracking: https://www.perplexity.ai/search/i-have-this-cmake-code-message-s.fOhSFMS_Ssx0ouZ9YzjQ?sm=d
-  - [ ] custom commands create their own dependency .d depfile
-  - [ ] configure needs to add the cmake
-    - [ ] 2 stage configure where the first stage creates the cmake file dependencies for the second stage
-- [ ] Create depfile for python dependencies dynamically
-- [ ] Make get in app fail if it is not explicitly requested plugin
-- [ ] Change to hlsl
-- [ ] Link vulkan indirectly for faster performance: https://docs.vulkan.org/guide/latest/loader.html#loader
-- [ ] Add project wide debug level
-- [ ] Add allocator plugin
-  - [ ] Add arena allocator with compile time settings for arenas
-    - [ ] Have compile time settings to allow for x for y size arenas
-    - [ ] Have the plugins using it register, then get back a handle to use
-      - [ ] This registering should say if it needs global/temporary, and the amount and sizes
-    - [ ] When allocating use the handle and receive an arena handle to use for allocation
-    - [ ] Never give the raw data
-    - [ ] When freeing either return the memory, or give back the handle (allow for both)
-    - [ ] If someone that has 1 temporary handle registered asks for a second one it will error
-    - [ ] Add memory allcoation tracker
-  - [ ] Check for other allocation strategies that might be necessary
-- [ ] Figure out valgrind
-- [ ] Add a way to get custom text inserted in log statements for error codes in plugin_utils
-- [ ] Add a composite Graphics/GPU interface that does the GPU initialization like vulkan. Then the renderer/ gpu_compute interface plugins can depend on this somehow. They need to depend specifically on the vulkan version however. This way you can specify a renderer and the composite one gets added right away.
-- [ ] Add more robust checks for user facing plugins (like checking if context != NULL)
-- [ ] Rename whole project to something acidy from framework
-- [ ] Make it so that plugins have access to the plugin_manager for scoped plugins for example 
-  - [ ] Add plugin_manager as dependency
-- [ ] Create logger fallback for initial plugin_manager dependency resolver
-- [ ] Add attachments that are defined in .toml
-  - [ ] attachments are just interfaces
-  - [ ] if attachment wants to be callable it has to have own interface and needs to embed the attachment interface
-  - [ ] Create logger to file and console at same time
-  - [ ] Allow for requested toml to specify attachments
-  - [ ] Allow attachments to have same interface as the plugin
-- [ ] Add compile time configurations to plugins via toml
-  - [ ] figure out good structure for this
-- [ ] add option for requested plugins to be created at statically
-- [ ] Add attachments for logic and draw
-- [ ] Add loops in my .in template files 
-- [ ] Change plugin_name meaning to be the entire plugin_name (eg. renderer_vulkan)
-  - [ ] Think of a new term for the former plugin_name (variant)
-- [ ] Create different cmake target that houses the pm_interface headers and remove these from the general include
-  - [x] Think if the include target has the correct name
-- [ ] Implement hash function for interface_name
+The framework knows 2 lifetimes, singleton and scoped. Singleton plugins are initialized at the start of the application and get shutdown when the application finishes. Scoped plugins live for the duration of their scope. During the initialization of singleton plugins, the buddy allocator acts as a permanent allocation for the lifetime of the application.
 
-### 3
-- [ ] Add proper error numbers
-- [ ] Add configurations to plugins
-- [ ] Create proper templating stuff in python with loops and everything
-  - [ ] Look into string.Template
-- [ ] Add logging to a file
-- [ ] Add error handling in cmake
-- [ ] Look into multiple threads
-  - [ ] Add a job interface, this interface hides the type of system like pthreads vs fibers vs ...
-  - [ ] Make singleton plugins either thread safe or not
-  - [ ] If not thread safe singleton, error on grabbibng form other thread than creatred
-- [ ] Create memory management plugins/interfaces
-- [ ] Add docker
-- [ ] Add ecs
-- [ ] Add game objects scene logic
+***
 
-### 4
-- [ ] Create syntax highlighting for .in files
-  - [ ] Make the lsp work, but add support for @...@ syntax
-  - [ ] Maybe even allow for strongly typed inclusions
-  - [ ] Add looping
-- [ ] Create go to definition in templating in python somehow
-- [ ] Hot reloading
+## Features
 
-### 5
-- [ ] Create C dutch to C transpiler in framework (for ACID lang)
-  - [ ] Aslang :^ 
+- **Linux/Zephyr RTOS style subsystem** - plugins communicate via interfaces that expose a vtable with an opaqua context struct, similar to how drivers and subsystems are abstracted in Linux and Zephyr RTOS
+- **Dynamic plugin loading** - plugins are discovered and loaded at runtime via shared libraries or at compile time using a combindation of CMake and Python
+- **Dependency resolution** - automatic ordering and validation of plugin dependencies at load time
+- **Buddy allocator** - each plugin can allocate dynamic memory using the buddy allocator plugin. This allows for fast dynamic memory without heap allocations
+- **Isolated plugin contexts** - plugins cannot access each other's memory directly; communication goes through well-defined interfaces
+- **Cross-platform** - targets Windows (MSVC), with Linux, web, and embedded systems in mind
+- **CMake build system** - includes code generation scripts via Python integrated into the build pipeline
 
-### 6
-- [ ] Create custom vma allocator 
-- [ ] ACID (Another C Inspired Design) programming language
-- [ ] BASE (Barely Another Storage Engine) sql database, add ACID syntax with it
-- [ ] BUFFER (...) text editor
-- [ ] ... (...) plugin framework
+***
 
-# other
-interface inline regex creator:
-.* ([a-z].*) \(\*(.*)\)\(.* (.*)context \*context(.*);/static inline \1 _\2(\3 *iface \4\n{\n\treturn iface->\2(iface->context\4;\n}\n
+## Architecture
+
+```
+┌────────────────────────────────────────────────────┐
+│                  Host Application                  │
+│                                                    │
+│  ┌───────────────────────────────────────────┐     │
+│  │           Bootloader (library)            │     │
+│  │                                           │     │
+│  │  1. Allocates memory pool at startup      │     │
+│  │  2. Launches plugin_manager plugin        │     │
+│  └───────────────────┬───────────────────────┘     │
+│                      │                             │
+│  ┌───────────────────▼──────────────────────────┐  │
+│  │            plugin_manager                    │  │
+│  │            1 KiB slab                        │  │
+│  │                                              │  │
+│  │  - Initialises its own dependencies          │  │
+│  │  - Resolves and creates requested plugins    │  │
+│  │  - Topologically sorts and inits dependencies│  │
+│  └──────┬────────────┬────────────┬─────────────┘  │
+│         │            │            │                │
+│  ┌──────▼──┐   ┌─────▼───┐  ┌────▼────┐            │
+│  │Plugin A │   │Plugin B │  │Plugin C │  ...       │
+│  │ 1KiB    │   │ 1KiB    │  │ 1KiB    │            │
+│  │ slab    │   │ slab    │  │ slab    │            │
+│  └─────────┘   └─────────┘  └─────────┘            │
+│                                                    │
+│  ╔═════════════════════════════════════════╗       │
+│  ║         Memory Pool (startup alloc)     ║       │
+│  ║  [ 1KiB ][ 1KiB ][ 1KiB ][ 1KiB ] ...   ║       │
+│  ║  [     Frozen permanent memory pool   ] ║       │
+│  ║  [     Buddy allocator                ] ║       │
+│  ╚═════════════════════════════════════════╝       │
+└────────────────────────────────────────────────────┘
+```
+
+Each plugin exposes a standard interface. The host resolves the load order based on declared dependencies before any plugin is initialised. Missing or cyclic dependencies are caught in this step and result in a loud error.
+
+***
+
+## Plugin Interface
+
+Every plugin implements a small, well-defined C interface:
+
+```c
+typedef int32_t (*PluginInjectDependency_Fn)(void *context, const char *interface_name, void *iface);
+typedef int32_t (*PluginInit_Fn)(void *context);
+typedef int32_t (*PluginShutdown_Fn)(void *context);
+
+typedef struct PluginProvider
+{
+    const void *vtable;
+    PluginInjectDependency_Fn inject_dependency;
+    PluginInit_Fn init;
+    PluginShutdown_Fn shutdown;
+    uint64_t context_size;
+} PluginProvider;
+```
+
+This keeps the ABI minimal and stable. Plugins declare their own dependencies. At compile time a python script reads a manifest.toml and creates a symbol to get this struct. An example of a manifest.toml.
+
+```toml
+interface_name = "gui_application"
+interface_version = "1"
+plugin_name = "default"
+module_path = "${build_dir}/gui_application_default.dll"
+supported_lifetimes = ["singleton"]
+init = true
+
+[dependencies]
+logger = {}
+window = {}
+draw = {}
+input = {}
+```
+
+Each plugin implements a vtable. An Interface struct holds both a reference to an opaque Context struct and a pointer to a defined vtable struct. For each vtable member a companion inline function is created for ease of use, borrowing from the abstraction system of Linux and Zephyr RTOS.
+
+```c
+#pragma once
+
+#include <stdint.h>
+
+#pragma pack(push, 8)
+
+struct GuiApplicationContext;
+struct WindowInterfaceCreateWindowOptions;
+typedef struct GuiApplicationVtable
+{
+    int32_t (*setup)(struct GuiApplicationContext *context, struct WindowInterfaceCreateWindowOptions *create_window_options);
+    int32_t (*run)(struct GuiApplicationContext *context);
+} GuiApplicationVtable;
+
+typedef struct GuiApplicationInterface {
+    struct GuiApplicationContext *context;
+    GuiApplicationVtable *vtable;
+} GuiApplicationInterface;
+
+#pragma pack(pop)
+
+static inline int32_t gui_application_setup(GuiApplicationInterface *iface, struct WindowInterfaceCreateWindowOptions *create_window_options)
+{
+    return iface->vtable->setup(iface->context, create_window_options);
+}
+
+static inline int32_t gui_application_run(GuiApplicationInterface *iface)
+{
+    return iface->vtable->run(iface->context);
+}
+
+```
+
+***
+
+## Memory Model
+
+Each plugin receives a `PluginContext` backed by a 1 KiB O(1) **slab allocator**. On plugin shutdown, the slab is freed in a single operation. If a plugin requires more than 1KiB memory, or has configurable dynamic memory, an arena can be allocated during initialization which has to be returned at shutdown. Application should be able to run for long unattended times, so fragmentation has to be kept to a minimum.
+
+***
+
+## Build
+
+Requires CMake 3.7+ and a C11-compatible compiler (MSVC or GCC/Clang).
+
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+```
+
+Python 3 is required for the code generation step, which runs automatically as part of the CMake configure phase.
+
+***
+
+## Project Goals
+
+This framework is one component of a larger planned personal ecosystem:
+
+- **Plugin Framework** (this repo) - modular runtime plugin loading in C
+- **ACID** - a custom programming language designed to transpile to C and LLVM IR
+- **BASE** - a custom SQL database engine
+- **BUFFER** - a custom text editor
+
+The goal is a fully self-authored stack, from memory allocator to language runtime, built with an emphasis on understanding every layer from first principles.
+
+***
+
+## Design Principles
+
+- No hidden allocations - all memory is explicit and caller-owned
+- No heap allocations - all memory is allocated statically or using strategies like bump arenas
+- No global state - everything lives in a context
+- Explicit error handling - no exceptions, no silent failures
+- Follows NASA's Power of Ten coding rules for reliability in constrained environments
+- Very limited headers allowed inside other headers to decrease incremental compilations 
+
+***
+
+***
+
+## Plugins
+
+| Plugin          | Status                        |
+| --------------- | ----------------------------- |
+| environment     | ✅ Complete                    |
+| input           | ✅ Complete                    |
+| logger          | ✅ Complete                    |
+| time            | ✅ Complete - Windows only     |
+| arena_allocator | 🔨 In Progress                 |
+| draw            | 🔨 In Progress                 |
+| gui_application | 🔨 In Progress                 |
+| plugin_manager  | 🔨  In Progress                |
+| render_graph    | 🔨  In Progress                |
+| renderer        | 🔨  In Progress                |
+| window          | 🔨  In Progress - Windows only |
+
+***
+
+## Arena Allocator Progress
+
+| Feature                     | Status        |
+| --------------------------- | ------------- |
+| 1KiB context slabs          | ✅ Complete    |
+| Permanent memory allocation | ✅ Complete    |
+| Buddy allocator             | 🔨 In Progress |
 
 
+***
 
+## Vulkan Backend Progress
 
-calculate lines of code:
-Get-ChildItem -Path . -Recurse -File | Where-Object {
-($_.Extension -in @('.md', '.c', '.h', '.txt', '.cmake', '.py', '.vert', '.frag', '.comp', '.in')) -and
-(($_.FullName -notmatch '\\build\\' -and $_.FullName -notmatch '\\lib\\') -or $_.FullName -match '\\lib\\plugin_manager_bootloader\\' -or $_.FullName -match '\\lib\\bump_arena\\')
-} | Get-Content | Measure-Object -Line
+| Feature                                            | Status        |
+| -------------------------------------------------- | ------------- |
+| Bootstrap & initialisation                         | ✅ Complete    |
+| Pipeline creation                                  | ✅ Complete    |
+| Descriptor set creation, allocation & updates      | ✅ Complete    |
+| Image creation                                     | ✅ Complete    |
+| Graceful resource destruction                      | ✅ Complete    |
+| API-agnostic abstract handles with generation      | ✅ Complete    |
+| Abstracted command buffer commands                 | ✅ Complete    |
+| Swapchain resizing                                 | ✅ Complete    |
+| Deferred destruction queues                        | ✅ Complete    |
+| Compile-time automatic shader compilation (Python) | ✅ Complete    |
+| Buffer creation & usage                            | 🔨 In Progress |
+| Immediate submission command buffer                | 🔨 In Progress |
+| Render graph with automatic pass management        | 📋 Planned     |
+| Compile-time shader reflection                     | 📋 Planned     |
+| `VK_ERROR_DEVICE_LOST` recovery                    | 📋 Planned     |
+
+***
+
+## Platform Targets
+
+| Platform | Status      |
+| -------- | ----------- |
+| Windows  | ✅ Supported |
+| Linux    | 📋 Planned   |
+| Embedded | 📋 Planned   |
+| Web      | 📋 Planned   |
