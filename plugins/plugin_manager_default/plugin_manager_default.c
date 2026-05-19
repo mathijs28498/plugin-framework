@@ -45,7 +45,7 @@ int32_t reserve_next_context_slot(const LoggerInterface *logger, PluginContextSl
     {
         if (logger)
             LOG_ERR_TRACE(logger, "Plugin context pool exhausted (max capacity: %u plugins)",
-                    context_slab_pool->max_plugin_amount);
+                          context_slab_pool->max_plugin_amount);
         return -1;
     }
 
@@ -297,7 +297,7 @@ int32_t add_plugins_from_bitfield(
         {
             if (logger != NULL)
                 LOG_ERR_TRACE(logger, "Unable to add plugin '%s' to scope with lifetime '%d' as its scope lifetime '%d' is incompatible",
-                        registered_plugin->metadata->interface_name, scope->lifetime, registered_plugin->lifetime);
+                              registered_plugin->metadata->interface_name, scope->lifetime, registered_plugin->lifetime);
             return -1;
         }
 
@@ -305,17 +305,13 @@ int32_t add_plugins_from_bitfield(
         {
             if (logger != NULL)
                 LOG_ERR_TRACE(logger, "Unable to add plugin '%s' to scope with lifetime '%d' the plugin does not support scope lifetime",
-                        registered_plugin->metadata->interface_name, scope->lifetime);
+                              registered_plugin->metadata->interface_name, scope->lifetime);
             return -1;
         }
 
         ScopedPluginInterface *added_plugin_interface;
-        ret = add_plugin_to_scope_unchecked(logger, context_slab_pool, singleton_scope, registered_plugin, scope, &added_plugin_interface);
-        if (ret < 0)
-        {
-            LOG_ERR_TRACE(logger, "Unable to add plugin: %d", ret);
-            return -1;
-        }
+        RETURN_IF_ERROR(logger, ret, add_plugin_to_scope_unchecked(logger, context_slab_pool, singleton_scope, registered_plugin, scope, &added_plugin_interface),
+                        "Unable to add plugin: %d", ret);
 
         if (out_plugin_interface != NULL &&
             strcmp(registered_plugin->metadata->interface_name, out_plugin_name) == 0)
@@ -351,12 +347,8 @@ int32_t add_plugins_to_scope(const LoggerInterface *logger,
         plugin_bitfield[registered_plugin_index] = true;
     }
 
-    ret = add_plugins_from_bitfield(logger, context_slab_pool, singleton_scope, registered_plugins, scope, plugin_bitfield, NULL);
-    if (ret < 0)
-    {
-        LOG_ERR_TRACE(logger, "Unable to add plugins from bitfield: %d", ret);
-        return -1;
-    }
+    RETURN_IF_ERROR(logger, ret, add_plugins_from_bitfield(logger, context_slab_pool, singleton_scope, registered_plugins, scope, plugin_bitfield, NULL),
+                    "Unable to add plugins from bitfield: %d", ret);
 
     return 0;
 }
@@ -382,13 +374,8 @@ int32_t add_plugin_to_scope(const LoggerInterface *logger,
     (void)get_registered_plugin_by_interface_name(registered_plugins, interface_name_to_add, &registered_plugin_index);
     plugin_bitfield[registered_plugin_index] = true;
 
-    ret = add_plugins_from_bitfield(logger, context_slab_pool, singleton_scope, registered_plugins, scope, plugin_bitfield, out_iface);
-    if (ret < 0)
-    {
-        if (logger != NULL)
-            LOG_ERR_TRACE(logger, "Unable to add plugins from bitfield: %d", ret);
-        return -1;
-    }
+    RETURN_IF_ERROR(logger, ret, add_plugins_from_bitfield(logger, context_slab_pool, singleton_scope, registered_plugins, scope, plugin_bitfield, out_iface),
+                    "Unable to add plugins from bitfield: %d", ret);
 
     return 0;
 }
@@ -402,29 +389,41 @@ int32_t plugin_manager_default_get_singleton(PluginManagerContext *context, cons
     return plugin_manager_default_get_scoped(context, &context->singleton_scope, interface_name, out_iface);
 }
 
-int32_t plugin_manager_default_get_scoped(struct PluginManagerContext *context, struct PluginScope *scope, const char *interface_name, void **out_iface)
+int32_t plugin_manager_default_get_scoped(PluginManagerContext *context, PluginScope *scope, const char *interface_name, void **out_iface)
 {
     assert(context != NULL);
     assert(scope != NULL);
     assert(interface_name != NULL);
     assert(out_iface != NULL);
 
+    *out_iface = NULL;
+
     LoggerInterface *logger = context->deps.logger;
 
     TODO("Check if already in scope, if yes get it, if no create it")
     TODO("If scope is SINGLETON, return err if not available")
+
+    ScopedPlugin *found_plugin = NULL;
 
     for (size_t i = 0; i < GET_ARRAY_LENGTH(scope->plugins); i++)
     {
         ScopedPlugin *plugin = &scope->plugins[i];
         if (strcmp(interface_name, plugin->interface_name) == 0)
         {
-            *out_iface = &plugin->iface;
-            return 0;
+            found_plugin = plugin;
+            break;
         }
     }
-    LOG_ERR_TRACE(logger, "Unable to get plugin '%s' from scope with lifetime '%d'", interface_name, scope->lifetime);
-    return -1;
+
+    RETURN_IF_TRUE(logger, found_plugin == NULL,
+                   -1, "Failed to get plugin '%s' from scope with lifetime '%d', plugin not found", interface_name, scope->lifetime);
+
+    RegisteredPlugin *registered_plugin = get_registered_plugin_by_interface_name(context->registered_plugins_a, found_plugin->interface_name, NULL);
+    RETURN_IF_FALSE(logger, registered_plugin->is_explicitly_requested,
+                    -2, "Failed to get plugin '%s', from scope with lifetime '%d', plugin was not explicitly requested", interface_name, scope->lifetime);
+
+    *out_iface = &found_plugin->iface;
+    return 0;
 }
 
 int32_t plugin_manager_default_shutdown_scope(PluginContextSlabPool *context_slab_pool, RegisteredPlugin *registered_plugins, PluginScope *scope)

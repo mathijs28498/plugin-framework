@@ -16,12 +16,10 @@ TODO("Remove this dependency")
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_pipeline, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/renderer/v1/renderer_interface.h>
 
-#include "shader_colored_triangle_vertex.h"
-#include "shader_colored_triangle_fragment.h"
-
 #include "renderer_vulkan_register.h"
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan.h"
+#include "renderer_vulkan_conversion.h"
 
 #define MAX_SHADER_STAGES 2
 
@@ -47,19 +45,6 @@ int32_t renderer_vulkan_create_shader(RendererContext *context, const uint32_t *
     RV_RES_RV_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->shader_module_occupied_a, context->shader_module_generations_a, context->shader_modules_a, shader_module, shader_handle,
                                      vkDestroyShaderModule(context->device, shader_module, NULL));
     *out_shader_handle = shader_handle.raw;
-    return 0;
-}
-
-int32_t renderer_vulkan_destroy_shader(RendererContext *context, RendererShaderHandle shader_handle)
-{
-    assert(context != NULL);
-
-    VkShaderModule shader_module = VK_NULL_HANDLE;
-    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->shader_module_generations_a, context->shader_modules_a, shader_handle, shader_module);
-    RV_RES_RENDERER_HANDLE_FREE_RETURN_IF_ERROR(context->deps.logger, context->shader_module_occupied_a, context->shader_module_generations_a, context->shader_modules_a, shader_handle);
-
-    vkDestroyShaderModule(context->device, shader_module, NULL);
-
     return 0;
 }
 
@@ -206,10 +191,10 @@ void rv_pipeline_set_input_topology(RV_PipelineBuilder *pipeline_builder, RV_VkP
     pipeline_builder->input_assembly_ci.primitiveRestartEnable = VK_FALSE;
 }
 
-void rv_pipeline_set_polygon_mode(RV_PipelineBuilder *pipeline_builder, RV_VkPolygonMode polygon_mode)
+void rv_pipeline_set_polygon_mode(RV_PipelineBuilder *pipeline_builder, RV_VkPolygonMode fill_mode)
 {
     assert(pipeline_builder != NULL);
-    pipeline_builder->rasterizer_ci.polygonMode = (VkPolygonMode)polygon_mode;
+    pipeline_builder->rasterizer_ci.polygonMode = (VkPolygonMode)fill_mode;
     pipeline_builder->rasterizer_ci.lineWidth = 1.0;
 }
 
@@ -294,16 +279,10 @@ void rv_pipeline_disable_depthtest(RV_PipelineBuilder *pipeline_builder)
     pipeline_builder->depth_stencil_ci.maxDepthBounds = 1.f;
 }
 
-int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle)
+static inline int32_t inl_renderer_vulkan_create_pipeline_layout(RendererContext *context, const RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle)
 {
-    assert(context != NULL);
-    assert(renderer_pipeline_layout_create_info != NULL);
-    assert(out_pipeline_layout_handle != NULL);
-
     VkResult result;
     int32_t ret;
-
-    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
 
     uint32_t push_constant_ranges_len = renderer_pipeline_layout_create_info->push_constants_len;
     VkPushConstantRange *push_constant_ranges;
@@ -345,14 +324,78 @@ int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const R
     RV_RES_RV_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->pipeline_layout_occupied_a, context->pipeline_layout_generations_a, context->pipeline_layouts_a, pipeline_layout, rv_pipeline_layout_handle,
                                      vkDestroyPipelineLayout(context->device, pipeline_layout, NULL));
 
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, pipeline_layout, NULL),
-                    "Failed to push gradient pipeline layout destroy data to destroy queue: %d", ret);
-
     *out_pipeline_layout_handle = rv_pipeline_layout_handle.raw;
-
-    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     return 0;
+}
+
+int32_t renderer_vulkan_create_pipeline_layout(RendererContext *context, const RendererPipelineLayoutCreateInfo *renderer_pipeline_layout_create_info, RendererPipelineLayoutHandle *out_pipeline_layout_handle)
+{
+    assert(context != NULL);
+    assert(renderer_pipeline_layout_create_info != NULL);
+    assert(out_pipeline_layout_handle != NULL);
+
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+    int32_t ret = inl_renderer_vulkan_create_pipeline_layout(context, renderer_pipeline_layout_create_info, out_pipeline_layout_handle);
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
+
+    return ret;
+}
+
+int32_t create_pipeline_shader_stage_create_info(RendererContext *context, const RendererShaderCreateInfo *shader_create_info, VkShaderStageFlagBits shader_stage, VkPipelineShaderStageCreateInfo *out_pipeline_shader_stage_create_info)
+{
+    assert(context != NULL);
+    assert(shader_create_info != NULL);
+    assert(out_pipeline_shader_stage_create_info != NULL);
+
+    VkShaderModule shader_module = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->shader_module_generations_a, context->shader_modules_a,
+                                         shader_create_info->shader_handle, shader_module);
+
+    *out_pipeline_shader_stage_create_info = (VkPipelineShaderStageCreateInfo){
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+        .stage = shader_stage,
+        .module = shader_module,
+        .pName = shader_create_info->entry_point,
+    };
+
+    return 0;
+}
+
+VkPipelineColorBlendAttachmentState create_color_blend_attachment_state(RendererBlendMode blend_mode)
+{
+    switch (blend_mode)
+    {
+    case RENDERER_BLEND_MODE_NONE:
+        return (VkPipelineColorBlendAttachmentState){
+            .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+            .blendEnable = VK_FALSE,
+        };
+    case RENDERER_BLEND_MODE_ADDITIVE:
+        return (VkPipelineColorBlendAttachmentState){
+            .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+            .blendEnable = VK_TRUE,
+            .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+            .dstColorBlendFactor = VK_BLEND_FACTOR_ONE,
+            .colorBlendOp = VK_BLEND_OP_ADD,
+            .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+            .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+            .alphaBlendOp = VK_BLEND_OP_ADD,
+        };
+    case RENDERER_BLEND_MODE_ALPHA_BLEND:
+        return (VkPipelineColorBlendAttachmentState){
+            .colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+            .blendEnable = VK_TRUE,
+            .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+            .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+            .colorBlendOp = VK_BLEND_OP_ADD,
+            .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+            .dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO,
+            .alphaBlendOp = VK_BLEND_OP_ADD,
+        };
+    default:
+        UNREACHABLE();
+        return (VkPipelineColorBlendAttachmentState){0};
+    }
 }
 
 int32_t renderer_vulkan_create_graphics_pipeline(RendererContext *context, const RendererGraphicsPipelineCreateInfo *renderer_pipeline_create_info, RendererGraphicsPipelineHandle *out_pipeline_handle)
@@ -360,6 +403,134 @@ int32_t renderer_vulkan_create_graphics_pipeline(RendererContext *context, const
     assert(context != NULL);
     assert(renderer_pipeline_create_info != NULL);
     assert(out_pipeline_handle != NULL);
+
+    int32_t ret;
+    VkResult result;
+
+    VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->pipeline_layout_generations_a, context->pipeline_layouts_a,
+                                         renderer_pipeline_create_info->layout_handle, pipeline_layout);
+
+    VkFormat vk_color_attachment_format = rv_image_format_to_vk_format(renderer_pipeline_create_info->color_attachment_format);
+    VkFormat vk_depth_attachment_format = rv_image_format_to_vk_format(renderer_pipeline_create_info->depth_attachment_format);
+    VkPipelineRenderingCreateInfo rendering_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+        .colorAttachmentCount = 1,
+        .pColorAttachmentFormats = &vk_color_attachment_format,
+        .depthAttachmentFormat = vk_depth_attachment_format,
+    };
+
+    VkPipelineShaderStageCreateInfo vertex_stage_create_info;
+    VkPipelineShaderStageCreateInfo fragment_stage_create_info;
+
+    RETURN_IF_ERROR(context->deps.logger, ret, create_pipeline_shader_stage_create_info(context, &renderer_pipeline_create_info->vertex_shader, VK_SHADER_STAGE_VERTEX_BIT, &vertex_stage_create_info),
+                    "Failed to create shader vertex stage create info: %d", ret);
+    RETURN_IF_ERROR(context->deps.logger, ret, create_pipeline_shader_stage_create_info(context, &renderer_pipeline_create_info->fragment_shader, VK_SHADER_STAGE_FRAGMENT_BIT, &fragment_stage_create_info),
+                    "Failed to create shader fragment stage create info: %d", ret);
+
+    VkPipelineShaderStageCreateInfo shader_stage_create_infos[] = {
+        vertex_stage_create_info,
+        fragment_stage_create_info,
+    };
+
+    VkPipelineVertexInputStateCreateInfo vertex_input_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+    };
+
+    VkPipelineInputAssemblyStateCreateInfo input_assembly_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO,
+        .topology = rv_topology_to_vk_topology(renderer_pipeline_create_info->topology),
+        .primitiveRestartEnable = VK_FALSE,
+    };
+
+    VkPipelineViewportStateCreateInfo viewport_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
+        .viewportCount = 1,
+        .scissorCount = 1,
+    };
+
+    VkPipelineRasterizationStateCreateInfo rasterization_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO,
+        .polygonMode = rv_fill_mode_to_vk_polygon_mode(renderer_pipeline_create_info->fill_mode),
+        .lineWidth = 1,
+        .cullMode = rv_cull_mode_to_vk_cull_mode(renderer_pipeline_create_info->cull_mode),
+        .frontFace = rv_front_face_to_vk_front_face(renderer_pipeline_create_info->front_face),
+    };
+
+    VkPipelineColorBlendAttachmentState color_blend_attachment_state = create_color_blend_attachment_state(renderer_pipeline_create_info->blend_mode);
+
+    VkPipelineColorBlendStateCreateInfo color_blend_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO,
+        .logicOpEnable = VK_FALSE,
+        .logicOp = VK_LOGIC_OP_COPY,
+        .attachmentCount = 1,
+        .pAttachments = &color_blend_attachment_state,
+    };
+
+    TODO("Add support for different types of multisampling, this is no sampling")
+    VkPipelineMultisampleStateCreateInfo multisample_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO,
+        .sampleShadingEnable = VK_FALSE,
+
+        // multisampling defaulted to no multisampling (1 sample per pixel)
+        .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT,
+        .minSampleShading = 1.0f,
+        .pSampleMask = NULL,
+
+        // no alpha to coverage either
+        .alphaToCoverageEnable = VK_FALSE,
+        .alphaToOneEnable = VK_FALSE,
+    };
+
+    TODO("Add support for different depth tests, this is disabled depth test")
+    VkPipelineDepthStencilStateCreateInfo depth_stencil_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_FALSE,
+        .depthWriteEnable = VK_FALSE,
+        .depthCompareOp = VK_COMPARE_OP_NEVER,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
+        .minDepthBounds = 0,
+        .maxDepthBounds = 1,
+    };
+
+    VkDynamicState dynamic_states[] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+    VkPipelineDynamicStateCreateInfo dynamic_state_create_info = {
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+        .dynamicStateCount = ARRAY_SIZE(dynamic_states),
+        .pDynamicStates = dynamic_states,
+    };
+
+    VkGraphicsPipelineCreateInfo graphics_pipeline_create_info = {
+        .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+        .pNext = &rendering_create_info,
+
+        .stageCount = ARRAY_SIZE(shader_stage_create_infos),
+        .pStages = shader_stage_create_infos,
+
+        .pVertexInputState = &vertex_input_create_info,
+        .pInputAssemblyState = &input_assembly_create_info,
+        .pTessellationState = NULL,
+        .pViewportState = &viewport_create_info,
+        .pRasterizationState = &rasterization_create_info,
+        .pMultisampleState = &multisample_create_info,
+        .pDepthStencilState = &depth_stencil_create_info,
+        .pColorBlendState = &color_blend_create_info,
+        .pDynamicState = &dynamic_state_create_info,
+
+        .layout = pipeline_layout,
+    };
+
+    VkPipeline pipeline;
+    RV_RETURN_IF_ERROR(context->deps.logger, result,
+                       vkCreateGraphicsPipelines(context->device, VK_NULL_HANDLE, 1, &graphics_pipeline_create_info, NULL, &pipeline),
+                       -1, "Failed to create graphics pipeline: %d", result);
+
+    RendererVulkanHandle pipeline_handle = {0};
+    RV_RES_RV_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->pipeline_occupied_a, context->pipeline_generations_a, context->pipelines_a, pipeline, pipeline_handle,
+                                     vkDestroyPipeline(context->device, pipeline, NULL));
+
+    *out_pipeline_handle = pipeline_handle.raw;
     return 0;
 }
 
@@ -372,16 +543,9 @@ int32_t renderer_vulkan_create_compute_pipeline(RendererContext *context, const 
     VkResult result;
     int32_t ret;
 
-    VkShaderModule compute_shader_module = VK_NULL_HANDLE;
-    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->shader_module_generations_a, context->shader_modules_a,
-                                         renderer_pipeline_create_info->compute_shader_handle, compute_shader_module);
-
-    VkPipelineShaderStageCreateInfo stage_create_info = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = VK_SHADER_STAGE_COMPUTE_BIT,
-        .module = compute_shader_module,
-        .pName = renderer_pipeline_create_info->compute_shader_entry_point,
-    };
+    VkPipelineShaderStageCreateInfo stage_create_info;
+    RETURN_IF_ERROR(context->deps.logger, ret, create_pipeline_shader_stage_create_info(context, &renderer_pipeline_create_info->compute_shader, VK_SHADER_STAGE_COMPUTE_BIT, &stage_create_info),
+                    "Failed to create compute shader stage create info: %d", ret);
 
     VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
     RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->pipeline_layout_generations_a, context->pipeline_layouts_a,
@@ -402,69 +566,126 @@ int32_t renderer_vulkan_create_compute_pipeline(RendererContext *context, const 
     RV_RES_RV_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->pipeline_occupied_a, context->pipeline_generations_a, context->pipelines_a, pipeline, pipeline_handle,
                                      vkDestroyPipeline(context->device, pipeline, NULL));
 
-    TODO("Make owner responsible for destruction");
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipeline, context->device, pipeline, NULL),
-                    "Failed to push gradient pipeline destroy data to destroy queue: %d", ret);
-
     *out_pipeline_handle = pipeline_handle.raw;
-
     return 0;
 }
 
-int32_t create_triangle_pipeline(RendererContext *context)
+
+int32_t renderer_vulkan_destroy_shader(RendererContext *context, RendererShaderHandle shader_handle)
 {
     assert(context != NULL);
 
     int32_t ret;
-    VkResult result;
 
-    TODO("REMVOE THIS");
-    VkShaderModule vertex_shader_module = NULL, fragment_shader_module = NULL;
-    // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_shader(context, COLORED_TRIANGLE_VERTEX_SHADER_U32_CODE, COLORED_TRIANGLE_VERTEX_SHADER_BYTES_LEN, &vertex_shader_module),
-    //                 "Failed to load vertex shader module: %d", ret);
-    // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_shader(context, COLORED_TRIANGLE_FRAGMENT_SHADER_U32_CODE, COLORED_TRIANGLE_FRAGMENT_SHADER_BYTES_LEN, &fragment_shader_module),
-    //                 "Failed to load fragment shader module: %d", ret);
+    VkShaderModule shader_module = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->shader_module_generations_a, context->shader_modules_a, shader_handle, shader_module);
+    RV_RES_RENDERER_HANDLE_FREE_RETURN_IF_ERROR(context->deps.logger, context->shader_module_occupied_a, context->shader_module_generations_a, context->shader_modules_a, shader_handle);
 
-    VkPipelineLayoutCreateInfo graphics_pipeline_layout_create_info = {
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-    };
-
-    VkPipelineLayout graphics_pipeline_layout;
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &graphics_pipeline_layout_create_info, NULL, &graphics_pipeline_layout),
-                       -1, "Failed to create graphics pipeline layout: %d", result);
-
-    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipelineLayout, context->device, graphics_pipeline_layout, NULL);
-
-    RV_PipelineBuilder *pipeline_builder;
-    RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_create_pipeline_builder(&pipeline_builder),
-                    "Failed to create pipeline builder: %d", ret);
-
-    rv_pipeline_set_layout(pipeline_builder, graphics_pipeline_layout);
-    RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_set_shaders(pipeline_builder, vertex_shader_module, fragment_shader_module),
-                    "Failed to set shaders: %d", ret);
-    rv_pipeline_set_input_topology(pipeline_builder, RV_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-    rv_pipeline_set_polygon_mode(pipeline_builder, RV_POLYGON_MODE_FILL);
-    rv_pipeline_set_cull_mode(pipeline_builder, RV_CULL_MODE_NONE, RV_FRONT_FACE_CLOCKWISE);
-    rv_pipeline_set_multisampling_none(pipeline_builder);
-    rv_pipeline_disable_blending(pipeline_builder);
-    // rv_pipeline_enable_blending_additive(pipeline_builder);
-    // rv_pipeline_enable_blending_alphablend(pipeline_builder);
-    rv_pipeline_disable_depthtest(pipeline_builder);
-
-    RV_AllocatedImage allocated_image = {0};
-    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
-                                              context->draw_image_handle, allocated_image);
-    rv_pipeline_set_color_attachment_format(pipeline_builder, allocated_image.image_format);
-    rv_pipeline_set_depth_format(pipeline_builder, VK_FORMAT_UNDEFINED);
-
-    RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_builder_build(context, pipeline_builder, &context->triangle_pipeline),
-                    "Failed to build graphics pipeline: %d", ret);
-
-    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyPipeline, context->device, context->triangle_pipeline, NULL);
-
-    vkDestroyShaderModule(context->device, fragment_shader_module, NULL);
-    vkDestroyShaderModule(context->device, vertex_shader_module, NULL);
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->active_frame_state.frame->destroy_queue_a, vkDestroyShaderModule, context->device, shader_module, NULL),
+                    "Failed to push shader destroy queue: %d", ret);
 
     return 0;
 }
+
+int32_t renderer_vulkan_destroy_pipeline_layout(RendererContext *context, RendererPipelineLayoutHandle pipeline_layout_handle)
+{
+    assert(context != NULL);
+
+    int32_t ret;
+
+    VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->pipeline_layout_generations_a, context->pipeline_layouts_a, pipeline_layout_handle, pipeline_layout);
+    RV_RES_RENDERER_HANDLE_FREE_RETURN_IF_ERROR(context->deps.logger, context->pipeline_layout_occupied_a, context->pipeline_layout_generations_a, context->pipeline_layouts_a, pipeline_layout_handle);
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->active_frame_state.frame->destroy_queue_a, vkDestroyPipelineLayout, context->device, pipeline_layout, NULL),
+                    "Failed to push pipeline layout to destroy queue: %d", ret);
+    return 0;
+}
+
+int32_t renderer_vulkan_destroy_graphics_pipeline(RendererContext *context, RendererGraphicsPipelineHandle pipeline_handle)
+{
+    assert(context != NULL);
+
+    int32_t ret;
+
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->pipeline_generations_a, context->pipelines_a, pipeline_handle, pipeline);
+    RV_RES_RENDERER_HANDLE_FREE_RETURN_IF_ERROR(context->deps.logger, context->pipeline_occupied_a, context->pipeline_generations_a, context->pipelines_a, pipeline_handle);
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->active_frame_state.frame->destroy_queue_a, vkDestroyPipeline, context->device, pipeline, NULL),
+                    "Failed to push graphics pipeline to destroy queue: %d", ret);
+    return 0;
+}
+
+int32_t renderer_vulkan_destroy_compute_pipeline(RendererContext *context, RendererComputePipelineHandle pipeline_handle)
+{
+    assert(context != NULL);
+
+    int32_t ret;
+
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->pipeline_generations_a, context->pipelines_a, pipeline_handle, pipeline);
+    RV_RES_RENDERER_HANDLE_FREE_RETURN_IF_ERROR(context->deps.logger, context->pipeline_occupied_a, context->pipeline_generations_a, context->pipelines_a, pipeline_handle);
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->active_frame_state.frame->destroy_queue_a, vkDestroyPipeline, context->device, pipeline, NULL),
+                    "Failed to push compute pipeline to destroy queue: %d", ret);
+    return 0;
+}
+
+// int32_t create_triangle_pipeline(RendererContext *context)
+// {
+//     assert(context != NULL);
+
+//     int32_t ret;
+//     VkResult result;
+
+//     TODO("REMVOE THIS");
+//     VkShaderModule vertex_shader_module = NULL, fragment_shader_module = NULL;
+//     // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_shader(context, COLORED_TRIANGLE_VERTEX_SHADER_U32_CODE, COLORED_TRIANGLE_VERTEX_SHADER_BYTES_LEN, &vertex_shader_module),
+//     //                 "Failed to load vertex shader module: %d", ret);
+//     // RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_create_shader(context, COLORED_TRIANGLE_FRAGMENT_SHADER_U32_CODE, COLORED_TRIANGLE_FRAGMENT_SHADER_BYTES_LEN, &fragment_shader_module),
+//     //                 "Failed to load fragment shader module: %d", ret);
+
+//     VkPipelineLayoutCreateInfo graphics_pipeline_layout_create_info = {
+//         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+//     };
+
+//     VkPipelineLayout graphics_pipeline_layout;
+//     RV_RETURN_IF_ERROR(context->deps.logger, result, vkCreatePipelineLayout(context->device, &graphics_pipeline_layout_create_info, NULL, &graphics_pipeline_layout),
+//                        -1, "Failed to create graphics pipeline layout: %d", result);
+
+//     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, vkDestroyPipelineLayout, context->device, graphics_pipeline_layout, NULL);
+
+//     RV_PipelineBuilder *pipeline_builder;
+//     RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_create_pipeline_builder(&pipeline_builder),
+//                     "Failed to create pipeline builder: %d", ret);
+
+//     rv_pipeline_set_layout(pipeline_builder, graphics_pipeline_layout);
+//     RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_set_shaders(pipeline_builder, vertex_shader_module, fragment_shader_module),
+//                     "Failed to set shaders: %d", ret);
+//     rv_pipeline_set_input_topology(pipeline_builder, RV_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+//     rv_pipeline_set_polygon_mode(pipeline_builder, RV_POLYGON_MODE_FILL);
+//     rv_pipeline_set_cull_mode(pipeline_builder, RV_CULL_MODE_NONE, RV_FRONT_FACE_CLOCKWISE);
+//     rv_pipeline_set_multisampling_none(pipeline_builder);
+//     rv_pipeline_disable_blending(pipeline_builder);
+//     // rv_pipeline_enable_blending_additive(pipeline_builder);
+//     // rv_pipeline_enable_blending_alphablend(pipeline_builder);
+//     rv_pipeline_disable_depthtest(pipeline_builder);
+
+//     RV_AllocatedImage allocated_image = {0};
+//     RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a,
+//                                               context->draw_image_handle, allocated_image);
+//     rv_pipeline_set_color_attachment_format(pipeline_builder, allocated_image.image_format);
+//     rv_pipeline_set_depth_format(pipeline_builder, VK_FORMAT_UNDEFINED);
+
+//     RETURN_IF_ERROR(context->deps.logger, ret, rv_pipeline_builder_build(context, pipeline_builder, &context->triangle_pipeline),
+//                     "Failed to build graphics pipeline: %d", ret);
+
+//     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, vkDestroyPipeline, context->device, context->triangle_pipeline, NULL);
+
+//     vkDestroyShaderModule(context->device, fragment_shader_module, NULL);
+//     vkDestroyShaderModule(context->device, vertex_shader_module, NULL);
+
+//     return 0;
+// }

@@ -59,8 +59,8 @@ TODO("Make a better version for certain parts that reoccure")
 /*
 TODO: Improve
 - [ ] Getting capabilities and looping over them
-    - [ ] Dont use the heap or static arrays, use an arena allocator
-    - [ ] Figure out how to get access to an arena allocator
+    - [ ] Dont use the heap or static arrays, use an allocator
+    - [ ] Figure out how to get access to an allocator
 - [ ] Settings for chosing all the different parts (like extensions, present_modes etc)
     - [ ] Make sure all settings are in 1 place
     - [ ] Make the user able to pick these settings with sane defaults
@@ -84,15 +84,9 @@ TODO("Make this file the bootstrap, only showing a bootstrap function")
 TODO("")
 
 #if IS_DEBUG
-int32_t check_validation_layer_support(RendererContext *context, const char **validation_layers_a, bool *out_has_support)
+static inline int32_t inl_check_validation_layer_support(RendererContext *context, const char **validation_layers_a, bool *out_has_support)
 {
-    assert(context != NULL);
-    assert(validation_layers_a != NULL);
-    assert(out_has_support != NULL);
     int32_t ret;
-
-    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
-
     uint32_t layers_len;
     vkEnumerateInstanceLayerProperties(&layers_len, NULL);
 
@@ -119,14 +113,25 @@ int32_t check_validation_layer_support(RendererContext *context, const char **va
         if (!layer_found)
         {
             *out_has_support = false;
-            bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
             return 0;
         }
     }
 
-    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     *out_has_support = true;
     return 0;
+}
+
+int32_t check_validation_layer_support(RendererContext *context, const char **validation_layers_a, bool *out_has_support)
+{
+    assert(context != NULL);
+    assert(validation_layers_a != NULL);
+    assert(out_has_support != NULL);
+
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+    int32_t ret = inl_check_validation_layer_support(context, validation_layers_a, out_has_support);
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
+
+    return ret;
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
@@ -202,7 +207,7 @@ int32_t setup_debug_messenger(RendererContext *context)
     }
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, destroy_func, context->instance, context->debug_messenger, NULL),
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, destroy_func, context->instance, context->debug_messenger, NULL),
                     "Failed to push instance destroy data to destroy queue: %d", ret);
 
     return 0;
@@ -236,7 +241,7 @@ int32_t create_instance(RendererContext *context)
     const char **platform_required_extensions_a = NULL;
     renderer_vulkan_platform_get_required_extensions(&platform_required_extensions_a);
     assert(platform_required_extensions_a != NULL);
-    TODO("Make the required_extensions_a allocated based on size of both extensions by arena allocator");
+    TODO("Make the required_extensions_a allocated based on size of both extensions by allocator");
 
     ARRAY_PUSH_MULTI_CHECKED(
         required_extensions_a, platform_required_extensions_a, GET_ARRAY_LENGTH(platform_required_extensions_a),
@@ -276,7 +281,7 @@ int32_t create_instance(RendererContext *context)
                        -1, "Failed to create vulkan instance!");
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_2(context->deps.logger, context->main_destroy_queue, vkDestroyInstance, context->instance, NULL),
+                    RV_CALL_QUEUE_PUSH_2(context->deps.logger, context->global_destroy_queue_a, vkDestroyInstance, context->instance, NULL),
                     "Failed to push instance destroy data to destroy queue: %d", ret);
 
     return 0;
@@ -290,7 +295,7 @@ int32_t create_surface(RendererContext *context)
                     "Failed to create platform surface: %d", ret);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroySurfaceKHR, context->instance, context->surface, NULL),
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, vkDestroySurfaceKHR, context->instance, context->surface, NULL),
                     "Failed to push surface destroy data to destroy queue: %d", ret);
     return 0;
 }
@@ -341,18 +346,13 @@ bool queue_family_indices_is_complete(const QueueFamilyIndices *queue_family_ind
     return queue_family_indices->has_graphics_family && queue_family_indices->has_present_family;
 }
 
-int32_t physical_device_extensions_are_supported(RendererContext *context, VkPhysicalDevice physical_device, bool *out_result)
+static inline int32_t inl_physical_device_extensions_are_supported(RendererContext *context, VkPhysicalDevice physical_device, bool *out_result)
 {
-    assert(context != NULL);
-    assert(physical_device != VK_NULL_HANDLE);
-    assert(out_result != NULL);
-
     uint32_t extensions_len;
     VkResult result;
     int32_t ret;
 
     *out_result = false;
-    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumerateDeviceExtensionProperties(physical_device, NULL, &extensions_len, NULL),
                        -1, "Failed to enumerate physical device extensions", result);
@@ -382,14 +382,25 @@ int32_t physical_device_extensions_are_supported(RendererContext *context, VkPhy
         if (!extension_found)
         {
             *out_result = false;
-            bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
             return 0;
         }
     }
-
-    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     *out_result = true;
+
     return 0;
+}
+
+int32_t physical_device_extensions_are_supported(RendererContext *context, VkPhysicalDevice physical_device, bool *out_result)
+{
+    assert(context != NULL);
+    assert(physical_device != VK_NULL_HANDLE);
+    assert(out_result != NULL);
+
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+    int32_t ret = inl_physical_device_extensions_are_supported(context, physical_device, out_result);
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
+
+    return ret;
 }
 
 int32_t query_swapchain_support_details(RendererContext *context, VkPhysicalDevice physical_device, SwapchainSupportDetails *out_swapchain_support_details)
@@ -557,15 +568,11 @@ int32_t rate_physical_device_suitability(RendererContext *context, VkPhysicalDev
     return score;
 }
 
-int32_t pick_physical_device(RendererContext *context)
+static inline int32_t inl_pick_physical_device(RendererContext *context)
 {
-    assert(context != NULL);
-
     int32_t ret;
     uint32_t physical_devices_len = 0;
     VkResult result;
-
-    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkEnumeratePhysicalDevices(context->instance, &physical_devices_len, NULL),
                        -1, "Unable to get physical device count");
@@ -596,8 +603,18 @@ int32_t pick_physical_device(RendererContext *context)
 
     context->physical_device = physical_devices[chosen_physical_device_index];
 
-    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
     return 0;
+}
+
+int32_t pick_physical_device(RendererContext *context)
+{
+    assert(context != NULL);
+
+    BumpArenaCheckpoint bump_arena_checkpoint = bump_arena_create_checkpoint(context->bump_arena_a);
+    int32_t ret = inl_pick_physical_device(context);
+    bump_arena_restore_checkpoint(context->bump_arena_a, bump_arena_checkpoint, true);
+
+    return ret;
 }
 
 TODO("Make this use the bump allocator")
@@ -695,7 +712,7 @@ int32_t create_logical_device(RendererContext *context)
                        -1, "Failed to create device: %d", result);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_2(context->deps.logger, context->main_destroy_queue, vkDestroyDevice, context->device, NULL),
+                    RV_CALL_QUEUE_PUSH_2(context->deps.logger, context->global_destroy_queue_a, vkDestroyDevice, context->device, NULL),
                     "Failed to push device destroy data to destroy queue: %d", ret);
 
     vkGetDeviceQueue(context->device, queue_family_indices.graphics_family, 0, &context->graphics_queue);
@@ -811,6 +828,12 @@ int32_t create_image_views(RendererContext *context, VkImage *swapchain_images_a
 
     for (size_t i = 0; i < GET_ARRAY_LENGTH(swapchain_images_a); i++)
     {
+        RV_RES_RENDERER_HANDLE_FREE(context->allocated_image_occupied_a, context->allocated_image_generations_a, context->allocated_images_a,
+                                    context->swapchain_image_handles[i], ret);
+    }
+
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(swapchain_images_a); i++)
+    {
 
         image_view_create_info.image = swapchain_images_a[i];
 
@@ -833,7 +856,7 @@ int32_t create_image_views(RendererContext *context, VkImage *swapchain_images_a
         context->swapchain_image_handles[i] = rv_allocated_image_handle.raw;
 
         RETURN_IF_ERROR(context->deps.logger, ret,
-                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->swapchain_destroy_queue, vkDestroyImageView, context->device, image_view, NULL),
+                        RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->swapchain_destroy_queue_a, vkDestroyImageView, context->device, image_view, NULL),
                         "Failed to push image view destroy data to destroy queue: %d", ret);
     }
 
@@ -920,7 +943,7 @@ int32_t create_swapchain(RendererContext *context)
     if (context->old_swapchain == VK_NULL_HANDLE)
     {
         RETURN_IF_ERROR(context->deps.logger, ret,
-                        RV_CALL_QUEUE_PUSH_1(context->deps.logger, context->main_destroy_queue, destroy_main_swapchain, context),
+                        RV_CALL_QUEUE_PUSH_1(context->deps.logger, context->global_destroy_queue_a, destroy_main_swapchain, context),
                         "Failed to push swapchain destroy data to destroy queue: %d", ret);
     }
     else
@@ -953,24 +976,22 @@ int32_t renderer_vulkan_bootstrap(RendererContext *context)
     }
 
     int32_t ret;
-    RV_TRY_INIT(context->deps.logger, ret, create_instance(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_instance(context), context->global_destroy_queue_a,
                 "Failed to create instance: %d", ret);
 
 #if IS_DEBUG
-    RV_TRY_INIT(context->deps.logger, ret, setup_debug_messenger(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, setup_debug_messenger(context), context->global_destroy_queue_a,
                 "Failed to setup debug messenger: %d", ret);
 #endif // #if IS_DEBUG
 
-    RV_TRY_INIT(context->deps.logger, ret, create_surface(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_surface(context), context->global_destroy_queue_a,
                 "Failed to create surface: %d", ret);
-    RV_TRY_INIT(context->deps.logger, ret, pick_physical_device(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, pick_physical_device(context), context->global_destroy_queue_a,
                 "failed to pick physical device: %d", ret);
-    RV_TRY_INIT(context->deps.logger, ret, create_logical_device(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_logical_device(context), context->global_destroy_queue_a,
                 "Failed to create logical device: %d", ret);
-    RV_TRY_INIT(context->deps.logger, ret, create_swapchain(context), context->main_destroy_queue,
+    RV_TRY_INIT(context->deps.logger, ret, create_swapchain(context), context->global_destroy_queue_a,
                 "failed to create swapchain, %d", ret);
-    // RV_TRY_INIT(context->deps.logger, ret, create_image_views(context), context->main_destroy_queue,
-    //             "Failed to create image views: %d", ret);
 
     return 0;
 }
@@ -978,14 +999,11 @@ int32_t renderer_vulkan_bootstrap(RendererContext *context)
 TODO("Make this working again");
 int32_t renderer_vulkan_bootstrap_recreate_swapchain(RendererContext *context)
 {
-    TODO("Figure out if need to use RV_TRY_INIT or not");
     assert(context != NULL);
-    // int32_t ret;
+    int32_t ret;
 
-    // RV_TRY_INIT(context->deps.logger, ret, create_swapchain(context), context->main_destroy_queue,
-    //             "failed to recreate swapchain, %d", ret);
-    // RV_TRY_INIT(context->deps.logger, ret, create_image_views(context), context->main_destroy_queue,
-    //             "Failed to recreate image views: %d", ret);
+    RETURN_IF_ERROR(context->deps.logger, ret, create_swapchain(context),
+                    "failed to recreate swapchain, %d", ret);
 
     return 0;
 }

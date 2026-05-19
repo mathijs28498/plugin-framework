@@ -5,7 +5,6 @@
 
 #include "plugin_utils_array.h"
 
-
 #define STRINGIZE2(x) #x
 #define STRINGIZE(x) STRINGIZE2(x)
 
@@ -49,6 +48,20 @@ static const bool IS_PLUGIN_BUILD_SHARED = false;
 #define CONCAT_2(x, y) CONCAT_2_(x, y)
 #define UNIQUE_VAR(prefix) CONCAT_2(prefix, __LINE__)
 
+#define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
+#define BYTE_TO_BINARY(byte)         \
+    ((byte) & 0x80 ? '1' : '0'),     \
+        ((byte) & 0x40 ? '1' : '0'), \
+        ((byte) & 0x20 ? '1' : '0'), \
+        ((byte) & 0x10 ? '1' : '0'), \
+        ((byte) & 0x08 ? '1' : '0'), \
+        ((byte) & 0x04 ? '1' : '0'), \
+        ((byte) & 0x02 ? '1' : '0'), \
+        ((byte) & 0x01 ? '1' : '0')
+
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+
 #define SAFE_WHILE(condition, max_iterations, on_fail)     \
     for (uint32_t UNIQUE_VAR(_safety_loop_) = 0;           \
          (UNIQUE_VAR(_safety_loop_) <= (max_iterations));  \
@@ -69,6 +82,9 @@ static const bool IS_PLUGIN_BUILD_SHARED = false;
      assert(0 && "Not implemented"),      \
      (return_type)0)
 
+#define UNREACHABLE() \
+    assert(0 && "Unreachable");
+
 #define BITFIELD_SIZE_32(bits) (((bits) + 31) / 32)
 
 #define CLAMP(value, low, high) ((value) < (low) ? (low) : ((high) < (value) ? (high) : (value)))
@@ -86,6 +102,20 @@ static const bool IS_PLUGIN_BUILD_SHARED = false;
 
 #define RETURN_IF_FALSE(logger, condition, err_ret_val, ...) \
     RETURN_IF_TRUE(logger, !(condition), err_ret_val, ##__VA_ARGS__)
+
+#define RETURN_IF_TRUE_VOID(logger, condition, ...)     \
+    do                                                  \
+    {                                                   \
+        if ((condition))                                \
+        {                                               \
+            if ((logger) != NULL)                       \
+                LOG_ERR_TRACE((logger), ##__VA_ARGS__); \
+            return;                                     \
+        }                                               \
+    } while (0)
+
+#define RETURN_IF_FALSE_VOID(logger, condition, ...) \
+    RETURN_IF_TRUE(logger, !(condition), ##__VA_ARGS__)
 
 #define RETURN_IF_ERROR_CONDITION_RET_VALUE(logger, err_var, condition, func_call, err_ret_val, ...) \
     do                                                                                               \
@@ -107,3 +137,21 @@ static const bool IS_PLUGIN_BUILD_SHARED = false;
 
 #define RETURN_IF_ERROR(logger, err_var, func_call, ...) \
     RETURN_IF_ERROR_CONDITION(logger, err_var, ((err_var) < 0), func_call, ##__VA_ARGS__)
+
+#define RETURN_IF_ERROR(logger, err_var, func_call, ...) \
+    RETURN_IF_ERROR_CONDITION(logger, err_var, ((err_var) < 0), func_call, ##__VA_ARGS__)
+
+#define RETURN_IF_ERROR_CONDITION_VOID(logger, err_var, condition, func_call, ...) \
+    do                                                                             \
+    {                                                                              \
+        (err_var) = (func_call);                                                   \
+        if ((condition))                                                           \
+        {                                                                          \
+            if ((logger) != NULL)                                                  \
+                LOG_ERR_TRACE((logger), ##__VA_ARGS__);                            \
+            return;                                                                \
+        }                                                                          \
+    } while (0)
+
+#define RETURN_IF_ERROR_VOID(logger, err_var, func_call, ...) \
+    RETURN_IF_ERROR_CONDITION_VOID(logger, err_var, ((err_var) < 0), func_call, ##__VA_ARGS__)

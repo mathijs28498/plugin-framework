@@ -24,8 +24,8 @@ target_sources(plugin_sdk
     "${INTERFACE_DIR_PATH}/window/v1/window_interface_window_event.h"
     "${INTERFACE_DIR_PATH}/window/v1/window_interface_window_event_enums.h"
     "${INTERFACE_DIR_PATH}/time/v1/time_interface.h"
-    "${INTERFACE_DIR_PATH}/arena_allocator/v1/arena_allocator_interface.h"
-    "${INTERFACE_DIR_PATH}/arena_allocator/v1/arena_allocator_pm_interface.h"
+    "${INTERFACE_DIR_PATH}/allocator/v1/allocator_interface.h"
+    "${INTERFACE_DIR_PATH}/allocator/v1/allocator_pm_interface.h"
     "${INTERFACE_DIR_PATH}/render_graph/v1/render_graph_interface.h"
 
     "${INTERFACE_DIR_PATH}/plugin_sdk_types/v1/plugin_sdk_types.h"

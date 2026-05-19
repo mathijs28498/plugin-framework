@@ -1,16 +1,24 @@
-#include <stdint.h>
-#include <plugin_sdk/plugin_manager/v1/plugin_manager_interface.h>
 
+
+#include <plugin_sdk/plugin_manager/v1/plugin_manager_interface.h>
+#include <plugin_sdk/allocator/v1/allocator_interface.h>
+#include <plugin_sdk/plugin_utils.h>
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
 LOGGER_INTERFACE_REGISTER(main, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/window/v1/window_interface.h>
 #include <plugin_sdk/gui_application/v1/gui_application_interface.h>
 
+#define DATA_AMOUNT 20
+
+typedef struct TestStruct
+{
+    uint32_t numba;
+} TestStruct;
+
 int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager)
 {
-    int ret;
-
+    int32_t ret;
 
     LoggerInterface *logger;
     ret = PLUGIN_MANAGER_GET_SINGLETON(plugin_manager, "logger", &logger);
@@ -20,6 +28,34 @@ int32_t plugin_manager_bootloader_main(PluginManagerInterface *plugin_manager)
     }
 
     LOG_WRN_TRACE(logger, "This works baby!");
+
+    AllocatorInterface *allocator;
+    RETURN_IF_ERROR(logger, ret, PLUGIN_MANAGER_GET_SINGLETON(plugin_manager, "allocator", &allocator),
+                    "Failed to get allocator plugin: %d", ret);
+
+    TestStruct *data;
+    (void)data;
+
+    void *test;
+    AllocatorAllocationHandle alloc_handle1;
+    allocator_alloc(allocator, 255, &alloc_handle1, &test);
+
+    AllocatorAllocationHandle alloc_handle0;
+    allocator_alloc(allocator, 20, &alloc_handle0, &test);
+
+
+    allocator_free(allocator, alloc_handle0);
+
+    AllocatorAllocationHandle alloc_handle2;
+    allocator_alloc(allocator, 511, &alloc_handle2, &test);
+
+    allocator_free(allocator, alloc_handle2);
+
+    AllocatorAllocationHandle alloc_handle3;
+    allocator_alloc(allocator, 256, &alloc_handle3, &test);
+
+    allocator_free(allocator, alloc_handle3);
+    allocator_free(allocator, alloc_handle1);
 
     GuiApplicationInterface *gui_application;
     RETURN_IF_ERROR(logger, ret, PLUGIN_MANAGER_GET_SINGLETON(plugin_manager, "gui_application", &gui_application),

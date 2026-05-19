@@ -7,14 +7,18 @@
 
 #pragma pack(push, 8)
 
-typedef struct ArenaAllocatorContext
+typedef struct AllocatorContext
 {
     PluginDependencies deps;
 
+    uint8_t page_size_msb;
+
+    uint8_t *free_list_tree;
+    uint8_t free_list_depth;
     uint8_t *memory_pool;
     uint64_t memory_pool_size;
-    bool permanent_arenas_frozen;
-} ArenaAllocatorContext;
+    bool permanent_allocations_frozen;
+} AllocatorContext;
 
 #pragma pack(pop)
 

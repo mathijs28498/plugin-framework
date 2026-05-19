@@ -12,6 +12,7 @@
 LOGGER_INTERFACE_REGISTER(renderer_vulkan_image, LOG_LEVEL_DEBUG)
 
 #include "renderer_vulkan_register.h"
+#include "renderer_vulkan_conversion.h"
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan.h"
 
@@ -23,7 +24,6 @@ int32_t renderer_vulkan_create_image(RendererContext *context, RendererImageCrea
     assert(out_image_handle != NULL);
 
     VkResult result;
-    int32_t ret;
 
     VkFormat vk_format = rv_image_format_to_vk_format(renderer_image_create_info->format);
 
@@ -31,7 +31,7 @@ int32_t renderer_vulkan_create_image(RendererContext *context, RendererImageCrea
         .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
         .imageType = VK_IMAGE_TYPE_2D,
         .format = vk_format,
-        .extent = EXTENT_3D_RENDERER_TO_VK(renderer_image_create_info->extent),
+        .extent = rv_renderer_extent_3d_to_vk_extent_3d(&renderer_image_create_info->extent),
         .mipLevels = 1,
         .arrayLayers = 1,
         .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -47,16 +47,12 @@ int32_t renderer_vulkan_create_image(RendererContext *context, RendererImageCrea
     TODO("Get rid of RV_VkExtent3D ");
     RV_AllocatedImage allocated_image = {
         .image_format = renderer_image_create_info->format,
-        .image_extent = EXTENT_3D_RENDERER_TO_RV(renderer_image_create_info->extent),
+        .image_extent = renderer_image_create_info->extent,
     };
 
     RV_RETURN_IF_ERROR(context->deps.logger, result,
                        vmaCreateImage(context->vma_allocator, &image_create_info, &allocation_create_info, &allocated_image.image, &allocated_image.allocation, NULL),
                        -1, "Failed to create image: %d", result);
-
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vmaDestroyImage, context->vma_allocator, allocated_image.image, allocated_image.allocation),
-                    "Failed to push image to destroy queue: %d", ret);
 
     VkImageSubresourceRange image_subresource_range = {
         .aspectMask = rv_vk_format_to_image_aspect(vk_format),
@@ -78,10 +74,6 @@ int32_t renderer_vulkan_create_image(RendererContext *context, RendererImageCrea
                        vkCreateImageView(context->device, &image_view_create_info, NULL, &allocated_image.image_view),
                        -1, "Failed to create image view: %d", result);
 
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->main_destroy_queue, vkDestroyImageView, context->device, allocated_image.image_view, NULL),
-                    "Failed to push image view to destroy queue: %d", ret);
-
     RendererVulkanHandle rv_image_handle = {0};
     RV_RES_RV_HANDLE_ALLOC_OR_RETURN(context->deps.logger, context->allocated_image_occupied_a, context->allocated_image_generations_a, context->allocated_images_a,
                                      allocated_image, rv_image_handle,
@@ -91,5 +83,48 @@ int32_t renderer_vulkan_create_image(RendererContext *context, RendererImageCrea
                                      });
 
     *out_image_handle = rv_image_handle.raw;
+    return 0;
+}
+
+RendererImageHandle renderer_vulkan_get_render_image_handle(RendererContext *context)
+{
+    assert(context != NULL);
+    return context->swapchain_image_handles[context->active_frame_state.swapchain_index];
+}
+
+int32_t renderer_vulkan_get_image_properties(RendererContext *context, RendererImageHandle image_handle, RendererImageProperties *out_image_properties)
+{
+    assert(context != NULL);
+    assert(out_image_properties != NULL);
+
+    RV_AllocatedImage image = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a, image_handle, image);
+
+    *out_image_properties = (RendererImageProperties){
+        .extent = image.image_extent,
+        .format = image.image_format,
+    };
+
+    return 0;
+}
+
+int32_t renderer_vulkan_destroy_image(RendererContext *context, RendererImageHandle image_handle)
+{
+    assert(context != NULL);
+
+    int32_t ret;
+
+    RV_AllocatedImage allocated_image = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_image_generations_a, context->allocated_images_a, image_handle, allocated_image);
+    RV_RES_RENDERER_HANDLE_FREE_RETURN_IF_ERROR(context->deps.logger, context->allocated_image_occupied_a, context->allocated_image_generations_a, context->allocated_images_a, image_handle);
+
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->active_frame_state.frame->destroy_queue_a, vkDestroyImageView, context->device, allocated_image.image_view, NULL),
+                    "Failed to push image view to destroy queue: %d", ret);
+
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->active_frame_state.frame->destroy_queue_a, vmaDestroyImage, context->vma_allocator, allocated_image.image, allocated_image.allocation),
+                    "Failed to push image to destroy queue: %d", ret);
+
     return 0;
 }

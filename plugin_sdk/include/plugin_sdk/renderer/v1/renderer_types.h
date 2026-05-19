@@ -1,0 +1,28 @@
+#pragma once
+
+#include <stdint.h>
+
+typedef uint64_t RendererShaderHandle;
+typedef uint64_t RendererResourceSetLayoutHandle;
+typedef uint64_t RendererResourceSetHandle;
+typedef uint64_t RendererPipelineLayoutHandle;
+typedef uint64_t RendererGraphicsPipelineHandle;
+typedef uint64_t RendererComputePipelineHandle;
+typedef uint64_t RendererCommandListHandle;
+typedef uint64_t RendererImageHandle;
+typedef uint64_t RendererSamplerHandle;
+typedef uint64_t RendererBufferHandle;
+typedef uint64_t RendererVertexBufferAddress;
+
+typedef struct RendererExtent3D
+{
+    uint32_t width;
+    uint32_t height;
+    uint32_t depth;
+} RendererExtent3D;
+
+typedef struct RendererExtent2D
+{
+    uint32_t width;
+    uint32_t height;
+} RendererExtent2D;

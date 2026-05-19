@@ -5,7 +5,7 @@
 
 #include <plugin_sdk/plugin_utils.h>
 
-TODO("Use an arena allocator of 4MB for the startup")
+TODO("Use an allocator of 4MB for the startup")
 #define MAX_EXTENSIONS_LEN 512
 #define MAX_QUEUE_CREATE_INFO_ARR_LEN 64
 #define MAX_QUEUE_FAMILIES_LEN 64

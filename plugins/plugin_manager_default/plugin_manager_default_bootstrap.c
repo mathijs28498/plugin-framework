@@ -15,7 +15,7 @@ LOGGER_INTERFACE_REGISTER(plugin_manager_default_bootstrap, LOG_LEVEL_WARNING)
 #include <plugin_sdk/plugin_manager/v1/plugin_manager_pm_interface.h>
 #include <plugin_sdk/plugin_sdk_types/v1/plugin_sdk_types.h>
 #include <plugin_sdk/environment/v1/environment_pm_interface.h>
-#include <plugin_sdk/arena_allocator/v1/arena_allocator_pm_interface.h>
+#include <plugin_sdk/allocator/v1/allocator_pm_interface.h>
 
 #include "plugin_manager_default_register.h"
 #include "plugin_manager_default.h"
@@ -181,24 +181,24 @@ int32_t resolve_plugin_metadatas(const LoggerInterface *logger,
 }
 
 int32_t resolve_plugin_metadata_dependencies(const LoggerInterface *logger,
-                                             const RegisteredPlugin *registered_plugins, size_t resolved_plugin_metadata_offset,
+                                             const RegisteredPlugin *registered_plugins_a, size_t resolved_plugin_metadata_offset,
                                              RequestedPlugin *out_requested_plugins)
 {
-    assert(registered_plugins != NULL);
+    assert(registered_plugins_a != NULL);
     assert(out_requested_plugins != NULL);
 
-    for (size_t i = resolved_plugin_metadata_offset; i < GET_ARRAY_LENGTH(registered_plugins); i++)
+    for (size_t i = resolved_plugin_metadata_offset; i < GET_ARRAY_LENGTH(registered_plugins_a); i++)
     {
-        const PluginMetadata *plugin_metadata = registered_plugins[i].metadata;
+        const PluginMetadata *plugin_metadata = registered_plugins_a[i].metadata;
         for (size_t j = 0; j < plugin_metadata->dependencies_len; j++)
         {
             const PluginDependency *plugin_dependency = &plugin_metadata->dependencies[j];
 
             bool dependency_already_present = false;
 
-            for (size_t k = 0; k < GET_ARRAY_LENGTH(registered_plugins); k++)
+            for (size_t k = 0; k < GET_ARRAY_LENGTH(registered_plugins_a); k++)
             {
-                const PluginMetadata *plugin_metadata_to_check = registered_plugins[k].metadata;
+                const PluginMetadata *plugin_metadata_to_check = registered_plugins_a[k].metadata;
                 if (strcmp(plugin_dependency->interface_name, plugin_metadata_to_check->interface_name) == 0)
                 {
                     dependency_already_present = true;
@@ -318,12 +318,12 @@ bool plugin_is_dependent_on(const PluginMetadata *dependent_plugin_metadata, con
 
 int32_t topologically_sort_registered_plugins(
     const LoggerInterface *logger,
-    RegisteredPlugin *registered_plugins,
+    RegisteredPlugin *registered_plugins_a,
     size_t already_sorted_len)
 {
-    assert(registered_plugins != NULL);
+    assert(registered_plugins_a != NULL);
 
-    size_t registered_plugins_len = GET_ARRAY_LENGTH(registered_plugins);
+    size_t registered_plugins_len = GET_ARRAY_LENGTH(registered_plugins_a);
 
     if (registered_plugins_len == 0 || already_sorted_len >= registered_plugins_len)
     {
@@ -337,7 +337,7 @@ int32_t topologically_sort_registered_plugins(
     {
         if (i >= already_sorted_len)
         {
-            size_t ndegree = registered_plugins[i].metadata->dependencies_len;
+            size_t ndegree = registered_plugins_a[i].metadata->dependencies_len;
             ndegrees[i] = ndegree;
         }
 
@@ -356,14 +356,14 @@ int32_t topologically_sort_registered_plugins(
         return -1;
     })
     {
-        const RegisteredPlugin *dependency_plugin = &registered_plugins[sorted_indices[tail]];
+        const RegisteredPlugin *dependency_plugin = &registered_plugins_a[sorted_indices[tail]];
         tail++;
 
         for (size_t i = 0; i < registered_plugins_len; i++)
         {
             if (
                 ndegrees[i] == 0 ||
-                !plugin_is_dependent_on(registered_plugins[i].metadata, dependency_plugin->metadata->interface_name))
+                !plugin_is_dependent_on(registered_plugins_a[i].metadata, dependency_plugin->metadata->interface_name))
             {
                 continue;
             }
@@ -389,8 +389,8 @@ int32_t topologically_sort_registered_plugins(
                 if (ndegrees[i] > 0)
                 {
                     LOG_ERR_TRACE(logger, "plugin '%s' (interface: '%s') could not be resolved. It is either missing a dependency or stuck in a cycle.",
-                                  registered_plugins[i].metadata->plugin_name,
-                                  registered_plugins[i].metadata->interface_name);
+                                  registered_plugins_a[i].metadata->plugin_name,
+                                  registered_plugins_a[i].metadata->interface_name);
                 }
             }
         }
@@ -398,10 +398,10 @@ int32_t topologically_sort_registered_plugins(
     }
 
     CREATE_ARRAY_WITH_LEN(RegisteredPlugin, registered_plugins_copy, MAX_REGISTERED_PLUGINS_LEN, registered_plugins_len);
-    memcpy(registered_plugins_copy, registered_plugins, sizeof(registered_plugins[0]) * registered_plugins_len);
+    memcpy(registered_plugins_copy, registered_plugins_a, sizeof(registered_plugins_a[0]) * registered_plugins_len);
     for (size_t i = already_sorted_len; i < registered_plugins_len; i++)
     {
-        registered_plugins[i] = registered_plugins_copy[sorted_indices[i]];
+        registered_plugins_a[i] = registered_plugins_copy[sorted_indices[i]];
     }
 
     return 0;
@@ -448,14 +448,14 @@ int32_t initialize_plugin_manager_dependencies(
                                  plugin_registry,
                                  static_plugin_metadatas,
                                  requested_plugins,
-                                 context->registered_plugins);
+                                 context->registered_plugins_a);
     if (ret < 0)
     {
         TODO("Add error log here")
         return ret;
     }
 
-    ret = topologically_sort_registered_plugins(NULL, context->registered_plugins, 0);
+    ret = topologically_sort_registered_plugins(NULL, context->registered_plugins_a, 0);
     if (ret < 0)
     {
         TODO("Add error log here")
@@ -468,42 +468,42 @@ int32_t initialize_plugin_manager_dependencies(
         const char *interface_name_to_add = plugin_manager_dependency_interfaces[i];
         ret = add_plugin_to_scope(context->deps.logger,
                                   context->context_slab_pool,
-                                  &context->singleton_scope, context->registered_plugins,
+                                  &context->singleton_scope, context->registered_plugins_a,
                                   interface_name_to_add, &context->singleton_scope,
                                   &context->deps.interfaces[i]);
         if (ret < 0)
         {
             TODO("Add error log here");
-            // if (context->deps.logger != NULL)
+            // if (logger != NULL)
             //     LOG_ERR_TRACE(logger, "Unable to add plugin '%s' to scope '%d': %d", interface_name_to_add, scope->lifetime, ret);
             return ret;
         }
     }
 
     environment_pm_set_args(context->deps.environment, argc, argv, platform_context);
-    arena_allocator_pm_set_memory_pool(context->deps.arena_allocator, plugin_memory_pool->pool, plugin_memory_pool->pool_size);
+    allocator_pm_set_memory_pool(context->deps.allocator, plugin_memory_pool->pool, plugin_memory_pool->pool_size);
     return 0;
 }
 
 int32_t seed_explicitly_requested_plugins(
     PluginManagerContext *context,
-    const RequestedPlugin *requested_plugins_explicit,
+    const RequestedPlugin *requested_plugins_explicit_a,
     RequestedPlugin *requested_plugins)
 {
     assert(context != NULL);
-    assert(requested_plugins_explicit != NULL);
+    assert(requested_plugins_explicit_a != NULL);
     assert(requested_plugins != NULL);
 
     LoggerInterface *logger = context->deps.logger;
-    for (size_t i = 0; i < GET_ARRAY_LENGTH(requested_plugins_explicit); i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(requested_plugins_explicit_a); i++)
     {
-        const RequestedPlugin *requested_plugin_explicit = &requested_plugins_explicit[i];
+        const RequestedPlugin *requested_plugin_explicit = &requested_plugins_explicit_a[i];
         bool plugin_already_loaded = false;
         // Check if explicitly requested plugins are already loaded as a dependency of the plugin manager
         // If so, do not add them to requested plugins
-        for (size_t j = 0; j < GET_ARRAY_LENGTH(context->registered_plugins); j++)
+        for (size_t j = 0; j < GET_ARRAY_LENGTH(context->registered_plugins_a); j++)
         {
-            const PluginMetadata *plugin_metadata = context->registered_plugins[j].metadata;
+            const PluginMetadata *plugin_metadata = context->registered_plugins_a[j].metadata;
             if (strcmp(requested_plugin_explicit->interface_name, plugin_metadata->interface_name) == 0)
             {
                 plugin_already_loaded = true;
@@ -556,26 +556,26 @@ int32_t registered_plugin_set_preferred_lifetime(const LoggerInterface *logger, 
 
 int32_t resolve_initial_lifetimes(
     const LoggerInterface *logger,
-    const RequestedPlugin *requested_plugins_explicit,
-    RegisteredPlugin *registered_plugins)
+    const RequestedPlugin *requested_plugins_explicit_a,
+    RegisteredPlugin *registered_plugins_a)
 {
     assert(logger != NULL);
-    assert(requested_plugins_explicit != NULL);
-    assert(registered_plugins != NULL);
+    assert(requested_plugins_explicit_a != NULL);
+    assert(registered_plugins_a != NULL);
 
     int32_t ret;
 
-    for (size_t i = 0; i < GET_ARRAY_LENGTH(registered_plugins); i++)
+    for (size_t i = 0; i < GET_ARRAY_LENGTH(registered_plugins_a); i++)
     {
-        RegisteredPlugin *registered_plugin = &registered_plugins[i];
+        RegisteredPlugin *registered_plugin = &registered_plugins_a[i];
         bool lifetime_already_resolved = registered_plugin->lifetime != PLUGIN_LIFETIME_UNKNOWN;
 
         PluginLifetime requested_lifetime = PLUGIN_LIFETIME_UNKNOWN;
 
         // First check for explicitly requested lifetimes,
-        for (size_t j = 0; j < GET_ARRAY_LENGTH(requested_plugins_explicit); j++)
+        for (size_t j = 0; j < GET_ARRAY_LENGTH(requested_plugins_explicit_a); j++)
         {
-            const RequestedPlugin *requested_plugin = &requested_plugins_explicit[j];
+            const RequestedPlugin *requested_plugin = &requested_plugins_explicit_a[j];
             if (strcmp(registered_plugin->metadata->interface_name, requested_plugin->interface_name) == 0)
             {
                 requested_lifetime = requested_plugin->lifetime;
@@ -612,13 +612,9 @@ int32_t resolve_initial_lifetimes(
         // If preferred lifetime is singleton, set the lifetime to singleton
         if (registered_plugin->metadata->preferred_lifetime == PLUGIN_LIFETIME_SINGLETON)
         {
-            ret = registered_plugin_set_preferred_lifetime(logger, registered_plugin);
-            if (ret < 0)
-            {
-                LOG_ERR_TRACE(logger, "error setting preferred lifetime of plugin '%s' - '%s': %d",
-                              registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, ret);
-                return ret;
-            }
+            RETURN_IF_ERROR(logger, ret, registered_plugin_set_preferred_lifetime(logger, registered_plugin),
+                            "error setting preferred lifetime of plugin '%s' - '%s': %d",
+                            registered_plugin->metadata->interface_name, registered_plugin->metadata->plugin_name, ret);
             continue;
         }
 
@@ -632,6 +628,28 @@ int32_t resolve_initial_lifetimes(
     return 0;
 }
 
+void set_explicitly_requested_plugins(RegisteredPlugin *registered_plugins_a, const RequestedPlugin *requested_plugins_explicit_a)
+{
+    assert(registered_plugins_a != NULL);
+    assert(requested_plugins_explicit_a != NULL);
+
+    for (uint32_t i = 0; i < GET_ARRAY_LENGTH(registered_plugins_a); i++)
+    {
+        RegisteredPlugin *registered_plugin = &registered_plugins_a[i];
+
+        for (uint32_t j = 0; j < GET_ARRAY_LENGTH(requested_plugins_explicit_a); j++)
+        {
+            const RequestedPlugin *requested_plugin = &requested_plugins_explicit_a[j];
+
+            if (strcmp(registered_plugin->metadata->interface_name, requested_plugin->interface_name) == 0)
+            {
+                registered_plugin->is_explicitly_requested = true;
+                break;
+            }
+        }
+    }
+}
+
 int32_t plugin_manager_default_bootstrap(
     PluginManagerContext *context,
     const PluginMetadata *plugin_manager_metadata,
@@ -639,13 +657,13 @@ int32_t plugin_manager_default_bootstrap(
     int argc, char **argv, void *platform_context,
     const PluginRegistry *plugin_registry,
     const PluginMetadata *const *static_plugin_metadatas,
-    const RequestedPlugin *requested_plugins_explicit)
+    const RequestedPlugin *requested_plugins_explicit_a)
 {
     assert(context != NULL);
     assert(plugin_manager_metadata != NULL);
     assert(plugin_framework_memory != NULL);
     assert(plugin_registry != NULL);
-    assert(requested_plugins_explicit != NULL);
+    assert(requested_plugins_explicit_a != NULL);
 
     int32_t ret;
 
@@ -662,72 +680,49 @@ int32_t plugin_manager_default_bootstrap(
         return ret;
     }
 
-    size_t initial_registered_plugins_len = GET_ARRAY_LENGTH(context->registered_plugins);
+    LoggerInterface *logger = context->deps.logger;
+
+    size_t initial_registered_plugins_len = GET_ARRAY_LENGTH(context->registered_plugins_a);
 
     CREATE_ARRAY(RequestedPlugin, requested_plugins, MAX_REGISTERED_PLUGINS_LEN);
-    ret = seed_explicitly_requested_plugins(context, requested_plugins_explicit, requested_plugins);
-    if (ret < 0)
-    {
-        LOG_ERR_TRACE(context->deps.logger, "Unable to seed requested plugins: %d", ret);
-        return ret;
-    }
+    RETURN_IF_ERROR(logger, ret, seed_explicitly_requested_plugins(context, requested_plugins_explicit_a, requested_plugins),
+                    "Unable to seed explicitly requested plugins: %d", ret);
 
-    ret = load_requested_plugins(
-        context->deps.logger,
-        plugin_registry,
-        static_plugin_metadatas,
-        requested_plugins,
-        context->registered_plugins);
-    if (ret < 0)
-    {
-        LOG_ERR_TRACE(context->deps.logger, "Unable to load plugins phase 2: %d", ret);
-        return ret;
-    }
+    RETURN_IF_ERROR(logger, ret, load_requested_plugins(logger, plugin_registry, static_plugin_metadatas, requested_plugins, context->registered_plugins_a),
+                    "Unable to load plugins phase 2: %d", ret);
 
-    ret = topologically_sort_registered_plugins(
-        context->deps.logger,
-        context->registered_plugins,
-        initial_registered_plugins_len);
-    if (ret < 0)
-    {
-        LOG_ERR_TRACE(context->deps.logger, "Unable to sort registered plugins: %d", ret);
-        return ret;
-    }
+    set_explicitly_requested_plugins(context->registered_plugins_a, requested_plugins_explicit_a);
 
-    ret = resolve_initial_lifetimes(
-        context->deps.logger,
-        requested_plugins_explicit,
-        context->registered_plugins);
-    if (ret < 0)
-    {
-        LOG_ERR_TRACE(context->deps.logger, "Failed to resolve initial lifetimes: %d", ret);
-        return ret;
-    }
+    RETURN_IF_ERROR(logger, ret, topologically_sort_registered_plugins(logger, context->registered_plugins_a, initial_registered_plugins_len),
+                    "Unable to sort registered plugins: %d", ret);
 
-    size_t registered_plugin_len = GET_ARRAY_LENGTH(context->registered_plugins);
+    RETURN_IF_ERROR(logger, ret, resolve_initial_lifetimes(logger, requested_plugins_explicit_a, context->registered_plugins_a),
+                    "Failed to resolve initial lifetimes: %d", ret);
+
+    size_t registered_plugin_len = GET_ARRAY_LENGTH(context->registered_plugins_a);
     CREATE_ARRAY(const char *, singleton_interfaces_to_add, MAX_REGISTERED_PLUGINS_LEN);
 
     for (size_t i = 0; i < registered_plugin_len; i++)
     {
         TODO("Check if its better to do it backwards or it doesnt matter")
-        // const RegisteredPlugin *registered_plugin = &context->registered_plugins[registered_plugin_len - i - 1];
-        const RegisteredPlugin *registered_plugin = &context->registered_plugins[i];
+        // const RegisteredPlugin *registered_plugin = &context->registered_plugins_a[registered_plugin_len - i - 1];
+        const RegisteredPlugin *registered_plugin = &context->registered_plugins_a[i];
         if (registered_plugin->lifetime == PLUGIN_LIFETIME_SINGLETON)
         {
             ARRAY_PUSH_CHECKED(singleton_interfaces_to_add, registered_plugin->metadata->interface_name, {
-                LOG_ERR_TRACE(context->deps.logger, "Tried to add plugin interface when array is full");
+                LOG_ERR_TRACE(logger, "Tried to add plugin interface when array is full");
                 return -1;
             });
         }
     }
 
-    add_plugins_to_scope(context->deps.logger,
+    add_plugins_to_scope(logger,
                          context->context_slab_pool,
                          &context->singleton_scope,
-                         context->registered_plugins,
+                         context->registered_plugins_a,
                          singleton_interfaces_to_add,
                          &context->singleton_scope);
 
-    arena_allocator_pm_freeze_permanent_arenas(context->deps.arena_allocator);
+    allocator_pm_freeze_permanent_arenas(context->deps.allocator);
     return 0;
 }

@@ -17,16 +17,16 @@
 
 TODO("This does not flush multiple queues when for example the swapchain and the main queue have to be flushed, fix this")
 TODO("Is the flush even necessary with the new function? Can I just do it at the end in the start script where I destroy the init queue")
-#define RV_TRY_INIT(logger, err_var, create_func_call, destroy_queue, ...) \
-    do                                                                     \
-    {                                                                      \
-        (err_var) = (create_func_call);                                    \
-        if ((err_var) < 0)                                                 \
-        {                                                                  \
-            LOG_ERR_TRACE((logger), __VA_ARGS__);                          \
-            rv_call_queue_flush(destroy_queue);                            \
-            return (err_var);                                              \
-        }                                                                  \
+#define RV_TRY_INIT(logger, err_var, create_func_call, destroy_queue_a, ...) \
+    do                                                                       \
+    {                                                                        \
+        (err_var) = (create_func_call);                                      \
+        if ((err_var) < 0)                                                   \
+        {                                                                    \
+            LOG_ERR_TRACE((logger), __VA_ARGS__);                            \
+            rv_call_queue_flush(destroy_queue_a);                            \
+            return (err_var);                                                \
+        }                                                                    \
     } while (0)
 
 struct LoggerInterface;
@@ -57,42 +57,21 @@ int32_t rv_call_queue_push_4(struct LoggerInterface *logger, struct RV_CallRecor
 
 void rv_call_queue_flush(struct RV_CallRecord *call_queue);
 
-RV_CREATE_HANDLE_DEFINITION(VkSemaphore);
-RV_CREATE_HANDLE_DEFINITION(VkCommandBuffer);
-RV_CREATE_HANDLE_DEFINITION(VkImage);
+RV_CREATE_HANDLE_DEFINITION(VmaAllocation);
+RV_CREATE_HANDLE_DEFINITION(VmaAllocator);
 RV_CREATE_HANDLE_DEFINITION(VkBuffer);
 
-RV_CREATE_HANDLE_DEFINITION(VmaAllocator);
-RV_CREATE_HANDLE_DEFINITION(VmaAllocation);
+typedef uint32_t VkBufferUsageFlags;
+typedef uint32_t VmaMemoryUsage;
 
-struct VkImageSubresourceRange;
-enum VkImageLayout;
-struct VkSemaphoreSubmitInfo;
-struct VkSubmitInfo2;
-struct VkCommandBufferSubmitInfo;
-struct VkSemaphoreSubmitInfo;
-struct VkExtent2D;
-struct VkExtent3D;
-struct VkImageViewCreateInfo;
-enum VkFormat;
 struct AllocatedBuffer;
 struct RendererContext;
 
-typedef uint32_t VkImageAspectFlags;
-typedef uint64_t VkPipelineStageFlags2;
-typedef uint32_t VkBufferUsageFlags;
-typedef uint32_t VmaMemoryUsage;
-struct VkExtent2D;
-struct RV_VkExtent2D;
-
-struct VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mask);
-struct VkSemaphoreSubmitInfo rv_create_semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore);
-struct VkCommandBufferSubmitInfo rv_create_command_buffer_submit_info(VkCommandBuffer cmd);
-struct VkSubmitInfo2 rv_create_submit_info(struct VkCommandBufferSubmitInfo *cmd, struct VkSemaphoreSubmitInfo *signal_semaphore_info, struct VkSemaphoreSubmitInfo *wait_semaphore_info);
-
+TODO("Figure out if this belongs here, remove definitions if not")
 int32_t rv_create_buffer(struct RendererContext *context, size_t alloc_size, VkBufferUsageFlags usage, VmaMemoryUsage memoryUsage, struct AllocatedBuffer *out_buffer);
 void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation allocation);
 
+TODO("Figure out if O(1) free lookup is wanted")
 #define RV_RES_RV_HANDLE_ALLOC(occupied_pool_a, generations_pool_a, resource_pool_a, resource, out_free_handle_found, out_handle) \
     do                                                                                                                            \
     {                                                                                                                             \
@@ -120,12 +99,13 @@ void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation al
         RV_RES_RV_HANDLE_ALLOC(occupied_pool_a, generations_pool_a, resource_pool_a, resource, UNIQUE_VAR(free_handle_found), out_resource_handle); \
         if (!UNIQUE_VAR(free_handle_found))                                                                                                         \
         {                                                                                                                                           \
-            LOG_ERR_TRACE(logger, "Failed to allocate handle, no ");                                                                                \
+            LOG_ERR_TRACE(logger, "Failed to allocate handle, no free handle found");                                                               \
             destroy_func;                                                                                                                           \
             return -1;                                                                                                                              \
         }                                                                                                                                           \
     } while (0)
 
+TODO("Maybe make the out_resource work by reference, should the input be a pointer or not then?")
 #define RV_RES_RV_HANDLE_GET(generations_pool_a, resource_pool_a, rv_handle, out_ret, out_resource) \
     do                                                                                              \
     {                                                                                               \
@@ -197,16 +177,29 @@ void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation al
             (out_ret) = -1;                                                                             \
             break;                                                                                      \
         }                                                                                               \
+        uint32_t UNIQUE_VAR(is_occupied) = (occupied_pool_a)[(rv_handle).index];                        \
+        if (!UNIQUE_VAR(is_occupied))                                                                   \
+        {                                                                                               \
+            (out_ret) = -2;                                                                             \
+            break;                                                                                      \
+        }                                                                                               \
         uint32_t UNIQUE_VAR(current_generation) = (generations_pool_a)[(rv_handle).index];              \
         if (UNIQUE_VAR(current_generation) != (rv_handle).generation)                                   \
         {                                                                                               \
-            (out_ret) = -2;                                                                             \
+            (out_ret) = -3;                                                                             \
             break;                                                                                      \
         }                                                                                               \
                                                                                                         \
         (occupied_pool_a)[(rv_handle).index] = false;                                                   \
         (generations_pool_a)[(rv_handle).index]++;                                                      \
         (out_ret) = 0;                                                                                  \
+    } while (0)
+
+#define RV_RES_RENDERER_HANDLE_FREE(occupied_pool_a, generations_pool_a, resource_pool_a, handle, out_ret)           \
+    do                                                                                                               \
+    {                                                                                                                \
+        RendererVulkanHandle UNIQUE_VAR(rv_handle) = {.raw = (handle)};                                              \
+        RV_RES_RV_HANDLE_FREE(occupied_pool_a, generations_pool_a, resource_pool_a, UNIQUE_VAR(rv_handle), out_ret); \
     } while (0)
 
 #define RV_RES_RV_HANDLE_FREE_RETURN_IF_ERROR(logger, occupied_pool_a, generations_pool_a, resource_pool_a, rv_handle) \
@@ -227,43 +220,3 @@ void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation al
         RendererVulkanHandle UNIQUE_VAR(rv_handle) = {.raw = (handle)};                                                             \
         RV_RES_RV_HANDLE_FREE_RETURN_IF_ERROR(logger, occupied_pool_a, generations_pool_a, resource_pool_a, UNIQUE_VAR(rv_handle)); \
     } while (0)
-
-typedef uint32_t RendererShaderStageFlags;
-typedef uint32_t VkShaderStageFlags;
-typedef uint32_t VkImageUsageFlags;
-typedef uint32_t RendererImageUsageFlags;
-typedef uint32_t VmaMemoryUsage;
-typedef uint32_t VkMemoryPropertyFlags;
-
-enum RendererPipelineType;
-enum VkPipelineBindPoint;
-enum RendererResourceType;
-enum VkDescriptorType;
-enum RendererImageFormat;
-enum VkImageUsageFlags;
-enum VkFormat;
-enum RendererImageMemoryUsage;
-
-enum VkDescriptorType rv_resource_type_to_vk_descriptor_type(enum RendererResourceType);
-VkShaderStageFlags rv_shader_stage_to_vk_shader_stage(RendererShaderStageFlags flags);
-enum VkPipelineBindPoint rv_pipeline_type_to_vk_pipeline_bind_point(enum RendererPipelineType pipeline_type);
-enum VkFormat rv_image_format_to_vk_format(enum RendererImageFormat format);
-VkImageUsageFlags rv_image_usage_to_vk_image_usage(RendererImageUsageFlags flags);
-VkImageAspectFlags rv_vk_format_to_image_aspect(enum VkFormat format);
-VmaMemoryUsage rv_image_memory_usage_to_vma_memory_usage(enum RendererImageMemoryUsage memory_usage);
-VkMemoryPropertyFlags rv_image_memory_usage_to_vk_memory_usage(enum RendererImageMemoryUsage memory_usage);
-
-#define EXTENT_3D_RENDERER_TO_RV(renderer_extent) \
-    (RV_VkExtent3D) { .width = (renderer_extent).width, .height = (renderer_extent).height, .depth = (renderer_extent).depth }
-
-#define EXTENT_3D_RENDERER_TO_VK(renderer_extent) \
-    (VkExtent3D) { .width = (renderer_extent).width, .height = (renderer_extent).height, .depth = (renderer_extent).depth }
-
-#define EXTENT_3D_VK_TO_RENDERER(renderer_extent) \
-    (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height, .depth = (vk_extent).depth }
-
-#define EXTENT_2D_RENDERER_TO_VK(renderer_extent) \
-    (VkExtent2D) { .width = (renderer_extent).width, .height = (renderer_extent).height }
-
-#define EXTENT_2D_VK_TO_RENDERER(vk_extent) \
-    (RendererExtent3D) { .width = (vk_extent).width, .height = (vk_extent).height }
