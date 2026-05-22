@@ -223,8 +223,8 @@ The goal is a fully self-authored stack, from memory allocator to language runti
 | Compile-time automatic shader compilation (Python) | ✅ Complete    |
 | Buffer creation & usage                            | 🔨 In Progress |
 | Immediate submission command buffer                | 🔨 In Progress |
-| Render graph with automatic pass management        | 📋 Planned     |
-| Compile-time shader reflection                     | 📋 Planned     |
+| Render graph with automatic pass management        | 🔨 In Progress |
+| Compile-time shader reflection                     | 🔨 In Progress |
 | `VK_ERROR_DEVICE_LOST` recovery                    | 📋 Planned     |
 
 ***
