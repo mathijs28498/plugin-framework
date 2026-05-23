@@ -11,6 +11,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_register, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/plugin_utils.h>
 
 #include "renderer_vulkan.h"
+#include "renderer_vulkan_immediate.h"
 #include "renderer_vulkan_image.h"
 #include "renderer_vulkan_start.h"
 #include "renderer_vulkan_render.h"
@@ -18,12 +19,17 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_register, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_pipeline.h"
 #include "renderer_vulkan_descriptor_set.h"
 
+int32_t rv_create_mesh_buffers(RendererCommandList *command_list, void *user_data);
+
 static const RendererVtable plugin_vtable = {
     .start = renderer_vulkan_start,
     .begin_frame = renderer_vulkan_render_begin_frame,
     .end_frame = renderer_vulkan_render_end_frame,
     .on_window_resize = renderer_vulkan_on_window_resize,
     .consume_has_resized = renderer_vulkan_consume_has_resized,
+
+    .immediate_execute = renderer_vulkan_immediate_execute,
+    .dummy_exec_fn = rv_create_mesh_buffers,
 
     .get_render_image_handle = renderer_vulkan_get_render_image_handle,
     .get_image_properties = renderer_vulkan_get_image_properties,
@@ -139,6 +145,8 @@ static int32_t plugin_init(RendererContext *context)
     BIND_ARRAY_FILLED(RV_AllocatedImage, allocated_memory->allocated_images_mem, context->allocated_images_a, ALLOCATED_IMAGES_CAPACITY);
 
     BIND_ARRAY(uint8_t, allocated_memory->bump_arena_mem, context->bump_arena_a, BUMP_ARENA_CAPACITY);
+
+    context->active_frame_state.frame = &context->frames[0];
 
     return 0;
 }

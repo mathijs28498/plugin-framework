@@ -275,6 +275,10 @@ int32_t draw_default_start(DrawContext *context)
 
     destroy_shaders(context, &shaders);
 
+    TODO("Make own immediate execute")
+    RETURN_IF_ERROR(logger, ret, renderer_immediate_execute(renderer, renderer->vtable->dummy_exec_fn, renderer->context),
+                    "Failed to immediate execute: %d", ret);
+
     return 0;
 }
 

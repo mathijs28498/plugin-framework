@@ -26,3 +26,7 @@ typedef struct RendererExtent2D
     uint32_t width;
     uint32_t height;
 } RendererExtent2D;
+
+typedef struct RendererCommandList RendererCommandList;
+
+typedef int32_t (*ImmediateExecute_Fn)(RendererCommandList *command_list, void *user_data);

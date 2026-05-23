@@ -87,11 +87,25 @@ void renderer_vulkan_cmd_bind_compute_pipeline(RendererContext *context, Rendere
     vkCmdBindPipeline(command_list->command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
 }
 
+#include <cglm/cglm.h>
 void renderer_vulkan_cmd_draw(RendererContext *context, RendererCommandList *command_list, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance)
 {
     assert(context != NULL);
     assert(command_list != NULL);
     vkCmdDraw(command_list->command_buffer, vertex_count, instance_count, first_vertex, first_instance);
+
+    VkCommandBuffer cmd = command_list->command_buffer;
+
+    TODO("Make this backend agnostic, SO UGLY")
+
+    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context->pipelines_a[2]);
+    GPUDrawPushConstants mesh_push_constants = {
+        .world_matrix = GLM_MAT4_IDENTITY_INIT,
+        .vertex_buffer_address = context->rectangle_mesh_buffers.vertex_buffer_address,
+    };
+    vkCmdPushConstants(cmd, context->pipeline_layouts_a[2], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &mesh_push_constants);
+    vkCmdBindIndexBuffer(cmd, context->rectangle_mesh_buffers.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+    vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
 }
 
 // ways to improve this efficiency: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples

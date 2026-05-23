@@ -163,6 +163,10 @@ typedef struct RendererContext
     VmaAllocator vma_allocator;
     RV_CallRecord *global_destroy_queue_a;
 
+    VkFence immediate_fence;
+    VkCommandPool immediate_command_pool;
+    VkCommandBuffer immediate_command_buffer;
+
     bool resize_requested;
     bool swapchain_recreated;
     bool halt_render;

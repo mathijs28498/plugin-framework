@@ -9,7 +9,6 @@
 #pragma pack(push, 8)
 
 typedef struct RendererContext RendererContext;
-typedef struct RendererCommandList RendererCommandList;
 
 typedef struct RendererWindowConfig
 {
@@ -292,6 +291,10 @@ typedef struct RendererVtable
     void (*on_window_resize)(RendererContext *context, uint32_t width, uint32_t height);
     bool (*consume_has_resized)(RendererContext *context);
 
+    int32_t (*dummy_exec_fn)(RendererCommandList *command_list, void *user_data);
+
+    int32_t (*immediate_execute)(RendererContext *context, ImmediateExecute_Fn immediate_execute_fn, void *user_data);
+
     RendererImageHandle (*get_render_image_handle)(RendererContext *context);
     int32_t (*get_image_properties)(RendererContext *context, RendererImageHandle image_handle, RendererImageProperties *out_image_properties);
 
@@ -350,6 +353,11 @@ static inline int32_t renderer_begin_frame(RendererInterface *iface, RendererCom
 static inline int32_t renderer_end_frame(RendererInterface *iface)
 {
     return VTABLE_METHOD_CALL(iface, end_frame);
+}
+
+static inline int32_t renderer_immediate_execute(RendererInterface *iface, ImmediateExecute_Fn immediate_execute_fn, void *user_data)
+{
+    return VTABLE_METHOD_CALL(iface, immediate_execute, immediate_execute_fn, user_data);
 }
 
 static inline RendererImageHandle renderer_get_render_image_handle(RendererInterface *iface)
