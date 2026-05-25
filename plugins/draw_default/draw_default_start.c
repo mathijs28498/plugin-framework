@@ -109,7 +109,7 @@ int32_t draw_default_create_draw_image(DrawContext *context)
         .extent = render_image_properties.extent,
         .format = RENDERER_IMAGE_FORMAT_R16G16B16A16_SFLOAT,
         .usage_flags = RENDERER_IMAGE_USAGE_TRANSFER_SRC_BIT | RENDERER_IMAGE_USAGE_TRANSFER_DST_BIT | RENDERER_IMAGE_USAGE_STORAGE_BIT | RENDERER_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-        .memory_usage = RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY,
+        .memory_usage = RENDERER_MEMORY_USAGE_GPU_ONLY,
     };
 
     RETURN_IF_ERROR(logger, ret, renderer_create_image(renderer, &renderer_image_create_info, &context->draw_image_handle),

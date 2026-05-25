@@ -161,6 +161,69 @@ VkFormat rv_image_format_to_vk_format(RendererImageFormat format)
         return VK_FORMAT_UNDEFINED;
     }
 }
+VkBufferUsageFlags rv_buffer_usage_to_vk_buffer_usage(RendererBufferUsageFlags renderer_flags)
+{
+    VkBufferUsageFlags vk_flags = 0;
+    if (renderer_flags & RENDERER_BUFFER_USAGE_TRANSFER_SRC_BIT)
+    {
+        vk_flags |= VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    }
+    if (renderer_flags & RENDERER_BUFFER_USAGE_TRANSFER_DST_BIT)
+    {
+        vk_flags |= VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    }
+    if (renderer_flags & RENDERER_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT)
+    {
+        vk_flags |= VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT;
+    }
+    if (renderer_flags & RENDERER_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT)
+    {
+        vk_flags |= VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT;
+    }
+    if (renderer_flags & RENDERER_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+    {
+        vk_flags |= VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    }
+    if (renderer_flags & RENDERER_BUFFER_USAGE_STORAGE_BUFFER_BIT)
+    {
+        vk_flags |= VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+    }
+    if (renderer_flags & RENDERER_BUFFER_USAGE_INDEX_BUFFER_BIT)
+    {
+        vk_flags |= VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    }
+    if (renderer_flags & RENDERER_BUFFER_USAGE_VERTEX_BUFFER_BIT)
+    {
+        vk_flags |= VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    }
+    if (renderer_flags & RENDERER_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
+    {
+        vk_flags |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+    }
+    if (renderer_flags & RENDERER_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT)
+    {
+        vk_flags |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+    }
+    return vk_flags;
+}
+
+VmaMemoryUsage rv_memory_usage_to_vma_memory_usage(RendererMemoryUsage renderer_memory_usage)
+{
+    switch (renderer_memory_usage)
+    {
+    case RENDERER_MEMORY_USAGE_GPU_ONLY:
+        return VMA_MEMORY_USAGE_GPU_ONLY;
+    case RENDERER_MEMORY_USAGE_CPU_ONLY:
+        return VMA_MEMORY_USAGE_CPU_ONLY;
+    default:
+        UNREACHABLE();
+        return 0;
+    }
+}
+
+TODO("Make the flags part of the buffer")
+// VmaAllocationCreateInfo alloc_create_info = {
+//     .usage = rv_memory_usage_to_vma_memory_usage(renderer_buffer_create_info->memory_usage),
 
 VkImageUsageFlags rv_image_usage_to_vk_image_usage(RendererImageUsageFlags flags)
 {
@@ -195,23 +258,11 @@ VkImageAspectFlags rv_vk_format_to_image_aspect(VkFormat format)
     }
 }
 
-VmaMemoryUsage rv_image_memory_usage_to_vma_memory_usage(RendererImageMemoryUsage memory_usage)
+VkMemoryPropertyFlags rv_image_memory_usage_to_vk_memory_usage(RendererMemoryUsage memory_usage)
 {
     switch (memory_usage)
     {
-    case RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY:
-        return VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE;
-    default:
-        UNREACHABLE();
-        return VMA_MEMORY_USAGE_AUTO;
-    }
-}
-
-VkMemoryPropertyFlags rv_image_memory_usage_to_vk_memory_usage(RendererImageMemoryUsage memory_usage)
-{
-    switch (memory_usage)
-    {
-    case RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY:
+    case RENDERER_MEMORY_USAGE_GPU_ONLY:
         return VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
     default:
         UNREACHABLE();

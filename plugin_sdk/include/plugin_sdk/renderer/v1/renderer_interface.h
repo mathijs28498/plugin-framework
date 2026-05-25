@@ -62,16 +62,17 @@ typedef enum RendererImageFormat
     RENDERER_IMAGE_FORMAT_D24_UNORM_S8_UINT,
 } RendererImageFormat;
 
-typedef enum RendererImageMemoryUsage
+typedef enum RendererMemoryUsage
 {
-    RENDERER_IMAGE_MEMORY_USAGE_GPU_ONLY,
-} RendererImageMemoryUsage;
+    RENDERER_MEMORY_USAGE_GPU_ONLY,
+    RENDERER_MEMORY_USAGE_CPU_ONLY,
+} RendererMemoryUsage;
 
 typedef struct RendererImageCreateInfo
 {
     RendererImageFormat format;
     RendererImageUsageFlags usage_flags;
-    RendererImageMemoryUsage memory_usage;
+    RendererMemoryUsage memory_usage;
     RendererExtent3D extent;
 } RendererImageCreateInfo;
 
@@ -80,6 +81,28 @@ typedef struct RendererImageProperties
     RendererImageFormat format;
     RendererExtent3D extent;
 } RendererImageProperties;
+
+
+typedef enum RendererBufferUsageBits {
+    RENDERER_BUFFER_USAGE_TRANSFER_SRC_BIT = 0x00000001,
+    RENDERER_BUFFER_USAGE_TRANSFER_DST_BIT = 0x00000002,
+    RENDERER_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT = 0x00000004,
+    RENDERER_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT = 0x00000008,
+    RENDERER_BUFFER_USAGE_UNIFORM_BUFFER_BIT = 0x00000010,
+    RENDERER_BUFFER_USAGE_STORAGE_BUFFER_BIT = 0x00000020,
+    RENDERER_BUFFER_USAGE_INDEX_BUFFER_BIT = 0x00000040,
+    RENDERER_BUFFER_USAGE_VERTEX_BUFFER_BIT = 0x00000080,
+    RENDERER_BUFFER_USAGE_INDIRECT_BUFFER_BIT = 0x00000100,
+    RENDERER_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT = 0x00020000,
+} RendererBufferUsageFlagBits;
+typedef uint32_t RendererBufferUsageFlags;
+
+typedef struct RendererBufferCreateInfo
+{
+    uint64_t size;
+    RendererBufferUsageFlags usage_flags;
+    RendererMemoryUsage memory_usage;
+} RendererBufferCreateInfo;
 
 typedef enum RendererPipelineType
 {

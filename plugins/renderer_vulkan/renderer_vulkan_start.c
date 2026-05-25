@@ -21,6 +21,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_start, LOG_LEVEL_WARNING)
 #include "renderer_vulkan_descriptor_set.h"
 #include "renderer_vulkan_pipeline.h"
 #include "renderer_vulkan_image.h"
+#include "renderer_vulkan_buffer.h"
 #include "renderer_vulkan.h"
 
 #define START_DESTROY_QUEUE_CAPACITY 64
@@ -201,41 +202,60 @@ int32_t create_mesh_buffer(RendererContext *context, RendererCommandList *comman
     const size_t index_buffer_size = GET_ARRAY_LENGTH(indices) * sizeof(*indices);
     const size_t vertex_buffer_size = GET_ARRAY_LENGTH(vertices) * sizeof(*vertices);
 
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    rv_create_buffer(context, vertex_buffer_size,
-                                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-                                     VMA_MEMORY_USAGE_GPU_ONLY, &out_mesh_buffers->vertex_buffer),
-                    "Unable to create vertex buffer: %d", ret);
+    RendererBufferCreateInfo vertex_buffer_create_info = {
+        .memory_usage = RENDERER_MEMORY_USAGE_GPU_ONLY,
+        .size = vertex_buffer_size,
+        .usage_flags = RENDERER_BUFFER_USAGE_STORAGE_BUFFER_BIT | RENDERER_BUFFER_USAGE_TRANSFER_DST_BIT | RENDERER_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+    };
 
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, rv_destroy_buffer, context->vma_allocator, out_mesh_buffers->vertex_buffer.buffer, out_mesh_buffers->vertex_buffer.allocation),
-                    "Failed to push vertex buffer to destroy queue: %d", ret);
+                    renderer_vulkan_create_buffer(context, &vertex_buffer_create_info, &out_mesh_buffers->vertex_buffer_handle),
+                    "Unable to create vertex buffer: %d", ret);
+
+    RendererBufferCreateInfo index_buffer_create_info = {
+        .memory_usage = RENDERER_MEMORY_USAGE_GPU_ONLY,
+        .size = index_buffer_size,
+        .usage_flags = RENDERER_BUFFER_USAGE_INDEX_BUFFER_BIT | RENDERER_BUFFER_USAGE_TRANSFER_DST_BIT,
+    };
+
+    RETURN_IF_ERROR(context->deps.logger, ret,
+                    renderer_vulkan_create_buffer(context, &index_buffer_create_info, &out_mesh_buffers->index_buffer_handle),
+                    "Unable to create index buffer: %d", ret);
+
+    RV_AllocatedBuffer vertex_buffer = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_buffer_generations_a, context->allocated_buffers_a,
+                                         out_mesh_buffers->vertex_buffer_handle, vertex_buffer);
+    RV_AllocatedBuffer index_buffer = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_buffer_generations_a, context->allocated_buffers_a,
+                                         out_mesh_buffers->index_buffer_handle, index_buffer);
 
     VkBufferDeviceAddressInfo device_address_info = {
         .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-        .buffer = out_mesh_buffers->vertex_buffer.buffer,
+        .buffer = vertex_buffer.buffer,
     };
 
     out_mesh_buffers->vertex_buffer_address = vkGetBufferDeviceAddress(context->device, &device_address_info);
 
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    rv_create_buffer(context, index_buffer_size,
-                                     VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-                                     VMA_MEMORY_USAGE_GPU_ONLY, &out_mesh_buffers->index_buffer),
-                    "Unable to create index buffer: %d", ret);
-
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->global_destroy_queue_a, rv_destroy_buffer, context->vma_allocator, out_mesh_buffers->index_buffer.buffer, out_mesh_buffers->index_buffer.allocation),
-                    "Failed to push index buffer to destroy queue: %d", ret);
-
     // Create the staging buffer
-    AllocatedBuffer staging_buffer;
 
+    RendererBufferCreateInfo staging_buffer_create_info = {
+        .memory_usage = RENDERER_MEMORY_USAGE_CPU_ONLY,
+        .size = vertex_buffer_size + index_buffer_size,
+        .usage_flags = RENDERER_BUFFER_USAGE_TRANSFER_SRC_BIT,
+    };
+
+    RendererBufferHandle staging_buffer_handle;
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    rv_create_buffer(context, vertex_buffer_size + index_buffer_size,
-                                     VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                     VMA_MEMORY_USAGE_CPU_ONLY, &staging_buffer),
+                    renderer_vulkan_create_buffer(context, &staging_buffer_create_info, &staging_buffer_handle),
+                    // rv_create_buffer(context, vertex_buffer_size + index_buffer_size,
+                    //                  VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                    //                  VMA_MEMORY_USAGE_CPU_ONLY, &staging_buffer),
                     "Unable to create staging buffer: %d", ret);
+
+    RV_AllocatedBuffer staging_buffer = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_buffer_generations_a, context->allocated_buffers_a,
+                                         staging_buffer_handle, staging_buffer);
+
 
     // Upload the vertex and index data to the staging buffer
     void *staging_buffer_data;
@@ -252,7 +272,7 @@ int32_t create_mesh_buffer(RendererContext *context, RendererCommandList *comman
         .size = vertex_buffer_size,
     };
 
-    vkCmdCopyBuffer(command_list->command_buffer, staging_buffer.buffer, out_mesh_buffers->vertex_buffer.buffer, 1, &vertex_copy_region);
+    vkCmdCopyBuffer(command_list->command_buffer, staging_buffer.buffer, vertex_buffer.buffer, 1, &vertex_copy_region);
 
     VkBufferCopy index_copy_region = {
         .dstOffset = 0,
@@ -260,7 +280,7 @@ int32_t create_mesh_buffer(RendererContext *context, RendererCommandList *comman
         .size = index_buffer_size,
     };
 
-    vkCmdCopyBuffer(command_list->command_buffer, staging_buffer.buffer, out_mesh_buffers->index_buffer.buffer, 1, &index_copy_region);
+    vkCmdCopyBuffer(command_list->command_buffer, staging_buffer.buffer, index_buffer.buffer, 1, &index_copy_region);
 
     RETURN_IF_ERROR(context->deps.logger, ret,
                     RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->active_frame_state.frame->destroy_queue_a, rv_destroy_buffer, context->vma_allocator, staging_buffer.buffer, staging_buffer.allocation),
@@ -306,7 +326,6 @@ int32_t rv_create_mesh_buffers(RendererCommandList *command_list, void *user_dat
 
     return 0;
 }
-
 
 int32_t renderer_vulkan_start_internal(RendererContext *context)
 {

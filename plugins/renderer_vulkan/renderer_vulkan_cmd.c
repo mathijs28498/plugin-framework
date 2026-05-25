@@ -83,7 +83,7 @@ void renderer_vulkan_cmd_bind_compute_pipeline(RendererContext *context, Rendere
     assert(command_list != NULL);
     VkPipeline pipeline = VK_NULL_HANDLE;
     RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_generations_a, context->pipelines_a, pipeline_handle, pipeline);
-   
+
     vkCmdBindPipeline(command_list->command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
 }
 
@@ -104,7 +104,10 @@ void renderer_vulkan_cmd_draw(RendererContext *context, RendererCommandList *com
         .vertex_buffer_address = context->rectangle_mesh_buffers.vertex_buffer_address,
     };
     vkCmdPushConstants(cmd, context->pipeline_layouts_a[2], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &mesh_push_constants);
-    vkCmdBindIndexBuffer(cmd, context->rectangle_mesh_buffers.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+    RV_AllocatedBuffer index_buffer = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_buffer_generations_a, context->allocated_buffers_a,
+                                              context->rectangle_mesh_buffers.index_buffer_handle, index_buffer);
+    vkCmdBindIndexBuffer(cmd, index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
     vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
 }
 

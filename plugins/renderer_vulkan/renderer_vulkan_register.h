@@ -98,11 +98,11 @@ typedef struct RV_AllocatedImage
     RendererExtent3D image_extent;
 } RV_AllocatedImage;
 
-typedef struct AllocatedBuffer
+typedef struct RV_AllocatedBuffer
 {
-    VkBuffer buffer;
+    _Alignas(16) VkBuffer buffer;
     VmaAllocation allocation;
-} AllocatedBuffer;
+} RV_AllocatedBuffer;
 
 typedef struct Vertex
 {
@@ -118,8 +118,10 @@ typedef uint64_t VkDeviceAddress;
 
 typedef struct GPUMeshBuffers
 {
-    AllocatedBuffer index_buffer;
-    AllocatedBuffer vertex_buffer;
+    RendererBufferHandle index_buffer_handle;
+    // RV_AllocatedBuffer vertex_buffer;
+    RendererBufferHandle vertex_buffer_handle;
+
     VkDeviceAddress vertex_buffer_address;
 } GPUMeshBuffers;
 
@@ -207,6 +209,10 @@ typedef struct RendererContext
     bool *allocated_image_occupied_a;
     uint32_t *allocated_image_generations_a;
     RV_AllocatedImage *allocated_images_a;
+
+    bool *allocated_buffer_occupied_a;
+    uint32_t *allocated_buffer_generations_a;
+    RV_AllocatedBuffer *allocated_buffers_a;
 
     uint8_t *bump_arena_a;
 

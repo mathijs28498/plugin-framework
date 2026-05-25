@@ -80,6 +80,7 @@ TODO("Make these part of the configurations")
 #define PIPELINES_CAPACITY 128
 #define PIPELINE_LAYOUTS_CAPACITY 128
 #define ALLOCATED_IMAGES_CAPACITY 16
+#define ALLOCATED_BUFFERS_CAPACITY 16
 #define BUMP_ARENA_CAPACITY (1024 * 128)
 
 static int32_t plugin_init(RendererContext *context)
@@ -109,6 +110,9 @@ static int32_t plugin_init(RendererContext *context)
         INIT_ARRAY_MEMORY_FIELD(allocated_image_occupied_mem, bool, ALLOCATED_IMAGES_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(allocated_image_generations_mem, uint32_t, ALLOCATED_IMAGES_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(allocated_images_mem, RV_AllocatedImage, ALLOCATED_IMAGES_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(allocated_buffer_occupied_mem, bool, ALLOCATED_BUFFERS_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(allocated_buffer_generations_mem, uint32_t, ALLOCATED_BUFFERS_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(allocated_buffers_mem, RV_AllocatedImage, ALLOCATED_BUFFERS_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(bump_arena_mem, uint8_t, BUMP_ARENA_CAPACITY);
     } *allocated_memory;
 
@@ -143,6 +147,10 @@ static int32_t plugin_init(RendererContext *context)
     BIND_ARRAY_FILLED(bool, allocated_memory->allocated_image_occupied_mem, context->allocated_image_occupied_a, ALLOCATED_IMAGES_CAPACITY);
     BIND_ARRAY_FILLED(uint32_t, allocated_memory->allocated_image_generations_mem, context->allocated_image_generations_a, ALLOCATED_IMAGES_CAPACITY);
     BIND_ARRAY_FILLED(RV_AllocatedImage, allocated_memory->allocated_images_mem, context->allocated_images_a, ALLOCATED_IMAGES_CAPACITY);
+
+    BIND_ARRAY_FILLED(bool, allocated_memory->allocated_buffer_occupied_mem, context->allocated_buffer_occupied_a, ALLOCATED_BUFFERS_CAPACITY);
+    BIND_ARRAY_FILLED(uint32_t, allocated_memory->allocated_buffer_generations_mem, context->allocated_buffer_generations_a, ALLOCATED_BUFFERS_CAPACITY);
+    BIND_ARRAY_FILLED(RV_AllocatedBuffer, allocated_memory->allocated_buffers_mem, context->allocated_buffers_a, ALLOCATED_BUFFERS_CAPACITY);
 
     BIND_ARRAY(uint8_t, allocated_memory->bump_arena_mem, context->bump_arena_a, BUMP_ARENA_CAPACITY);
 
