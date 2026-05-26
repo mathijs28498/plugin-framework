@@ -87,6 +87,26 @@ void renderer_vulkan_cmd_bind_compute_pipeline(RendererContext *context, Rendere
     vkCmdBindPipeline(command_list->command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
 }
 
+void renderer_vulkan_cmd_bind_index_buffer(RendererContext *context, RendererCommandList *command_list, RendererBufferHandle buffer_handle)
+{
+    assert(context != NULL);
+    assert(command_list != NULL);
+
+    RV_AllocatedBuffer buffer = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_buffer_generations_a, context->allocated_buffers_a,
+                                              buffer_handle, buffer);
+    TODO("Figure out if other 2 should be arguments");
+    vkCmdBindIndexBuffer(command_list->command_buffer, buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+}
+
+void renderer_vulkan_cmd_draw_indexed(RendererContext *context, RendererCommandList *command_list, uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance)
+{
+    assert(context != NULL);
+    assert(command_list != NULL);
+
+    vkCmdDrawIndexed(command_list->command_buffer, index_count, instance_count, first_index, vertex_offset, first_instance);
+}
+
 #include <cglm/cglm.h>
 void renderer_vulkan_cmd_draw(RendererContext *context, RendererCommandList *command_list, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance)
 {
@@ -94,21 +114,20 @@ void renderer_vulkan_cmd_draw(RendererContext *context, RendererCommandList *com
     assert(command_list != NULL);
     vkCmdDraw(command_list->command_buffer, vertex_count, instance_count, first_vertex, first_instance);
 
-    VkCommandBuffer cmd = command_list->command_buffer;
-
     TODO("Make this backend agnostic, SO UGLY")
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context->pipelines_a[2]);
+    RendererVulkanHandle dummy_pp_handle = {
+        .generation = 0,
+        .index = 2,
+    };
+    renderer_vulkan_cmd_bind_graphics_pipeline(context, command_list, dummy_pp_handle.raw);
     GPUDrawPushConstants mesh_push_constants = {
         .world_matrix = GLM_MAT4_IDENTITY_INIT,
         .vertex_buffer_address = context->rectangle_mesh_buffers.vertex_buffer_address,
     };
-    vkCmdPushConstants(cmd, context->pipeline_layouts_a[2], VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &mesh_push_constants);
-    RV_AllocatedBuffer index_buffer = {0};
-    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_buffer_generations_a, context->allocated_buffers_a,
-                                              context->rectangle_mesh_buffers.index_buffer_handle, index_buffer);
-    vkCmdBindIndexBuffer(cmd, index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-    vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
+    renderer_vulkan_cmd_push_constants(context, command_list, dummy_pp_handle.raw, RENDERER_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &mesh_push_constants);
+    renderer_vulkan_cmd_bind_index_buffer(context, command_list, context->rectangle_mesh_buffers.index_buffer_handle);
+    renderer_vulkan_cmd_draw_indexed(context, command_list, 6, 1, 0, 0, 0);
 }
 
 // ways to improve this efficiency: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples

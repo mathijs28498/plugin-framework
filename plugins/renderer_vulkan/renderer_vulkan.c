@@ -12,10 +12,12 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan, LOG_LEVEL_DEBUG);
 #include "renderer_vulkan_bootstrap.h"
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan_start.h"
+#include "renderer_vulkan_buffer.h"
 
 int32_t renderer_vulkan_cleanup(RendererContext *context)
 {
     assert(context != NULL);
+
 
     if (context->device != VK_NULL_HANDLE)
     {
@@ -24,6 +26,14 @@ int32_t renderer_vulkan_cleanup(RendererContext *context)
         RV_RETURN_IF_ERROR(context->deps.logger, result, vkDeviceWaitIdle(context->device),
                            -1, "Failed to wait for device to idle: %d", result);
     }
+
+
+    TODO("Remove these");
+    int32_t ret;
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_destroy_buffer(context, context->rectangle_mesh_buffers.index_buffer_handle),
+                    "Failed to destroy index buffer: %d", ret);
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_destroy_buffer(context, context->rectangle_mesh_buffers.vertex_buffer_handle),
+                    "Failed to destroy vertex buffer: %d", ret);
 
     for (size_t i = 0; i < ARRAY_SIZE(context->frames); i++)
     {

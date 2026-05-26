@@ -13,6 +13,7 @@ typedef uint64_t RendererImageHandle;
 typedef uint64_t RendererSamplerHandle;
 typedef uint64_t RendererBufferHandle;
 typedef uint64_t RendererBufferHandle;
+typedef uint64_t RendererBufferDeviceAddress;
 
 // TODO: Figure out how to do this properly
 typedef uint64_t RendererVertexBufferAddress;

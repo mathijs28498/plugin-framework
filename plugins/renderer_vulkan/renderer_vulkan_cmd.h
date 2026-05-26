@@ -28,7 +28,9 @@ void renderer_vulkan_cmd_bind_compute_pipeline(struct RendererContext *context, 
 void renderer_vulkan_cmd_bind_resource_sets(struct RendererContext *context, struct RendererCommandList *command_list, enum RendererPipelineType renderer_pipeline_type, RendererPipelineLayoutHandle pipeline_layout_handle, uint32_t first_set, uint32_t resource_set_len, const RendererResourceSetHandle *resource_set_handle, uint32_t dynamic_offset_len, const uint32_t *dynamic_offsets);
 void renderer_vulkan_cmd_push_constants(struct RendererContext *context, struct RendererCommandList *command_list, RendererPipelineLayoutHandle pipeline_layout_handle, RendererShaderStageFlags shader_stage_flags, uint32_t offset, uint32_t push_constants_size, void *push_constants);
 void renderer_vulkan_cmd_dispatch(struct RendererContext *context, struct RendererCommandList *command_list, uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z);
+void renderer_vulkan_cmd_bind_index_buffer(struct RendererContext *context, struct RendererCommandList *command_list, RendererBufferHandle buffer_handle);
 
+void renderer_vulkan_cmd_draw_indexed(struct RendererContext *context, struct RendererCommandList *command_list, uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance);
 void renderer_vulkan_cmd_draw(struct RendererContext *context, struct RendererCommandList *command_list, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance);
 
 TODO("Make platform agnostic")

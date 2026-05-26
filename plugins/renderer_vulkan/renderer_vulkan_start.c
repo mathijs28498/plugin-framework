@@ -222,69 +222,29 @@ int32_t create_mesh_buffer(RendererContext *context, RendererCommandList *comman
                     renderer_vulkan_create_buffer(context, &index_buffer_create_info, &out_mesh_buffers->index_buffer_handle),
                     "Unable to create index buffer: %d", ret);
 
-    RV_AllocatedBuffer vertex_buffer = {0};
-    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_buffer_generations_a, context->allocated_buffers_a,
-                                         out_mesh_buffers->vertex_buffer_handle, vertex_buffer);
-    RV_AllocatedBuffer index_buffer = {0};
-    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_buffer_generations_a, context->allocated_buffers_a,
-                                         out_mesh_buffers->index_buffer_handle, index_buffer);
-
-    VkBufferDeviceAddressInfo device_address_info = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO,
-        .buffer = vertex_buffer.buffer,
-    };
-
-    out_mesh_buffers->vertex_buffer_address = vkGetBufferDeviceAddress(context->device, &device_address_info);
-
-    // Create the staging buffer
-
-    RendererBufferCreateInfo staging_buffer_create_info = {
-        .memory_usage = RENDERER_MEMORY_USAGE_CPU_ONLY,
-        .size = vertex_buffer_size + index_buffer_size,
-        .usage_flags = RENDERER_BUFFER_USAGE_TRANSFER_SRC_BIT,
-    };
-
-    RendererBufferHandle staging_buffer_handle;
     RETURN_IF_ERROR(context->deps.logger, ret,
-                    renderer_vulkan_create_buffer(context, &staging_buffer_create_info, &staging_buffer_handle),
-                    // rv_create_buffer(context, vertex_buffer_size + index_buffer_size,
-                    //                  VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                    //                  VMA_MEMORY_USAGE_CPU_ONLY, &staging_buffer),
-                    "Unable to create staging buffer: %d", ret);
+                    renderer_vulkan_get_buffer_device_address(context, out_mesh_buffers->vertex_buffer_address, &out_mesh_buffers->vertex_buffer_address),
+                    "Failed to get buffer device address: %d", ret);
 
-    RV_AllocatedBuffer staging_buffer = {0};
-    RV_RES_RENDERER_HANDLE_GET_OR_RETURN(context->deps.logger, context->allocated_buffer_generations_a, context->allocated_buffers_a,
-                                         staging_buffer_handle, staging_buffer);
-
-
-    // Upload the vertex and index data to the staging buffer
-    void *staging_buffer_data;
-    vmaMapMemory(context->vma_allocator, staging_buffer.allocation, &staging_buffer_data);
-
-    memcpy(staging_buffer_data, vertices, vertex_buffer_size);
-    memcpy((void *)((uintptr_t)staging_buffer_data + vertex_buffer_size), indices, index_buffer_size);
-
-    vmaUnmapMemory(context->vma_allocator, staging_buffer.allocation);
-
-    VkBufferCopy vertex_copy_region = {
-        .dstOffset = 0,
-        .srcOffset = 0,
-        .size = vertex_buffer_size,
+    RendererUploadBufferDataInfo vertex_upload_buffer_data = {
+        .upload_size = vertex_buffer_size,
+        .upload_data = vertices,
+        .destination_offset = 0,
+        .destination_buffer_handle = out_mesh_buffers->vertex_buffer_handle,
     };
 
-    vkCmdCopyBuffer(command_list->command_buffer, staging_buffer.buffer, vertex_buffer.buffer, 1, &vertex_copy_region);
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_upload_buffer_data(context, command_list, &vertex_upload_buffer_data),
+                    "Failed to upload vertex buffer data: %d", ret);
 
-    VkBufferCopy index_copy_region = {
-        .dstOffset = 0,
-        .srcOffset = vertex_buffer_size,
-        .size = index_buffer_size,
+    RendererUploadBufferDataInfo index_upload_buffer_data = {
+        .upload_size = index_buffer_size,
+        .upload_data = indices,
+        .destination_offset = 0,
+        .destination_buffer_handle = out_mesh_buffers->index_buffer_handle,
     };
 
-    vkCmdCopyBuffer(command_list->command_buffer, staging_buffer.buffer, index_buffer.buffer, 1, &index_copy_region);
-
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    RV_CALL_QUEUE_PUSH_3(context->deps.logger, context->active_frame_state.frame->destroy_queue_a, rv_destroy_buffer, context->vma_allocator, staging_buffer.buffer, staging_buffer.allocation),
-                    "Failed to push staging buffer to destroy queue: %d", ret);
+    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_upload_buffer_data(context, command_list, &index_upload_buffer_data),
+                    "Failed to upload index buffer data: %d", ret);
 
     return 0;
 }

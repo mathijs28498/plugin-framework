@@ -119,7 +119,6 @@ typedef uint64_t VkDeviceAddress;
 typedef struct GPUMeshBuffers
 {
     RendererBufferHandle index_buffer_handle;
-    // RV_AllocatedBuffer vertex_buffer;
     RendererBufferHandle vertex_buffer_handle;
 
     VkDeviceAddress vertex_buffer_address;
@@ -215,10 +214,6 @@ typedef struct RendererContext
     RV_AllocatedBuffer *allocated_buffers_a;
 
     uint8_t *bump_arena_a;
-
-    VkPipeline triangle_pipeline;
-    VkPipelineLayout mesh_pipeline_layout;
-    VkPipeline mesh_pipeline;
 
     GPUMeshBuffers rectangle_mesh_buffers;
 

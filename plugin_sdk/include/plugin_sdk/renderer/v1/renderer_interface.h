@@ -82,8 +82,16 @@ typedef struct RendererImageProperties
     RendererExtent3D extent;
 } RendererImageProperties;
 
+typedef struct RendererUploadBufferDataInfo
+{
+    uint64_t upload_size;
+    void *upload_data;
+    uint64_t destination_offset;
+    RendererBufferHandle destination_buffer_handle;
+} RendererUploadBufferDataInfo;
 
-typedef enum RendererBufferUsageBits {
+typedef enum RendererBufferUsageBits
+{
     RENDERER_BUFFER_USAGE_TRANSFER_SRC_BIT = 0x00000001,
     RENDERER_BUFFER_USAGE_TRANSFER_DST_BIT = 0x00000002,
     RENDERER_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT = 0x00000004,
