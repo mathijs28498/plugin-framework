@@ -186,7 +186,4 @@ interface inline regex creator:
 
 
 calculate lines of code:
-Get-ChildItem -Path . -Recurse -File | Where-Object {
-($_.Extension -in @('.md', '.c', '.h', '.txt', '.cmake', '.py', '.vert', '.frag', '.comp', '.in')) -and
-(($_.FullName -notmatch '\\build\\' -and $_.FullName -notmatch '\\lib\\') -or $_.FullName -match '\\lib\\plugin_manager_bootloader\\' -or $_.FullName -match '\\lib\\bump_arena\\')
-} | Get-Content | Measure-Object -Line
+Get-ChildItem -Path . -Recurse -File | Where-Object { ($_.Extension -in @('.md', '.c', '.h', '.txt', '.cmake', '.py', '.vert', '.frag', '.comp', '.in')) -and (($_.FullName -notmatch '\\build\\' -and $_.FullName -notmatch '\\lib\\') -or $_.FullName -match '\\lib\\plugin_manager_bootloader\\' -or $_.FullName -match '\\lib\\bump_arena\\') } | Get-Content | Measure-Object -Line

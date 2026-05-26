@@ -71,6 +71,7 @@ struct VkExtent3D;
 struct VkExtent2D;
 struct RendererShaderCreateInfo;
 struct VkPipelineShaderStageCreateInfo;
+struct RendererContext;
 
 struct VkImageSubresourceRange rv_image_subresource_range(VkImageAspectFlags aspect_mask);
 struct VkSemaphoreSubmitInfo rv_create_semaphore_submit_info(VkPipelineStageFlags2 stage_mask, VkSemaphore semaphore);
@@ -97,7 +98,7 @@ RendererExtent3D rv_vk_extent_3d_to_renderer_3d(const struct VkExtent3D *rendere
 struct VkExtent2D rv_renderer_extent_2d_to_vk_extent_2d(const RendererExtent2D *renderer_extent);
 RendererExtent2D rv_vk_extent_2d_to_renderer_2d(const struct VkExtent2D *renderer_extent);
 
-int32_t create_pipeline_shader_stage_create_info(struct RendererContext *context, const struct RendererShaderCreateInfo *shader_create_info, enum VkShaderStageFlagBits shader_stage, struct VkPipelineShaderStageCreateInfo *out_pipeline_shader_stage_create_info);
+int32_t rv_create_pipeline_shader_stage_create_info(struct RendererContext *context, const struct RendererShaderCreateInfo *shader_create_info, enum VkShaderStageFlagBits shader_stage, struct VkPipelineShaderStageCreateInfo *out_pipeline_shader_stage_create_info);
 
 enum VkPrimitiveTopology rv_topology_to_vk_topology(enum RendererPrimitiveTopology topology);
 enum VkPolygonMode rv_fill_mode_to_vk_polygon_mode(enum RendererFillMode fill_mode);

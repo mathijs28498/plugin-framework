@@ -221,10 +221,6 @@ VmaMemoryUsage rv_memory_usage_to_vma_memory_usage(RendererMemoryUsage renderer_
     }
 }
 
-TODO("Make the flags part of the buffer")
-// VmaAllocationCreateInfo alloc_create_info = {
-//     .usage = rv_memory_usage_to_vma_memory_usage(renderer_buffer_create_info->memory_usage),
-
 VkImageUsageFlags rv_image_usage_to_vk_image_usage(RendererImageUsageFlags flags)
 {
     VkImageUsageFlags vk_flags = 0;

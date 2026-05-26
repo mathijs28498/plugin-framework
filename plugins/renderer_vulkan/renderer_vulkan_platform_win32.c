@@ -35,9 +35,9 @@ int32_t renderer_vulkan_platform_create_surface(RendererContext *context, VkSurf
 }
 
 TODO("Make this have a length method so that it can be done with a bump allocator")
-void renderer_vulkan_platform_get_required_extensions(const char ***out_extensions)
+void renderer_vulkan_platform_get_required_extensions(const char ***out_extensions_a)
 {
-    assert(out_extensions != NULL);
+    assert(out_extensions_a != NULL);
     CREATE_INITIALIZED_ARRAY_WITH_DECL(
         static, const char *, extensions,
         {
@@ -45,5 +45,5 @@ void renderer_vulkan_platform_get_required_extensions(const char ***out_extensio
             VK_KHR_WIN32_SURFACE_EXTENSION_NAME,
         });
 
-    *out_extensions = extensions;
+    *out_extensions_a = extensions;
 }

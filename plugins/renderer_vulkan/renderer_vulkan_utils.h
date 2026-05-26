@@ -61,16 +61,6 @@ RV_CREATE_HANDLE_DEFINITION(VmaAllocation);
 RV_CREATE_HANDLE_DEFINITION(VmaAllocator);
 RV_CREATE_HANDLE_DEFINITION(VkBuffer);
 
-typedef uint32_t RendererBufferUsageFlags;
-typedef uint32_t VmaMemoryUsage;
-
-struct RV_AllocatedBuffer;
-struct RendererContext;
-
-TODO("Figure out if this belongs here, remove definitions if not")
-int32_t rv_create_buffer(struct RendererContext *context, size_t alloc_size, RendererBufferUsageFlags usage, VmaMemoryUsage memoryUsage, struct RV_AllocatedBuffer *out_buffer);
-void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation allocation);
-
 TODO("Figure out if O(1) free lookup is wanted")
 #define RV_RES_RV_HANDLE_ALLOC(occupied_pool_a, generations_pool_a, resource_pool_a, resource, out_free_handle_found, out_handle) \
     do                                                                                                                            \

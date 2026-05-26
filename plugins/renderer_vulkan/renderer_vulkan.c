@@ -1,6 +1,8 @@
 #include "renderer_vulkan.h"
 
 #include <assert.h>
+#include <stdbool.h>
+#include <stdint.h>
 #include <vulkan/vulkan.h>
 
 #include <plugin_sdk/logger/v1/logger_interface.h>
@@ -17,7 +19,6 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan, LOG_LEVEL_DEBUG);
 int32_t renderer_vulkan_cleanup(RendererContext *context)
 {
     assert(context != NULL);
-
 
     if (context->device != VK_NULL_HANDLE)
     {
@@ -47,8 +48,9 @@ void renderer_vulkan_on_window_resize(RendererContext *context, uint32_t width, 
     context->resize_extent.height = height;
 }
 
-// RendererExtent2D renderer_vulkan_get_render_extent(RendererContext *context)
-// {
-//     return (RendererExtent2D {
-//         . context->swapchain_extent;
-// }
+bool renderer_vulkan_consume_has_resized(RendererContext *context)
+{
+    bool swapchain_recreated = context->swapchain_recreated;
+    context->swapchain_recreated = false;
+    return swapchain_recreated;
+}

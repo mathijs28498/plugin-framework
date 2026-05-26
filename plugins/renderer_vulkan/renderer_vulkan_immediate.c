@@ -12,6 +12,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_immediate, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_utils.h"
 
 // 100 seconds
+TODO("Make this configurable")
 #define IMMEDIATE_FENCE_WAIT_TIMEOUT_NS 100ULL * 1000000000ULL
 
 int32_t renderer_vulkan_immediate_execute(RendererContext *context, ImmediateExecute_Fn immediate_execute_fn, void *user_data)

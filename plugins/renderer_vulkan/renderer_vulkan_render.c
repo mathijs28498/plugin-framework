@@ -94,32 +94,27 @@ int32_t renderer_vulkan_render_begin_frame(RendererContext *context, RendererCom
     return 0;
 }
 
+TODO("Make sure this is not more than the begin and end should be doing")
 int32_t renderer_vulkan_render_end_frame(RendererContext *context)
 {
     assert(context != NULL);
     assert(context->active_frame_state.frame != NULL);
+    assert(context->active_frame_state.is_active);
 
     VkResult result;
 
     RendererFrameData *frame = context->active_frame_state.frame;
-    RendererCommandList *command_list = &frame->command_list;
-    RendererImageHandle swapchain_image_handle = context->swapchain_image_handles[context->active_frame_state.swapchain_index];
+    VkCommandBuffer cmd = frame->command_list.command_buffer;
 
-    TODO("Remove this and add render passes");
-    TODO("Make a renderer method for getting the extent")
-    TODO("Make this method platform agnostic")
-
-    renderer_vulkan_cmd_transition_image(context, command_list, swapchain_image_handle, RENDERER_IMAGE_LAYOUT_TRANSFER_DST, RENDERER_IMAGE_LAYOUT_PRESENT_SRC);
-
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vkEndCommandBuffer(command_list->command_buffer),
+    RV_RETURN_IF_ERROR(context->deps.logger, result, vkEndCommandBuffer(cmd),
                        -1, "Failed to end buffer: %d", result);
 
-    VkCommandBufferSubmitInfo cmd_info = rv_create_command_buffer_submit_info(command_list->command_buffer);
+    VkCommandBufferSubmitInfo cmd_submit_info = rv_create_command_buffer_submit_info(cmd);
 
     VkSemaphoreSubmitInfo wait_info = rv_create_semaphore_submit_info(VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR, frame->swapchain_semaphore);
     VkSemaphoreSubmitInfo signal_info = rv_create_semaphore_submit_info(VK_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT, frame->render_semaphore);
 
-    VkSubmitInfo2 submit = rv_create_submit_info(&cmd_info, &signal_info, &wait_info);
+    VkSubmitInfo2 submit = rv_create_submit_info(&cmd_submit_info, &signal_info, &wait_info);
 
     RV_RETURN_IF_ERROR(context->deps.logger, result, vkQueueSubmit2(context->graphics_queue, 1, &submit, frame->render_fence),
                        -1, "Failed to submit cmd to queue: %d", result);
@@ -152,14 +147,4 @@ int32_t renderer_vulkan_render_end_frame(RendererContext *context)
     }
 
     return 0;
-}
-
-void draw_geometry(RendererContext *context, VkCommandBuffer cmd)
-{
-    assert(context != NULL);
-    assert(cmd != VK_NULL_HANDLE);
-
-    // vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context->triangle_pipeline);
-    // vkCmdDraw(cmd, 3, 1, 0, 0);
-
 }

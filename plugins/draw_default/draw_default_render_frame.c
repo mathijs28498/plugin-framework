@@ -41,9 +41,10 @@ int32_t draw_default_render_frame(DrawContext *context, RendererCommandList *com
         .height = render_image_properties.extent.height,
     };
 
-    // Start background pass
+    // Transition pass to 0
     renderer_cmd_transition_image(renderer, command_list, context->draw_image_handle, RENDERER_IMAGE_LAYOUT_UNDEFINED, RENDERER_IMAGE_LAYOUT_GENERAL);
 
+    // Execute pass 0
     RendererResourceSetHandle draw_image_resource_set_handle;
     RETURN_IF_ERROR(logger, ret, renderer_allocate_transient_resource_set(renderer, context->draw_image_resource_set_layout_handle, &draw_image_resource_set_handle),
                     "Failed to allocate transient resource set: %d", ret);
@@ -80,8 +81,10 @@ int32_t draw_default_render_frame(DrawContext *context, RendererCommandList *com
 
     renderer_cmd_dispatch(renderer, command_list, (uint32_t)ceil(render_extent_2d.width / 16.0), (uint32_t)ceil(render_extent_2d.height / 16.0), 1);
 
+    // Transition to pass 1
     renderer_cmd_transition_image(renderer, command_list, context->draw_image_handle, RENDERER_IMAGE_LAYOUT_GENERAL, RENDERER_IMAGE_LAYOUT_COLOR_ATTACHMENT);
 
+    // Execute pass 1
     // Start graphics rendering
     RendererBeginRenderingInfo begin_rendering_info = {
         .color_attachment_info = {
@@ -107,6 +110,8 @@ int32_t draw_default_render_frame(DrawContext *context, RendererCommandList *com
     renderer_cmd_bind_index_buffer(renderer, command_list, context->rect_mesh_buffers.index_buffer_handle);
     renderer_cmd_draw_indexed(renderer, command_list, context->rect_mesh_buffers.indices_len, 1, 0, 0, 0);
 
+    // Transition pass end
+
     // End graphics rendering
     renderer_cmd_end_rendering(renderer, command_list);
 
@@ -115,5 +120,8 @@ int32_t draw_default_render_frame(DrawContext *context, RendererCommandList *com
     renderer_cmd_transition_image(renderer, command_list, render_image_handle, RENDERER_IMAGE_LAYOUT_UNDEFINED, RENDERER_IMAGE_LAYOUT_TRANSFER_DST);
     renderer_cmd_blit_image_to_image(renderer, command_list, context->draw_image_handle, render_image_handle,
                                      context->draw_extent, render_extent_2d);
+
+    TODO("Remove this and add render passes");
+    renderer_cmd_transition_image(renderer, command_list, render_image_handle, RENDERER_IMAGE_LAYOUT_TRANSFER_DST, RENDERER_IMAGE_LAYOUT_PRESENT_SRC);
     return 0;
 }

@@ -123,36 +123,3 @@ int32_t rv_call_queue_push_1(LoggerInterface *logger, RV_CallRecord *call_queue,
 {
     return rv_call_queue_push_(logger, call_queue, RV_CALL_TYPE_1, fn, arg_0, 0U, 0U, 0U);
 }
-
-
-int32_t rv_create_buffer(RendererContext *context, size_t alloc_size, RendererBufferUsageFlags usage, VmaMemoryUsage memory_usage, RV_AllocatedBuffer *out_buffer)
-{
-    assert(alloc_size > 0);
-    assert(out_buffer != NULL);
-
-    VkResult result;
-
-    VkBufferCreateInfo buffer_create_info = {
-        .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
-        .size = alloc_size,
-        .usage = usage,
-    };
-
-    VmaAllocationCreateInfo alloc_create_info = {
-        .usage = memory_usage,
-        .flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
-    };
-
-    VmaAllocationInfo allocation_info;
-    RV_RETURN_IF_ERROR(context->deps.logger, result, vmaCreateBuffer(context->vma_allocator, &buffer_create_info, &alloc_create_info, &out_buffer->buffer, &out_buffer->allocation, &allocation_info),
-                       -1, "Failed to create buffer: %d", result);
-
-    return 0;
-}
-
-void rv_destroy_buffer(VmaAllocator allocator, VkBuffer buffer, VmaAllocation allocation)
-{
-    assert(allocator != VK_NULL_HANDLE);
-    assert(buffer != NULL);
-    vmaDestroyBuffer(allocator, buffer, allocation);
-}

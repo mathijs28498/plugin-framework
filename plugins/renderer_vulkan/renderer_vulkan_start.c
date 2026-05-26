@@ -257,10 +257,3 @@ int32_t renderer_vulkan_start_recreate_swapchain(RendererContext *context)
     context->swapchain_recreated = true;
     return 0;
 }
-
-bool renderer_vulkan_consume_has_resized(RendererContext *context)
-{
-    bool swapchain_recreated = context->swapchain_recreated;
-    context->swapchain_recreated = false;
-    return swapchain_recreated;
-}
