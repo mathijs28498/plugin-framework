@@ -322,8 +322,6 @@ typedef struct RendererVtable
     void (*on_window_resize)(RendererContext *context, uint32_t width, uint32_t height);
     bool (*consume_has_resized)(RendererContext *context);
 
-    int32_t (*dummy_exec_fn)(RendererCommandList *command_list, void *user_data);
-
     int32_t (*immediate_execute)(RendererContext *context, ImmediateExecute_Fn immediate_execute_fn, void *user_data);
 
     RendererImageHandle (*get_render_image_handle)(RendererContext *context);
@@ -331,6 +329,11 @@ typedef struct RendererVtable
 
     int32_t (*create_shader)(RendererContext *context, const uint32_t *shader_code_u32, size_t shader_code_bytes_len, RendererShaderHandle *out_shader_handle);
     int32_t (*destroy_shader)(RendererContext *context, RendererShaderHandle shader_handle);
+
+    int32_t (*create_buffer)(RendererContext *context, RendererBufferCreateInfo *renderer_buffer_create_info, RendererBufferHandle *out_buffer_handle);
+    int32_t (*destroy_buffer)(RendererContext *context, RendererBufferHandle buffer_handle);
+    int32_t (*upload_buffer_data)(RendererContext *context, RendererCommandList *command_list, RendererUploadBufferDataInfo *upload_buffer_data_info);
+    int32_t (*get_buffer_device_address)(RendererContext *context, RendererBufferHandle buffer_handle, RendererBufferDeviceAddress *out_device_address);
 
     int32_t (*create_image)(RendererContext *context, RendererImageCreateInfo *renderer_image_create_info, RendererImageHandle *out_image_handle);
     int32_t (*destroy_image)(RendererContext *context, RendererImageHandle image_handle);
@@ -355,6 +358,9 @@ typedef struct RendererVtable
 
     void (*cmd_bind_graphics_pipeline)(RendererContext *context, RendererCommandList *command_list, RendererGraphicsPipelineHandle pipeline_handle);
     void (*cmd_bind_compute_pipeline)(RendererContext *context, RendererCommandList *command_list, RendererComputePipelineHandle pipeline_handle);
+    void (*cmd_bind_index_buffer)(RendererContext *context, RendererCommandList *command_list, RendererBufferHandle buffer_handle);
+
+    void (*cmd_draw_indexed)(RendererContext *context, RendererCommandList *command_list, uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance);
     void (*cmd_draw)(RendererContext *context, RendererCommandList *command_list, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance);
     void (*cmd_bind_resource_sets)(RendererContext *context, RendererCommandList *command_list, RendererPipelineType renderer_pipeline_type, RendererPipelineLayoutHandle pipeline_layout_handle, uint32_t first_set, uint32_t resource_set_len, const RendererResourceSetHandle *resource_set_handle, uint32_t dynamic_offset_len, const uint32_t *dynamic_offsets);
 
@@ -419,6 +425,26 @@ static inline int32_t renderer_create_shader(RendererInterface *iface, const uin
 static inline int32_t renderer_destroy_shader(RendererInterface *iface, RendererShaderHandle shader_handle)
 {
     return VTABLE_METHOD_CALL(iface, destroy_shader, shader_handle);
+}
+
+static inline int32_t renderer_create_buffer(RendererInterface *iface, RendererBufferCreateInfo *renderer_buffer_create_info, RendererBufferHandle *out_buffer_handle)
+{
+    return VTABLE_METHOD_CALL(iface, create_buffer, renderer_buffer_create_info, out_buffer_handle);
+}
+
+static inline int32_t renderer_destroy_buffer(RendererInterface *iface, RendererBufferHandle buffer_handle)
+{
+    return VTABLE_METHOD_CALL(iface, destroy_buffer, buffer_handle);
+}
+
+static inline int32_t renderer_upload_buffer_data(RendererInterface *iface, RendererCommandList *command_list, RendererUploadBufferDataInfo *upload_buffer_data_info)
+{
+    return VTABLE_METHOD_CALL(iface, upload_buffer_data, command_list, upload_buffer_data_info);
+}
+
+static inline int32_t renderer_get_buffer_device_address(RendererInterface *iface, RendererBufferHandle buffer_handle, RendererBufferDeviceAddress *out_device_address)
+{
+    return VTABLE_METHOD_CALL(iface, get_buffer_device_address, buffer_handle, out_device_address);
 }
 
 static inline int32_t renderer_create_image(RendererInterface *iface, RendererImageCreateInfo *renderer_image_create_info, RendererImageHandle *out_image_handle)
@@ -524,6 +550,16 @@ static inline void renderer_cmd_push_constants(RendererInterface *iface, Rendere
 static inline void renderer_cmd_dispatch(RendererInterface *iface, RendererCommandList *command_list, uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z)
 {
     VTABLE_METHOD_CALL(iface, cmd_dispatch, command_list, group_count_x, group_count_y, group_count_z);
+}
+
+static inline void renderer_cmd_bind_index_buffer(RendererInterface *iface, RendererCommandList *command_list, RendererBufferHandle buffer_handle)
+{
+    VTABLE_METHOD_CALL(iface, cmd_bind_index_buffer, command_list, buffer_handle);
+}
+
+static inline void renderer_cmd_draw_indexed(RendererInterface *iface, RendererCommandList *command_list, uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance)
+{
+    VTABLE_METHOD_CALL(iface, cmd_draw_indexed, command_list, index_count, instance_count, first_index, vertex_offset, first_instance);
 }
 
 static inline void renderer_cmd_draw(RendererInterface *iface, RendererCommandList *command_list, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance)

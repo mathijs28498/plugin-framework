@@ -190,103 +190,6 @@ int32_t create_vma_allocator(RendererContext *context)
     return 0;
 }
 
-int32_t create_mesh_buffer(RendererContext *context, RendererCommandList *command_list, uint32_t *indices, Vertex *vertices, GPUMeshBuffers *out_mesh_buffers)
-{
-    assert(indices != NULL);
-    assert(vertices != NULL);
-    assert(out_mesh_buffers != NULL);
-
-    int32_t ret;
-
-    // Create the vertex and index buffers
-    const size_t index_buffer_size = GET_ARRAY_LENGTH(indices) * sizeof(*indices);
-    const size_t vertex_buffer_size = GET_ARRAY_LENGTH(vertices) * sizeof(*vertices);
-
-    RendererBufferCreateInfo vertex_buffer_create_info = {
-        .memory_usage = RENDERER_MEMORY_USAGE_GPU_ONLY,
-        .size = vertex_buffer_size,
-        .usage_flags = RENDERER_BUFFER_USAGE_STORAGE_BUFFER_BIT | RENDERER_BUFFER_USAGE_TRANSFER_DST_BIT | RENDERER_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-    };
-
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    renderer_vulkan_create_buffer(context, &vertex_buffer_create_info, &out_mesh_buffers->vertex_buffer_handle),
-                    "Unable to create vertex buffer: %d", ret);
-
-    RendererBufferCreateInfo index_buffer_create_info = {
-        .memory_usage = RENDERER_MEMORY_USAGE_GPU_ONLY,
-        .size = index_buffer_size,
-        .usage_flags = RENDERER_BUFFER_USAGE_INDEX_BUFFER_BIT | RENDERER_BUFFER_USAGE_TRANSFER_DST_BIT,
-    };
-
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    renderer_vulkan_create_buffer(context, &index_buffer_create_info, &out_mesh_buffers->index_buffer_handle),
-                    "Unable to create index buffer: %d", ret);
-
-    RETURN_IF_ERROR(context->deps.logger, ret,
-                    renderer_vulkan_get_buffer_device_address(context, out_mesh_buffers->vertex_buffer_address, &out_mesh_buffers->vertex_buffer_address),
-                    "Failed to get buffer device address: %d", ret);
-
-    RendererUploadBufferDataInfo vertex_upload_buffer_data = {
-        .upload_size = vertex_buffer_size,
-        .upload_data = vertices,
-        .destination_offset = 0,
-        .destination_buffer_handle = out_mesh_buffers->vertex_buffer_handle,
-    };
-
-    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_upload_buffer_data(context, command_list, &vertex_upload_buffer_data),
-                    "Failed to upload vertex buffer data: %d", ret);
-
-    RendererUploadBufferDataInfo index_upload_buffer_data = {
-        .upload_size = index_buffer_size,
-        .upload_data = indices,
-        .destination_offset = 0,
-        .destination_buffer_handle = out_mesh_buffers->index_buffer_handle,
-    };
-
-    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_upload_buffer_data(context, command_list, &index_upload_buffer_data),
-                    "Failed to upload index buffer data: %d", ret);
-
-    return 0;
-}
-
-int32_t rv_create_mesh_buffers(RendererCommandList *command_list, void *user_data)
-{
-    assert(command_list != NULL);
-    assert(user_data != NULL);
-    RendererContext *context = (RendererContext *)user_data;
-    int32_t ret;
-
-    CREATE_INITIALIZED_ARRAY(
-        Vertex, main_mesh_vertices,
-        {(Vertex){
-             .position = {0.5, -0.5, 0},
-             .color = {0, 0, 0, 1},
-         },
-         (Vertex){
-             .position = {0.5, 0.5, 0},
-             .color = {0.5, 0.5, 0.5, 1},
-         },
-         (Vertex){
-             .position = {-0.5, -0.5, 0},
-             .color = {1, 0, 0, 1},
-         },
-         (Vertex){
-             .position = {-0.5, 0.5, 0},
-             .color = {0, 1, 0, 1},
-         }});
-
-    CREATE_INITIALIZED_ARRAY(
-        uint32_t,
-        main_mesh_indices,
-        {0, 1, 2,
-         2, 1, 3});
-
-    RETURN_IF_ERROR(context->deps.logger, ret, create_mesh_buffer(context, command_list, main_mesh_indices, main_mesh_vertices, &context->rectangle_mesh_buffers),
-                    "Failed to create main mesh buffers: %d", ret);
-
-    return 0;
-}
-
 int32_t renderer_vulkan_start_internal(RendererContext *context)
 {
     assert(context != NULL);
@@ -307,9 +210,6 @@ int32_t renderer_vulkan_start_internal(RendererContext *context)
 
     RV_TRY_INIT(context->deps.logger, ret, rv_create_descriptor_pools(context), context->global_destroy_queue_a,
                 "Failed to create draw image: %d", ret);
-
-    // RV_TRY_INIT(context->deps.logger, ret, renderer_vulkan_immediate_execute(context, create_mesh_buffers, context), context->global_destroy_queue_a,
-    //             "Failed to create mesh buffers: %d", ret);
 
     return 0;
 }

@@ -113,21 +113,6 @@ void renderer_vulkan_cmd_draw(RendererContext *context, RendererCommandList *com
     assert(context != NULL);
     assert(command_list != NULL);
     vkCmdDraw(command_list->command_buffer, vertex_count, instance_count, first_vertex, first_instance);
-
-    TODO("Make this backend agnostic, SO UGLY")
-
-    RendererVulkanHandle dummy_pp_handle = {
-        .generation = 0,
-        .index = 2,
-    };
-    renderer_vulkan_cmd_bind_graphics_pipeline(context, command_list, dummy_pp_handle.raw);
-    GPUDrawPushConstants mesh_push_constants = {
-        .world_matrix = GLM_MAT4_IDENTITY_INIT,
-        .vertex_buffer_address = context->rectangle_mesh_buffers.vertex_buffer_address,
-    };
-    renderer_vulkan_cmd_push_constants(context, command_list, dummy_pp_handle.raw, RENDERER_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &mesh_push_constants);
-    renderer_vulkan_cmd_bind_index_buffer(context, command_list, context->rectangle_mesh_buffers.index_buffer_handle);
-    renderer_vulkan_cmd_draw_indexed(context, command_list, 6, 1, 0, 0, 0);
 }
 
 // ways to improve this efficiency: https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples

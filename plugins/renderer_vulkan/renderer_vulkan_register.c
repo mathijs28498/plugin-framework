@@ -18,8 +18,7 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_register, LOG_LEVEL_DEBUG)
 #include "renderer_vulkan_cmd.h"
 #include "renderer_vulkan_pipeline.h"
 #include "renderer_vulkan_descriptor_set.h"
-
-int32_t rv_create_mesh_buffers(RendererCommandList *command_list, void *user_data);
+#include "renderer_vulkan_buffer.h"
 
 static const RendererVtable plugin_vtable = {
     .start = renderer_vulkan_start,
@@ -29,13 +28,17 @@ static const RendererVtable plugin_vtable = {
     .consume_has_resized = renderer_vulkan_consume_has_resized,
 
     .immediate_execute = renderer_vulkan_immediate_execute,
-    .dummy_exec_fn = rv_create_mesh_buffers,
 
     .get_render_image_handle = renderer_vulkan_get_render_image_handle,
     .get_image_properties = renderer_vulkan_get_image_properties,
 
     .create_shader = renderer_vulkan_create_shader,
     .destroy_shader = renderer_vulkan_destroy_shader,
+
+    .create_buffer = renderer_vulkan_create_buffer,
+    .destroy_buffer = renderer_vulkan_destroy_buffer,
+    .upload_buffer_data = renderer_vulkan_upload_buffer_data,
+    .get_buffer_device_address = renderer_vulkan_get_buffer_device_address,
 
     .create_image = renderer_vulkan_create_image,
     .destroy_image = renderer_vulkan_destroy_image,
@@ -60,6 +63,9 @@ static const RendererVtable plugin_vtable = {
 
     .cmd_bind_graphics_pipeline = renderer_vulkan_cmd_bind_graphics_pipeline,
     .cmd_bind_compute_pipeline = renderer_vulkan_cmd_bind_compute_pipeline,
+    .cmd_bind_index_buffer = renderer_vulkan_cmd_bind_index_buffer,
+
+    .cmd_draw_indexed = renderer_vulkan_cmd_draw_indexed,
     .cmd_draw = renderer_vulkan_cmd_draw,
     .cmd_bind_resource_sets = renderer_vulkan_cmd_bind_resource_sets,
     .cmd_push_constants = renderer_vulkan_cmd_push_constants,

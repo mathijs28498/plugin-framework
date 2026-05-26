@@ -244,6 +244,126 @@ int32_t create_background_pipeline(DrawContext *context, DD_Shaders *shaders)
     return 0;
 }
 
+typedef struct UploadVertexIndexBuffersInfo
+{
+    LoggerInterface *logger;
+    RendererInterface *renderer;
+    RendererUploadBufferDataInfo *vertex_upload_buffer_data_info;
+    RendererUploadBufferDataInfo *index_upload_buffer_data_info;
+    // uint64_t vertex_buffer_size;
+    // void *vertices;
+    // Vert
+    // uint64_t index_buffer_size;
+    // void *indices;
+} UploadVertexIndexBuffersInfo;
+
+int32_t upload_vertex_index_buffers(RendererCommandList *command_list, void *user_data)
+{
+    assert(command_list != NULL);
+    assert(user_data != NULL);
+
+    UploadVertexIndexBuffersInfo *upload_vertex_index_buffers_info = (UploadVertexIndexBuffersInfo *)user_data;
+
+    int32_t ret;
+    LoggerInterface *logger = upload_vertex_index_buffers_info->logger;
+    RendererInterface *renderer = upload_vertex_index_buffers_info->renderer;
+
+    RETURN_IF_ERROR(logger, ret, renderer_upload_buffer_data(renderer, command_list, upload_vertex_index_buffers_info->vertex_upload_buffer_data_info),
+                    "Failed to upload vertex buffer data: %d", ret);
+
+    RETURN_IF_ERROR(logger, ret, renderer_upload_buffer_data(renderer, command_list, upload_vertex_index_buffers_info->index_upload_buffer_data_info),
+                    "Failed to upload index buffer data: %d", ret);
+
+    return 0;
+}
+
+int32_t create_mesh_buffers(DrawContext *context)
+{
+    assert(context != NULL);
+    int32_t ret;
+
+    LoggerInterface *logger = context->deps.logger;
+    RendererInterface *renderer = context->deps.renderer;
+
+    CREATE_INITIALIZED_ARRAY(
+        Vertex, main_mesh_vertices_a,
+        {(Vertex){
+             .position = {0.5, -0.5, 0},
+             .color = {0, 0, 0, 1},
+         },
+         (Vertex){
+             .position = {0.5, 0.5, 0},
+             .color = {0.5, 0.5, 0.5, 1},
+         },
+         (Vertex){
+             .position = {-0.5, -0.5, 0},
+             .color = {1, 0, 0, 1},
+         },
+         (Vertex){
+             .position = {-0.5, 0.5, 0},
+             .color = {0, 1, 0, 1},
+         }});
+
+    CREATE_INITIALIZED_ARRAY(
+        uint32_t,
+        main_mesh_indices_a,
+        {0, 1, 2,
+         2, 1, 3});
+
+    const size_t vertex_buffer_size = GET_ARRAY_LENGTH(main_mesh_vertices_a) * sizeof(*main_mesh_vertices_a);
+    const size_t index_buffer_size = GET_ARRAY_LENGTH(main_mesh_indices_a) * sizeof(*main_mesh_indices_a);
+
+    RendererBufferCreateInfo vertex_buffer_create_info = {
+        .memory_usage = RENDERER_MEMORY_USAGE_GPU_ONLY,
+        .size = vertex_buffer_size,
+        .usage_flags = RENDERER_BUFFER_USAGE_STORAGE_BUFFER_BIT | RENDERER_BUFFER_USAGE_TRANSFER_DST_BIT | RENDERER_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+    };
+
+    RETURN_IF_ERROR(logger, ret,
+                    renderer_create_buffer(renderer, &vertex_buffer_create_info, &context->rect_mesh_buffers.vertex_buffer_handle),
+                    "Unable to create vertex buffer: %d", ret);
+
+    RETURN_IF_ERROR(logger, ret,
+                    renderer_get_buffer_device_address(renderer, context->rect_mesh_buffers.vertex_buffer_handle, &context->rect_mesh_buffers.vertex_buffer_address),
+                    "Failed to get buffer device address: %d", ret);
+
+    RendererBufferCreateInfo index_buffer_create_info = {
+        .memory_usage = RENDERER_MEMORY_USAGE_GPU_ONLY,
+        .size = index_buffer_size,
+        .usage_flags = RENDERER_BUFFER_USAGE_INDEX_BUFFER_BIT | RENDERER_BUFFER_USAGE_TRANSFER_DST_BIT,
+    };
+
+    RETURN_IF_ERROR(logger, ret,
+                    renderer_create_buffer(renderer, &index_buffer_create_info, &context->rect_mesh_buffers.index_buffer_handle),
+                    "Unable to create index buffer: %d", ret);
+
+    RendererUploadBufferDataInfo vertex_upload_buffer_data = {
+        .upload_size = vertex_buffer_size,
+        .upload_data = main_mesh_vertices_a,
+        .destination_offset = 0,
+        .destination_buffer_handle = context->rect_mesh_buffers.vertex_buffer_handle,
+    };
+    RendererUploadBufferDataInfo index_upload_buffer_data = {
+        .upload_size = index_buffer_size,
+        .upload_data = main_mesh_indices_a,
+        .destination_offset = 0,
+        .destination_buffer_handle = context->rect_mesh_buffers.index_buffer_handle,
+    };
+
+    UploadVertexIndexBuffersInfo upload_vertex_index_buffers_info = {
+        .logger = logger,
+        .renderer = renderer,
+        .vertex_upload_buffer_data_info = &vertex_upload_buffer_data,
+        .index_upload_buffer_data_info = &index_upload_buffer_data,
+    };
+
+    RETURN_IF_ERROR(logger, ret,
+                    renderer_immediate_execute(renderer, upload_vertex_index_buffers,&upload_vertex_index_buffers_info),
+                    "Failed to upload vertex and index buffers: %d", ret);
+
+    return 0;
+}
+
 int32_t draw_default_start(DrawContext *context)
 {
     assert(context != NULL);
@@ -275,9 +395,12 @@ int32_t draw_default_start(DrawContext *context)
 
     destroy_shaders(context, &shaders);
 
-    TODO("Make own immediate execute")
-    RETURN_IF_ERROR(logger, ret, renderer_immediate_execute(renderer, renderer->vtable->dummy_exec_fn, renderer->context),
-                    "Failed to immediate execute: %d", ret);
+    RETURN_IF_ERROR(logger, ret, create_mesh_buffers(context),
+                    "Failed to create mesh buffer: %d", ret);
+
+    // TODO("Make own immediate execute")
+    // RETURN_IF_ERROR(logger, ret, renderer_immediate_execute(renderer, renderer->vtable->dummy_exec_fn, renderer->context),
+    //                 "Failed to immediate execute: %d", ret);
 
     return 0;
 }
