@@ -105,7 +105,7 @@ int32_t draw_default_render_frame(DrawContext *context, RendererCommandList *com
     };
     renderer_cmd_push_constants(renderer, command_list, context->triangle_mesh_pipeline_layout_handle, RENDERER_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &mesh_push_constants);
     renderer_cmd_bind_index_buffer(renderer, command_list, context->rect_mesh_buffers.index_buffer_handle);
-    renderer_cmd_draw_indexed(renderer, command_list, 6, 1, 0, 0, 0);
+    renderer_cmd_draw_indexed(renderer, command_list, context->rect_mesh_buffers.indices_len, 1, 0, 0, 0);
 
     // End graphics rendering
     renderer_cmd_end_rendering(renderer, command_list);

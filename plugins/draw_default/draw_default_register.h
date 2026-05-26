@@ -39,6 +39,7 @@ typedef struct GPUMeshBuffers
     RendererBufferDeviceAddress vertex_buffer_address;
 
     RendererBufferHandle index_buffer_handle;
+    uint32_t indices_len;
 } GPUMeshBuffers;
 
 typedef struct DrawContext

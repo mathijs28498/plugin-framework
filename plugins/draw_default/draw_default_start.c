@@ -250,11 +250,6 @@ typedef struct UploadVertexIndexBuffersInfo
     RendererInterface *renderer;
     RendererUploadBufferDataInfo *vertex_upload_buffer_data_info;
     RendererUploadBufferDataInfo *index_upload_buffer_data_info;
-    // uint64_t vertex_buffer_size;
-    // void *vertices;
-    // Vert
-    // uint64_t index_buffer_size;
-    // void *indices;
 } UploadVertexIndexBuffersInfo;
 
 int32_t upload_vertex_index_buffers(RendererCommandList *command_list, void *user_data)
@@ -286,29 +281,59 @@ int32_t create_mesh_buffers(DrawContext *context)
     RendererInterface *renderer = context->deps.renderer;
 
     CREATE_INITIALIZED_ARRAY(
-        Vertex, main_mesh_vertices_a,
-        {(Vertex){
-             .position = {0.5, -0.5, 0},
-             .color = {0, 0, 0, 1},
-         },
-         (Vertex){
-             .position = {0.5, 0.5, 0},
-             .color = {0.5, 0.5, 0.5, 1},
-         },
-         (Vertex){
-             .position = {-0.5, -0.5, 0},
-             .color = {1, 0, 0, 1},
-         },
-         (Vertex){
-             .position = {-0.5, 0.5, 0},
-             .color = {0, 1, 0, 1},
-         }});
+    Vertex, main_mesh_vertices_a,
+    {
+        (Vertex){ .position = { 0.0000f,  -0.5000f, 0.0f }, .color = { 0.051f, 0.463f, 0.878f, 1.0f } }, // top tip
+        (Vertex){ .position = { 0.1123f,  -0.1545f, 0.0f }, .color = { 1.00f, 0.62f, 0.18f, 1.0f } },
+        (Vertex){ .position = { 0.4755f,  -0.1545f, 0.0f }, .color = { 1.00f, 0.82f, 0.10f, 1.0f } },
+        (Vertex){ .position = { 0.1816f, 0.0590f, 0.0f }, .color = { 0.95f, 0.42f, 0.22f, 1.0f } },
+        (Vertex){ .position = { 0.2939f, 0.4045f, 0.0f }, .color = { 1.00f, 0.72f, 0.08f, 1.0f } },
+        (Vertex){ .position = { 0.0000f, 0.1910f, 0.0f }, .color = { 0.90f, 0.28f, 0.35f, 1.0f } },
+        (Vertex){ .position = {-0.2939f, 0.4045f, 0.0f }, .color = { 1.00f, 0.76f, 0.12f, 1.0f } },
+        (Vertex){ .position = {-0.1816f, 0.0590f, 0.0f }, .color = { 0.98f, 0.48f, 0.20f, 1.0f } },
+        (Vertex){ .position = {-0.4755f,  -0.1545f, 0.0f }, .color = { 1.00f, 0.84f, 0.14f, 1.0f } },
+        (Vertex){ .position = {-0.1123f,  -0.1545f, 0.0f }, .color = { 1.00f, 0.58f, 0.24f, 1.0f } },
+        (Vertex){ .position = { 0.0000f,  -0.0000f, 0.0f }, .color = { 0.82f, 0.22f, 0.58f, 1.0f } },
+    });
+   
 
     CREATE_INITIALIZED_ARRAY(
         uint32_t,
         main_mesh_indices_a,
-        {0, 1, 2,
-         2, 1, 3});
+        {
+            0,
+            1,
+            9,
+            2,
+            3,
+            1,
+            4,
+            5,
+            3,
+            6,
+            7,
+            5,
+            8,
+            9,
+            7,
+            10,
+            9,
+            1,
+            10,
+            1,
+            3,
+            10,
+            3,
+            5,
+            10,
+            5,
+            7,
+            10,
+            7,
+            9,
+        });
+
+    context->rect_mesh_buffers.indices_len = (uint32_t)GET_ARRAY_LENGTH(main_mesh_indices_a);
 
     const size_t vertex_buffer_size = GET_ARRAY_LENGTH(main_mesh_vertices_a) * sizeof(*main_mesh_vertices_a);
     const size_t index_buffer_size = GET_ARRAY_LENGTH(main_mesh_indices_a) * sizeof(*main_mesh_indices_a);
@@ -358,7 +383,7 @@ int32_t create_mesh_buffers(DrawContext *context)
     };
 
     RETURN_IF_ERROR(logger, ret,
-                    renderer_immediate_execute(renderer, upload_vertex_index_buffers,&upload_vertex_index_buffers_info),
+                    renderer_immediate_execute(renderer, upload_vertex_index_buffers, &upload_vertex_index_buffers_info),
                     "Failed to upload vertex and index buffers: %d", ret);
 
     return 0;
