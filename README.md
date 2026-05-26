@@ -180,29 +180,32 @@ The goal is a fully self-authored stack, from memory allocator to language runti
 
 ## Plugins
 
-| Plugin          | Status                       |
-| --------------- | ---------------------------- |
-| environment     | ✅ Complete                   |
-| input           | ✅ Complete                   |
-| logger          | ✅ Complete                   |
-| time            | ✅ Complete - Windows only    |
-| allocator       | 🔨 In Progress                |
-| draw            | 🔨 In Progress                |
-| gui_application | 🔨 In Progress                |
-| plugin_manager  | 🔨 In Progress                |
-| render_graph    | 🔨 In Progress                |
-| renderer        | 🔨 In Progress                |
-| window          | 🔨 In Progress - Windows only |
+| Plugin            | Status                       |
+| ----------------- | ---------------------------- |
+| environment       | ✅ Complete                   |
+| input             | ✅ Complete                   |
+| logger            | ✅ Complete                   |
+| time              | ✅ Complete - Windows only    |
+| allocator         | ✅ Complete                   |
+| draw              | 🔨 In Progress                |
+| - draw_background | 🔨 In Progress                |
+| - draw_2d         | 🔨 In Progress                |
+| - draw_3d         | 🔨 In Progress                |
+| gui_application   | 🔨 In Progress                |
+| plugin_manager    | 🔨 In Progress                |
+| render_graph      | 🔨 In Progress                |
+| renderer          | 🔨 In Progress                |
+| window            | 🔨 In Progress - Windows only |
 
 ***
 
 ## Allocator Progress
 
-| Feature                     | Status        |
-| --------------------------- | ------------- |
-| 1KiB context slabs          | ✅ Complete    |
-| Permanent memory allocation | ✅ Complete    |
-| Buddy allocator             | 🔨 In Progress |
+| Feature                     | Status     |
+| --------------------------- | ---------- |
+| 1KiB context slabs          | ✅ Complete |
+| Permanent memory allocation | ✅ Complete |
+| Buddy allocator             | ✅ Complete |
 
 
 ***
@@ -221,8 +224,8 @@ The goal is a fully self-authored stack, from memory allocator to language runti
 | Swapchain resizing                                 | ✅ Complete    |
 | Deferred destruction queues                        | ✅ Complete    |
 | Compile-time automatic shader compilation (Python) | ✅ Complete    |
-| Buffer creation & usage                            | 🔨 In Progress |
-| Immediate submission command buffer                | 🔨 In Progress |
+| Buffer creation & usage                            | ✅ Complete    |
+| Immediate submission command buffer                | ✅ Complete    |
 | Render graph with automatic pass management        | 🔨 In Progress |
 | Compile-time shader reflection                     | 🔨 In Progress |
 | `VK_ERROR_DEVICE_LOST` recovery                    | 📋 Planned     |
@@ -235,5 +238,6 @@ The goal is a fully self-authored stack, from memory allocator to language runti
 | -------- | ----------- |
 | Windows  | ✅ Supported |
 | Linux    | 📋 Planned   |
+| MacOS    | 📋 Planned   |
 | Web      | 📋 Planned   |
 | Embedded | 📋 Planned   |
