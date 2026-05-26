@@ -104,40 +104,12 @@ typedef struct RV_AllocatedBuffer
     VmaAllocation allocation;
 } RV_AllocatedBuffer;
 
-typedef struct Vertex
-{
-    vec3 position;
-    float uv_x;
-    vec3 normal;
-    float uv_y;
-    vec4 color;
-} Vertex;
-
-typedef uint64_t VkDeviceAddress;
-
-typedef struct GPUMeshBuffers
-{
-    RendererBufferHandle index_buffer_handle;
-    RendererBufferHandle vertex_buffer_handle;
-
-    VkDeviceAddress vertex_buffer_address;
-} GPUMeshBuffers;
-
-typedef struct GPUDrawPushConstants
-{
-    mat4 world_matrix;
-    VkDeviceAddress vertex_buffer_address;
-
-} GPUDrawPushConstants;
-
 typedef struct ActiveFrameState
 {
     RendererFrameData *frame;
     uint32_t swapchain_index;
     bool is_active;
 } ActiveFrameState;
-
-typedef uint64_t RendererImageHandle;
 
 TODO("Maybe split up the struct into smaller structs, like a queue/logical device struct")
 TODO("The smaller struct could also be one for the bootstrap and one for runtime")
@@ -214,16 +186,6 @@ typedef struct RendererContext
 
     uint8_t *bump_arena_a;
 
-    GPUMeshBuffers rectangle_mesh_buffers;
-
 } RendererContext;
 
 #pragma pack(pop)
-
-typedef struct ComputePushConstants
-{
-    vec4 top_left;
-    vec4 top_right;
-    vec4 bottom_left;
-    vec4 bottom_right;
-} ComputePushConstants;

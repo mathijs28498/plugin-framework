@@ -413,6 +413,18 @@ void draw_default_cleanup(DrawContext *context)
     LoggerInterface *logger = context->deps.logger;
     RendererInterface *renderer = context->deps.renderer;
 
+    ret = renderer_destroy_buffer(renderer, context->rect_mesh_buffers.index_buffer_handle);
+    if (ret < 0)
+    {
+        LOG_WRN_TRACE(logger, "Failed to destroy index buffer");
+    }
+
+    ret = renderer_destroy_buffer(renderer, context->rect_mesh_buffers.vertex_buffer_handle);
+    if (ret < 0)
+    {
+        LOG_WRN_TRACE(logger, "Failed to destroy vertex buffer");
+    }
+
     ret = renderer_destroy_graphics_pipeline(renderer, context->triangle_mesh_pipeline_handle);
     if (ret < 0)
     {

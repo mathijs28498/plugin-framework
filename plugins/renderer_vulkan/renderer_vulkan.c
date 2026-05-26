@@ -27,14 +27,6 @@ int32_t renderer_vulkan_cleanup(RendererContext *context)
                            -1, "Failed to wait for device to idle: %d", result);
     }
 
-
-    TODO("Remove these");
-    int32_t ret;
-    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_destroy_buffer(context, context->rectangle_mesh_buffers.index_buffer_handle),
-                    "Failed to destroy index buffer: %d", ret);
-    RETURN_IF_ERROR(context->deps.logger, ret, renderer_vulkan_destroy_buffer(context, context->rectangle_mesh_buffers.vertex_buffer_handle),
-                    "Failed to destroy vertex buffer: %d", ret);
-
     for (size_t i = 0; i < ARRAY_SIZE(context->frames); i++)
     {
         rv_call_queue_flush(context->frames[i].destroy_queue_a);
