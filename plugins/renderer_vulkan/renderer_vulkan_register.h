@@ -98,37 +98,11 @@ typedef struct RV_AllocatedImage
     RendererExtent3D image_extent;
 } RV_AllocatedImage;
 
-typedef struct AllocatedBuffer
+typedef struct RV_AllocatedBuffer
 {
-    VkBuffer buffer;
+    _Alignas(16) VkBuffer buffer;
     VmaAllocation allocation;
-} AllocatedBuffer;
-
-typedef struct Vertex
-{
-
-    vec3 position;
-    float uv_x;
-    vec3 normal;
-    float uv_y;
-    vec4 color;
-} Vertex;
-
-typedef uint64_t VkDeviceAddress;
-
-typedef struct GPUMeshBuffers
-{
-    AllocatedBuffer index_buffer;
-    AllocatedBuffer vertex_buffer;
-    VkDeviceAddress vertex_buffer_address;
-} GPUMeshBuffers;
-
-typedef struct GPUDrawPushConstants
-{
-    mat4 world_matrix;
-    VkDeviceAddress vertex_buffer_address;
-
-} GPUDrawPushConstants;
+} RV_AllocatedBuffer;
 
 typedef struct ActiveFrameState
 {
@@ -136,8 +110,6 @@ typedef struct ActiveFrameState
     uint32_t swapchain_index;
     bool is_active;
 } ActiveFrameState;
-
-typedef uint64_t RendererImageHandle;
 
 TODO("Maybe split up the struct into smaller structs, like a queue/logical device struct")
 TODO("The smaller struct could also be one for the bootstrap and one for runtime")
@@ -162,6 +134,10 @@ typedef struct RendererContext
     RendererExtent2D swapchain_extent;
     VmaAllocator vma_allocator;
     RV_CallRecord *global_destroy_queue_a;
+
+    VkFence immediate_fence;
+    VkCommandPool immediate_command_pool;
+    VkCommandBuffer immediate_command_buffer;
 
     bool resize_requested;
     bool swapchain_recreated;
@@ -204,22 +180,12 @@ typedef struct RendererContext
     uint32_t *allocated_image_generations_a;
     RV_AllocatedImage *allocated_images_a;
 
+    bool *allocated_buffer_occupied_a;
+    uint32_t *allocated_buffer_generations_a;
+    RV_AllocatedBuffer *allocated_buffers_a;
+
     uint8_t *bump_arena_a;
-
-    VkPipeline triangle_pipeline;
-    VkPipelineLayout mesh_pipeline_layout;
-    VkPipeline mesh_pipeline;
-
-    GPUMeshBuffers rectangle_mesh_buffers;
 
 } RendererContext;
 
 #pragma pack(pop)
-
-typedef struct ComputePushConstants
-{
-    vec4 top_left;
-    vec4 top_right;
-    vec4 bottom_left;
-    vec4 bottom_right;
-} ComputePushConstants;

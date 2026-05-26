@@ -11,12 +11,14 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_register, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/plugin_utils.h>
 
 #include "renderer_vulkan.h"
+#include "renderer_vulkan_immediate.h"
 #include "renderer_vulkan_image.h"
 #include "renderer_vulkan_start.h"
 #include "renderer_vulkan_render.h"
 #include "renderer_vulkan_cmd.h"
 #include "renderer_vulkan_pipeline.h"
 #include "renderer_vulkan_descriptor_set.h"
+#include "renderer_vulkan_buffer.h"
 
 static const RendererVtable plugin_vtable = {
     .start = renderer_vulkan_start,
@@ -25,11 +27,18 @@ static const RendererVtable plugin_vtable = {
     .on_window_resize = renderer_vulkan_on_window_resize,
     .consume_has_resized = renderer_vulkan_consume_has_resized,
 
+    .immediate_execute = renderer_vulkan_immediate_execute,
+
     .get_render_image_handle = renderer_vulkan_get_render_image_handle,
     .get_image_properties = renderer_vulkan_get_image_properties,
 
     .create_shader = renderer_vulkan_create_shader,
     .destroy_shader = renderer_vulkan_destroy_shader,
+
+    .create_buffer = renderer_vulkan_create_buffer,
+    .destroy_buffer = renderer_vulkan_destroy_buffer,
+    .upload_buffer_data = renderer_vulkan_upload_buffer_data,
+    .get_buffer_device_address = renderer_vulkan_get_buffer_device_address,
 
     .create_image = renderer_vulkan_create_image,
     .destroy_image = renderer_vulkan_destroy_image,
@@ -54,6 +63,9 @@ static const RendererVtable plugin_vtable = {
 
     .cmd_bind_graphics_pipeline = renderer_vulkan_cmd_bind_graphics_pipeline,
     .cmd_bind_compute_pipeline = renderer_vulkan_cmd_bind_compute_pipeline,
+    .cmd_bind_index_buffer = renderer_vulkan_cmd_bind_index_buffer,
+
+    .cmd_draw_indexed = renderer_vulkan_cmd_draw_indexed,
     .cmd_draw = renderer_vulkan_cmd_draw,
     .cmd_bind_resource_sets = renderer_vulkan_cmd_bind_resource_sets,
     .cmd_push_constants = renderer_vulkan_cmd_push_constants,
@@ -74,6 +86,7 @@ TODO("Make these part of the configurations")
 #define PIPELINES_CAPACITY 128
 #define PIPELINE_LAYOUTS_CAPACITY 128
 #define ALLOCATED_IMAGES_CAPACITY 16
+#define ALLOCATED_BUFFERS_CAPACITY 16
 #define BUMP_ARENA_CAPACITY (1024 * 128)
 
 static int32_t plugin_init(RendererContext *context)
@@ -103,6 +116,9 @@ static int32_t plugin_init(RendererContext *context)
         INIT_ARRAY_MEMORY_FIELD(allocated_image_occupied_mem, bool, ALLOCATED_IMAGES_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(allocated_image_generations_mem, uint32_t, ALLOCATED_IMAGES_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(allocated_images_mem, RV_AllocatedImage, ALLOCATED_IMAGES_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(allocated_buffer_occupied_mem, bool, ALLOCATED_BUFFERS_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(allocated_buffer_generations_mem, uint32_t, ALLOCATED_BUFFERS_CAPACITY);
+        INIT_ARRAY_MEMORY_FIELD(allocated_buffers_mem, RV_AllocatedImage, ALLOCATED_BUFFERS_CAPACITY);
         INIT_ARRAY_MEMORY_FIELD(bump_arena_mem, uint8_t, BUMP_ARENA_CAPACITY);
     } *allocated_memory;
 
@@ -138,7 +154,13 @@ static int32_t plugin_init(RendererContext *context)
     BIND_ARRAY_FILLED(uint32_t, allocated_memory->allocated_image_generations_mem, context->allocated_image_generations_a, ALLOCATED_IMAGES_CAPACITY);
     BIND_ARRAY_FILLED(RV_AllocatedImage, allocated_memory->allocated_images_mem, context->allocated_images_a, ALLOCATED_IMAGES_CAPACITY);
 
+    BIND_ARRAY_FILLED(bool, allocated_memory->allocated_buffer_occupied_mem, context->allocated_buffer_occupied_a, ALLOCATED_BUFFERS_CAPACITY);
+    BIND_ARRAY_FILLED(uint32_t, allocated_memory->allocated_buffer_generations_mem, context->allocated_buffer_generations_a, ALLOCATED_BUFFERS_CAPACITY);
+    BIND_ARRAY_FILLED(RV_AllocatedBuffer, allocated_memory->allocated_buffers_mem, context->allocated_buffers_a, ALLOCATED_BUFFERS_CAPACITY);
+
     BIND_ARRAY(uint8_t, allocated_memory->bump_arena_mem, context->bump_arena_a, BUMP_ARENA_CAPACITY);
+
+    context->active_frame_state.frame = &context->frames[0];
 
     return 0;
 }

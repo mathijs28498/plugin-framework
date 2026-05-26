@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <math.h>
 
+#include <cglm/cglm.h>
+
 #include <plugin_sdk/renderer/v1/renderer_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface.h>
 #include <plugin_sdk/logger/v1/logger_interface_macros.h>
@@ -95,6 +97,15 @@ int32_t draw_default_render_frame(DrawContext *context, RendererCommandList *com
 
     renderer_cmd_bind_graphics_pipeline(renderer, command_list, context->triangle_pipeline_handle);
     renderer_cmd_draw(renderer, command_list, 3, 1, 0, 0);
+
+    renderer_cmd_bind_graphics_pipeline(renderer, command_list, context->triangle_mesh_pipeline_handle);
+    GPUDrawPushConstants mesh_push_constants = {
+        .world_matrix = GLM_MAT4_IDENTITY_INIT,
+        .vertex_buffer_address = context->rect_mesh_buffers.vertex_buffer_address,
+    };
+    renderer_cmd_push_constants(renderer, command_list, context->triangle_mesh_pipeline_layout_handle, RENDERER_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &mesh_push_constants);
+    renderer_cmd_bind_index_buffer(renderer, command_list, context->rect_mesh_buffers.index_buffer_handle);
+    renderer_cmd_draw_indexed(renderer, command_list, 6, 1, 0, 0, 0);
 
     // End graphics rendering
     renderer_cmd_end_rendering(renderer, command_list);

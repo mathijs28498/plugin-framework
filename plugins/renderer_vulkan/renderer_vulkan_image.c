@@ -40,7 +40,7 @@ int32_t renderer_vulkan_create_image(RendererContext *context, RendererImageCrea
     };
 
     VmaAllocationCreateInfo allocation_create_info = {
-        .usage = rv_image_memory_usage_to_vma_memory_usage(renderer_image_create_info->memory_usage),
+        .usage = rv_memory_usage_to_vma_memory_usage(renderer_image_create_info->memory_usage),
         .requiredFlags = rv_image_memory_usage_to_vk_memory_usage(renderer_image_create_info->memory_usage),
     };
 

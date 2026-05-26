@@ -24,6 +24,23 @@ typedef struct GPUDrawPushConstants
     RendererVertexBufferAddress vertex_buffer_address;
 } GPUDrawPushConstants;
 
+typedef struct Vertex
+{
+    vec3 position;
+    float uv_x;
+    vec3 normal;
+    float uv_y;
+    vec4 color;
+} Vertex;
+
+typedef struct GPUMeshBuffers
+{
+    RendererBufferHandle vertex_buffer_handle;
+    RendererBufferDeviceAddress vertex_buffer_address;
+
+    RendererBufferHandle index_buffer_handle;
+} GPUMeshBuffers;
+
 typedef struct DrawContext
 {
     PluginDependencies deps;
@@ -40,6 +57,8 @@ typedef struct DrawContext
 
     RendererImageHandle draw_image_handle;
     RendererExtent2D draw_extent;
+
+    GPUMeshBuffers rect_mesh_buffers;
 } DrawContext;
 
 #pragma pack(pop)

@@ -14,6 +14,8 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan_utils, LOG_LEVEL_DEBUG)
 #include <plugin_sdk/renderer/v1/renderer_interface.h>
 
 #include "renderer_vulkan_register.h"
+#include "renderer_vulkan_conversion.h"
+#include "renderer_vulkan.h"
 
 int32_t vk_get_instance_proc(LoggerInterface *logger, VkInstance instance, const char *proc_name, vk_func_void_void *out_func)
 {
@@ -122,7 +124,8 @@ int32_t rv_call_queue_push_1(LoggerInterface *logger, RV_CallRecord *call_queue,
     return rv_call_queue_push_(logger, call_queue, RV_CALL_TYPE_1, fn, arg_0, 0U, 0U, 0U);
 }
 
-int32_t rv_create_buffer(RendererContext *context, size_t alloc_size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage, AllocatedBuffer *out_buffer)
+
+int32_t rv_create_buffer(RendererContext *context, size_t alloc_size, RendererBufferUsageFlags usage, VmaMemoryUsage memory_usage, RV_AllocatedBuffer *out_buffer)
 {
     assert(alloc_size > 0);
     assert(out_buffer != NULL);

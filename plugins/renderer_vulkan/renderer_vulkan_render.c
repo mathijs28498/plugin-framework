@@ -159,15 +159,7 @@ void draw_geometry(RendererContext *context, VkCommandBuffer cmd)
     assert(context != NULL);
     assert(cmd != VK_NULL_HANDLE);
 
-    vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context->triangle_pipeline);
-    vkCmdDraw(cmd, 3, 1, 0, 0);
+    // vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context->triangle_pipeline);
+    // vkCmdDraw(cmd, 3, 1, 0, 0);
 
-    // vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context->mesh_pipeline);
-    // GPUDrawPushConstants mesh_push_constants = {
-    //     .world_matrix = GLM_MAT4_IDENTITY_INIT,
-    //     .vertex_buffer_address = context->rectangle_mesh_buffers.vertex_buffer_address,
-    // };
-    // vkCmdPushConstants(cmd, context->mesh_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(GPUDrawPushConstants), &mesh_push_constants);
-    // vkCmdBindIndexBuffer(cmd, context->rectangle_mesh_buffers.index_buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
-    // vkCmdDrawIndexed(cmd, 6, 1, 0, 0, 0);
 }

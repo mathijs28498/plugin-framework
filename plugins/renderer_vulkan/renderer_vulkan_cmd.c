@@ -83,10 +83,31 @@ void renderer_vulkan_cmd_bind_compute_pipeline(RendererContext *context, Rendere
     assert(command_list != NULL);
     VkPipeline pipeline = VK_NULL_HANDLE;
     RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->pipeline_generations_a, context->pipelines_a, pipeline_handle, pipeline);
-   
+
     vkCmdBindPipeline(command_list->command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline);
 }
 
+void renderer_vulkan_cmd_bind_index_buffer(RendererContext *context, RendererCommandList *command_list, RendererBufferHandle buffer_handle)
+{
+    assert(context != NULL);
+    assert(command_list != NULL);
+
+    RV_AllocatedBuffer buffer = {0};
+    RV_RES_RENDERER_HANDLE_GET_OR_RETURN_VOID(context->deps.logger, context->allocated_buffer_generations_a, context->allocated_buffers_a,
+                                              buffer_handle, buffer);
+    TODO("Figure out if other 2 should be arguments");
+    vkCmdBindIndexBuffer(command_list->command_buffer, buffer.buffer, 0, VK_INDEX_TYPE_UINT32);
+}
+
+void renderer_vulkan_cmd_draw_indexed(RendererContext *context, RendererCommandList *command_list, uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance)
+{
+    assert(context != NULL);
+    assert(command_list != NULL);
+
+    vkCmdDrawIndexed(command_list->command_buffer, index_count, instance_count, first_index, vertex_offset, first_instance);
+}
+
+#include <cglm/cglm.h>
 void renderer_vulkan_cmd_draw(RendererContext *context, RendererCommandList *command_list, uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance)
 {
     assert(context != NULL);

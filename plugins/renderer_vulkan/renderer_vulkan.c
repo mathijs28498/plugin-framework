@@ -12,10 +12,12 @@ LOGGER_INTERFACE_REGISTER(renderer_vulkan, LOG_LEVEL_DEBUG);
 #include "renderer_vulkan_bootstrap.h"
 #include "renderer_vulkan_utils.h"
 #include "renderer_vulkan_start.h"
+#include "renderer_vulkan_buffer.h"
 
 int32_t renderer_vulkan_cleanup(RendererContext *context)
 {
     assert(context != NULL);
+
 
     if (context->device != VK_NULL_HANDLE)
     {
