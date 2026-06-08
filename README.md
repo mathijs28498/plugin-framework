@@ -210,11 +210,12 @@ The goal is a fully self-authored stack, from memory allocator to language runti
 
 ## Allocator Progress
 
-| Feature                     | Status     |
-| --------------------------- | ---------- |
-| 1KiB context slabs          | ✅ Complete |
-| Permanent memory allocation | ✅ Complete |
-| Buddy allocator             | ✅ Complete |
+| Feature                     | Status        |
+| --------------------------- | ------------- |
+| 1KiB context slabs          | ✅ Complete    |
+| Permanent memory allocation | ✅ Complete    |
+| Buddy allocator             | ✅ Complete    |
+| TLSF allocator              | 🔨 In Progress |
 
 ## Vulkan Backend Progress
 
