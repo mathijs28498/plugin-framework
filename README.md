@@ -4,20 +4,6 @@ A modular, dependency-aware, statically allocated plugin framework written in C,
 
 The framework knows 2 lifetimes, singleton and scoped. Singleton plugins are initialized at the start of the application and get shutdown when the application finishes. Scoped plugins live for the duration of their scope. During the initialization of singleton plugins, the buddy allocator acts as a permanent allocation for the lifetime of the application.
 
-***
-
-## Features
-
-- **Linux/Zephyr RTOS style subsystem** - plugins communicate via interfaces that expose a vtable with an opaqua context struct, similar to how drivers and subsystems are abstracted in Linux and Zephyr RTOS
-- **Dynamic plugin loading** - plugins are discovered and loaded at runtime via shared libraries or at compile time using a combindation of CMake and Python
-- **Dependency resolution** - automatic ordering and validation of plugin dependencies at load time
-- **Buddy allocator** - each plugin can allocate dynamic memory using the buddy allocator plugin. This allows for fast dynamic memory without heap allocations
-- **Isolated plugin contexts** - plugins cannot access each other's memory directly; communication goes through well-defined interfaces
-- **Cross-platform** - targets Windows (MSVC), with Linux, web, and embedded systems in mind
-- **CMake build system** - includes code generation scripts via Python integrated into the build pipeline
-
-***
-
 ## Architecture
 
 ```
@@ -40,7 +26,7 @@ The framework knows 2 lifetimes, singleton and scoped. Singleton plugins are ini
 │  │  - Topologically sorts and inits dependencies│  │
 │  └──────┬────────────┬────────────┬─────────────┘  │
 │         │            │            │                │
-│  ┌──────▼──┐   ┌─────▼───┐  ┌────▼────┐            │
+│  ┌──────▼──┐   ┌─────▼───┐  ┌─────▼───┐            │
 │  │Plugin A │   │Plugin B │  │Plugin C │  ...       │
 │  │ 1KiB    │   │ 1KiB    │  │ 1KiB    │            │
 │  │ slab    │   │ slab    │  │ slab    │            │
@@ -57,7 +43,15 @@ The framework knows 2 lifetimes, singleton and scoped. Singleton plugins are ini
 
 Each plugin exposes a standard interface. The host resolves the load order based on declared dependencies before any plugin is initialised. Missing or cyclic dependencies are caught in this step and result in a loud error.
 
-***
+## Features
+
+- **Linux/Zephyr RTOS style subsystem** - plugins communicate via interfaces that expose a vtable with an opaqua context struct, similar to how drivers and subsystems are abstracted in Linux and Zephyr RTOS
+- **Dynamic plugin loading** - plugins are discovered and loaded at runtime via shared libraries or at compile time using a combindation of CMake and Python
+- **Dependency resolution** - automatic ordering and validation of plugin dependencies at load time
+- **Buddy allocator** - each plugin can allocate dynamic memory using the buddy allocator plugin. This allows for fast dynamic memory without heap allocations
+- **Isolated plugin contexts** - plugins cannot access each other's memory directly; communication goes through well-defined interfaces
+- **Cross-platform** - targets Windows (MSVC), with Linux, web, and embedded systems in mind
+- **CMake build system** - includes code generation scripts via Python integrated into the build pipeline
 
 ## Plugin Interface
 
@@ -106,6 +100,7 @@ Each plugin implements a vtable. An Interface struct holds both a reference to a
 
 struct GuiApplicationContext;
 struct WindowInterfaceCreateWindowOptions;
+
 typedef struct GuiApplicationVtable
 {
     int32_t (*setup)(struct GuiApplicationContext *context, struct WindowInterfaceCreateWindowOptions *create_window_options);
@@ -131,26 +126,41 @@ static inline int32_t gui_application_run(GuiApplicationInterface *iface)
 
 ```
 
-***
-
 ## Memory Model
 
 Each plugin receives a `PluginContext` backed by a 1 KiB O(1) **slab allocator**. On plugin shutdown, the slab is freed in a single operation. If a plugin requires more than 1KiB memory, or has configurable dynamic memory, an allocation can be executed during initialization which has to be returned at shutdown. Application should be able to run for long unattended times, so fragmentation has to be kept to a minimum.
 
-***
+## Build Instructions
 
-## Build
+This framework requires CMake and Python 3 for the build system and compile-time code generation.
 
-Requires CMake 3.7+ and a C11-compatible compiler (MSVC or GCC/Clang).
+### Prerequisites
+* CMake (3.23+)
+* Python (3.7+)
+* A C11-compatible compiler (MSVC, GCC, or Clang)
 
-```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-```
+### Building via Command Line
+This project uses `CMakePresets.json` to standardize builds. You can choose to build the plugins as either dynamic shared libraries (default) or static libraries.
 
-Python 3 is required for the code generation step, which runs automatically as part of the CMake configure phase.
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/mathijs28498/plugin-framework.git
+   ```
+2. Configure the project using one of the presets, for example:
+   ```bash
+   # For a gui application with dynamic shared libraries
+   cmake --preset dev-gui-dynamic 
+   
+   # For a gui application with static libraries 
+   cmake --preset dev-gui-static
+   ```
+3. Build the project:
+   ```bash
+   cmake --build build
+   ```
 
-***
+### Building via VS Code
+If you are using Visual Studio Code, simply open the project folder, ensure the **CMake Tools** extension is installed, and select a default preset provided by the `CMakePresets.json` file.
 
 ## Project Goals
 
@@ -163,8 +173,6 @@ This framework is one component of a larger planned personal ecosystem:
 
 The goal is a fully self-authored stack, from memory allocator to language runtime, built with an emphasis on understanding every layer from first principles.
 
-***
-
 ## Design Principles
 
 - No hidden allocations - all memory is explicit and caller-owned
@@ -174,30 +182,31 @@ The goal is a fully self-authored stack, from memory allocator to language runti
 - Follows NASA's Power of Ten coding rules for reliability in constrained environments
 - Very limited headers allowed inside other headers to decrease incremental compilations 
 
-***
-
-***
-
 ## Plugins
 
-| Plugin            | Status                       |
-| ----------------- | ---------------------------- |
-| environment       | ✅ Complete                   |
-| input             | ✅ Complete                   |
-| logger            | ✅ Complete                   |
-| time              | ✅ Complete - Windows only    |
-| allocator         | ✅ Complete                   |
-| draw              | 🔨 In Progress                |
-| - draw_background | 🔨 In Progress                |
-| - draw_2d         | 🔨 In Progress                |
-| - draw_3d         | 🔨 In Progress                |
-| gui_application   | 🔨 In Progress                |
-| plugin_manager    | 🔨 In Progress                |
-| render_graph      | 🔨 In Progress                |
-| renderer          | 🔨 In Progress                |
-| window            | 🔨 In Progress - Windows only |
-
-***
+| Plugin                 | Status                    |
+| ---------------------- | ------------------------- |
+| environment            | ✅ Complete                |
+| input                  | ✅ Complete                |
+| logger                 | ✅ Complete                |
+| time                   | ✅ Complete - Windows only |
+| allocator              | ✅ Complete                |
+| draw                   | 🔨 In Progress             |
+| - draw_background      | 🔨 In Progress             |
+| - draw_2d              | 🔨 In Progress             |
+| - draw_3d              | 📋 Planned                 |
+| - draw_voxel           | 📋 Planned                 |
+| - draw_post_processing | 📋 Planned                 |
+| gui_application        | 🔨 In Progress             |
+| plugin_manager         | 🔨 In Progress             |
+| render_graph           | 🔨 In Progress             |
+| renderer               | 🔨 In Progress             |
+| window                 | 🔨 In Progress             |
+| ui                     | 📋 Planned                 |
+| physics                | 📋 Planned                 |
+| - 2d physics           | 📋 Planned                 |
+| - 3d physics           | 📋 Planned                 |
+| - voxel physics        | 📋 Planned                 |
 
 ## Allocator Progress
 
@@ -206,9 +215,6 @@ The goal is a fully self-authored stack, from memory allocator to language runti
 | 1KiB context slabs          | ✅ Complete |
 | Permanent memory allocation | ✅ Complete |
 | Buddy allocator             | ✅ Complete |
-
-
-***
 
 ## Vulkan Backend Progress
 
@@ -230,14 +236,15 @@ The goal is a fully self-authored stack, from memory allocator to language runti
 | Compile-time shader reflection                     | 🔨 In Progress |
 | `VK_ERROR_DEVICE_LOST` recovery                    | 📋 Planned     |
 
-***
-
 ## Platform Targets
 
-| Platform | Status      |
-| -------- | ----------- |
-| Windows  | ✅ Supported |
-| Linux    | 📋 Planned   |
-| MacOS    | 📋 Planned   |
-| Web      | 📋 Planned   |
-| Embedded | 📋 Planned   |
+| Platform | Status        |
+| -------- | ------------- |
+| Windows  | ✅ Supported   |
+| Linux    | 🔨 In Progress |
+| MacOS    | 📋 Planned     |
+| Web      | 📋 Planned     |
+| Embedded | 📋 Planned     |
+
+## License
+This project is licensed under the [MIT License](LICENSE).
